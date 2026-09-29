@@ -3,236 +3,280 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ระบบจัดการงานและบันทึกเวลาช่าง Foresee</title>
+  <title>Foresee Field Service Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Sarabun', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      background-color: #F8FAFC;
+    }
+    input, select, textarea {
+      font-family: 'Prompt', sans-serif;
+    }
   </style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-12">
+<body class="text-slate-800 min-h-screen pb-12 antialiased selection:bg-slate-200">
 
-  <!-- Header -->
-  <header class="bg-gradient-to-r from-slate-900 via-teal-900 to-slate-900 text-white px-5 py-4 shadow-md sticky top-0 z-50">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-2.5">
-        <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-xl shadow-inner border border-white/20">
-          👁️
+  <!-- Enterprise Header -->
+  <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 text-white">
+    <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-white tracking-wider">
+          FS
         </div>
         <div>
-          <h1 class="font-bold text-base leading-tight">FORESEE SYSTEM</h1>
-          <p class="text-[11px] text-teal-300">ระบบงานช่าง & ติดตามงานติดตั้ง</p>
+          <div class="text-xs font-bold tracking-widest text-slate-200 uppercase">FORESEE TECHNOLOGY</div>
+          <div class="text-[11px] text-slate-400">ระบบจัดการงานช่างภาคสนาม</div>
         </div>
       </div>
-      <div id="gpsBadge" class="text-[11px] px-2.5 py-1 rounded-full font-semibold bg-amber-500 text-white flex items-center space-x-1 shadow-sm">
-        <span class="animate-pulse">●</span>
-        <span id="gpsText">หา GPS...</span>
+      <div id="gpsStatusBadge" class="text-[11px] px-2.5 py-1 rounded-md font-medium bg-slate-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5">
+        <span id="gpsDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span id="gpsStatusText">รอพิกัด GPS</span>
       </div>
     </div>
   </header>
 
-  <main class="max-w-md mx-auto px-4 pt-3">
+  <main class="max-w-md mx-auto px-4 pt-3.5 space-y-3.5">
 
-    <!-- 3 Tabs Navigation -->
-    <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/90 rounded-2xl mb-4 text-xs font-bold text-center">
-      <button id="tabAssignBtn" onclick="switchTab('assign')" class="py-2.5 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-0.5 text-slate-600 hover:text-slate-900">
-        <span class="text-sm">➕</span>
-        <span>มอบหมายงาน</span>
+    <!-- iOS-Style Segmented Navigation -->
+    <div class="bg-slate-200/80 p-1 rounded-xl grid grid-cols-3 gap-1 text-xs font-medium text-slate-600">
+      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold">
+        เช็กอินหน้างาน
       </button>
-      <button id="tabCheckinBtn" onclick="switchTab('checkin')" class="py-2.5 rounded-xl transition-all duration-200 bg-white text-teal-800 shadow-sm flex flex-col items-center justify-center space-y-0.5">
-        <span class="text-sm">📍</span>
-        <span>เช็กอินหน้างาน</span>
+      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 rounded-lg transition-all hover:text-slate-900">
+        ปิดงาน
       </button>
-      <button id="tabCheckoutBtn" onclick="switchTab('checkout')" class="py-2.5 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-0.5 text-slate-600 hover:text-slate-900">
-        <span class="text-sm">🏁</span>
-        <span>ปิดงาน</span>
+      <button id="tabBtnAssign" onclick="switchTab('assign')" class="py-2 rounded-lg transition-all hover:text-slate-900">
+        มอบหมายงาน
       </button>
     </div>
 
-    <!-- GPS Bar -->
-    <div id="gpsBar" class="bg-white rounded-xl p-3 shadow-sm border border-slate-200 mb-3.5 flex items-center justify-between text-xs">
-      <div class="flex items-center space-x-2">
-        <div class="w-7 h-7 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center font-bold">
-          📍
+    <!-- GPS Coordinate Panel -->
+    <div id="gpsPanel" class="bg-white rounded-xl p-3 border border-slate-200/80 shadow-sm flex items-center justify-between">
+      <div class="flex items-start space-x-2.5">
+        <div class="mt-0.5 text-slate-400">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
         </div>
         <div>
-          <p class="font-bold text-slate-800" id="locationTitle">กำลังดึงตำแหน่ง GPS...</p>
-          <p class="text-slate-500 text-[11px]" id="locationCoords">เปิด GPS ในมือถือเพื่อความแม่นยำ</p>
+          <div id="gpsLocationTitle" class="text-xs font-semibold text-slate-800">กำลังระบุตำแหน่งอัตโนมัติ...</div>
+          <div id="gpsCoordsText" class="text-[11px] text-slate-500">กรุณาเปิดระบบ GPS บนอุปกรณ์</div>
         </div>
       </div>
-      <button onclick="requestLocation()" class="text-teal-700 font-semibold text-xs px-2.5 py-1 bg-teal-50 rounded-lg border border-teal-200 active:scale-95">
-        🔄 รีเฟรช
+      <button type="button" onclick="requestLocation()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-md border border-slate-200 transition-colors flex items-center space-x-1">
+        <span>รีเฟรช</span>
       </button>
     </div>
 
-    <!-- ==================== TAB 1: มอบหมายงาน (Assign Task) ==================== -->
-    <div id="assignSection" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-      <div class="border-b border-slate-100 pb-3 mb-4 flex items-center justify-between">
-        <h2 class="font-bold text-slate-800 text-sm flex items-center space-x-1.5">
-          <span>📋</span>
-          <span>สร้างงานใหม่และมอบหมาย</span>
-        </h2>
-        <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">สำหรับหัวหน้า</span>
+    <!-- ==================== TAB 1: CHECK-IN ==================== -->
+    <section id="checkinSection" class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
+      <div class="border-b border-slate-100 pb-3 mb-3.5">
+        <h2 class="text-sm font-bold text-slate-900">บันทึกเวลาเข้าหน้างาน</h2>
+        <p class="text-[11px] text-slate-500">ระบบจะจับเวลาและพิกัด GPS อัตโนมัติ เพื่อส่งการ์ดแจ้งเตือนเข้ากลุ่ม LINE</p>
+      </div>
+
+      <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-3.5">
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-semibold text-slate-700">ช่างผู้รับผิดชอบ <span class="text-rose-500">*</span></label>
+            <button type="button" onclick="openAddTechModal()" class="text-[11px] text-blue-600 hover:text-blue-800 font-medium">+ เพิ่มช่างใหม่</button>
+          </div>
+          <select id="techSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+            <option value="">-- กรุณาเลือกช่าง --</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">เลือกงานที่มอบหมายไว้ (ถ้ามี)</label>
+          <select id="presetTaskSelect" onchange="onPresetTaskChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+            <option value="">-- เลือกจากงานในระบบ หรือพิมพ์ระบุเองด้านล่าง --</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">รายละเอียดงาน / สถานที่ติดตั้ง <span class="text-rose-500">*</span></label>
+          <textarea id="customTaskInput" rows="2" required placeholder="เช่น ติดตั้งกล้องวงจรปิด Hikvision 4 จุด - ซอยลาซาล 32" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800"></textarea>
+        </div>
+
+        <div class="pt-1.5">
+          <button type="submit" id="btnCheckinSubmit" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center justify-center space-x-2">
+            <span>บันทึกเช็กอิน & แชร์เข้ากลุ่ม LINE</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ==================== TAB 2: CHECK-OUT ==================== -->
+    <section id="checkoutSection" class="hidden bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
+      <div class="border-b border-slate-100 pb-3 mb-3.5 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900">ปิดงานและบันทึกเวลาจบ</h2>
+          <p class="text-[11px] text-slate-500">เลือกงานที่ต้องการปิดเพื่อส่งการ์ดสรุปงานเข้ากลุ่ม</p>
+        </div>
+        <button type="button" onclick="loadSystemData()" class="text-[11px] text-slate-600 hover:text-slate-900 font-medium bg-slate-100 px-2 py-1 rounded border border-slate-200">
+          รีเฟรชงาน
+        </button>
+      </div>
+
+      <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-2">เลือกงานที่กำลังดำเนินงานอยู่ <span class="text-rose-500">*</span></label>
+          <div id="activeListContainer" class="space-y-2 max-h-60 overflow-y-auto pr-0.5">
+            <div class="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-200">
+              กำลังโหลดรายการงานคงค้าง...
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-1.5">
+          <button type="submit" id="btnCheckoutSubmit" disabled class="w-full bg-slate-300 text-slate-500 font-semibold py-3 px-4 rounded-lg text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed">
+            <span>เลือกงานด้านบนเพื่อบันทึกปิดงาน</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ==================== TAB 3: ASSIGN TASK ==================== -->
+    <section id="assignSection" class="hidden bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
+      <div class="border-b border-slate-100 pb-3 mb-3.5">
+        <h2 class="text-sm font-bold text-slate-900">สร้างงานใหม่และมอบหมายช่าง</h2>
+        <p class="text-[11px] text-slate-500">ระบบจะสร้างการ์ดมอบหมายงานส่งตรงเข้ากลุ่ม LINE ทันที</p>
       </div>
 
       <form id="assignForm" onsubmit="handleAssign(event)" class="space-y-3.5">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">ชื่องาน / รายละเอียด <span class="text-red-500">*</span></label>
-          <input type="text" id="taskTitleInput" required placeholder="เช่น ติดตั้งกล้องวงจรปิด 4 ตัว" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">ชื่องาน / รายละเอียดงาน <span class="text-rose-500">*</span></label>
+          <input type="text" id="taskTitleInput" required placeholder="เช่น ติดตั้งระบบกล้อง IP Camera 8 ตัว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">สถานที่ / ลูกค้า</label>
-          <input type="text" id="customerLocInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">สถานที่ติดตั้ง / ลูกค้า</label>
+          <input type="text" id="customerLocInput" placeholder="เช่น อาคารไทยสมุทร ชั้น 4 ถ.สาทรใต้" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-xs font-bold text-slate-700">มอบหมายช่าง <span class="text-red-500">*</span></label>
-              <button type="button" onclick="promptAddNewTech()" class="text-[10px] text-blue-600 font-bold hover:underline">+ เพิ่มช่าง</button>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-semibold text-slate-700">มอบหมายช่าง <span class="text-rose-500">*</span></label>
             </div>
-            <select id="assignTechSelect" required class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none bg-slate-50">
+            <select id="assignTechSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
               <option value="">-- เลือกช่าง --</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">ความสำคัญ</label>
-            <select id="prioritySelect" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none bg-slate-50">
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">ระดับความสำคัญ</label>
+            <select id="prioritySelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
               <option value="ปกติ">ปกติ</option>
-              <option value="ด่วน">ด่วน 🔥</option>
-              <option value="ด่วนมาก">ด่วนมาก 🚨</option>
+              <option value="ด่วน">ด่วน</option>
+              <option value="ด่วนที่สุด">ด่วนที่สุด</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">กำหนดส่งงาน (Deadline)</label>
-          <input type="datetime-local" id="deadlineInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">กำหนดส่งมอบงาน</label>
+          <input type="datetime-local" id="deadlineInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
         </div>
 
-        <button type="submit" id="btnAssignSubmit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center space-x-2 text-sm mt-2">
-          <span>📤</span>
-          <span>มอบหมายงาน & แชร์เข้ากลุ่ม</span>
-        </button>
+        <div class="pt-1.5">
+          <button type="submit" id="btnAssignSubmit" class="w-full bg-blue-700 hover:bg-blue-800 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center justify-center space-x-2">
+            <span>สร้างงาน & แชร์การ์ดเข้ากลุ่ม LINE</span>
+          </button>
+        </div>
       </form>
-    </div>
-
-    <!-- ==================== TAB 2: เช็กอินหน้างาน (Check-in) ==================== -->
-    <div id="checkinSection" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-      <div class="border-b border-slate-100 pb-3 mb-4 flex items-center justify-between">
-        <h2 class="font-bold text-slate-800 text-sm flex items-center space-x-1.5">
-          <span>📍</span>
-          <span>เช็กอินเข้าถึงหน้างาน</span>
-        </h2>
-        <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full font-bold">ดึง GPS จริง</span>
-      </div>
-
-      <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-4">
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="block text-xs font-bold text-slate-700">👤 ชื่อช่างผู้รับผิดชอบ <span class="text-red-500">*</span></label>
-            <button type="button" onclick="promptAddNewTech()" class="text-[11px] text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">+ เพิ่มชื่อช่าง</button>
-          </div>
-          <select id="techSelect" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50">
-            <option value="">-- กรุณาเลือกชื่อช่าง --</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">📋 ชื่องาน / ลูกค้า <span class="text-red-500">*</span></label>
-          <select id="presetTaskSelect" onchange="onPresetTaskChange()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-600 focus:outline-none bg-slate-50 mb-2">
-            <option value="">-- เลือกจากงานในระบบ หรือพิมพ์เองด้านล่าง --</option>
-          </select>
-          <input type="text" id="customTaskInput" required placeholder="หรือพิมพ์ชื่องาน / ลูกค้า / ไซต์งาน" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-teal-600 focus:outline-none">
-        </div>
-
-        <button type="submit" id="btnCheckinSubmit" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center space-x-2 text-sm">
-          <span>📍</span>
-          <span>ยืนยันเช็กอิน & แชร์เข้ากลุ่ม</span>
-        </button>
-      </form>
-    </div>
-
-    <!-- ==================== TAB 3: ปิดงาน (Check-out) ==================== -->
-    <div id="checkoutSection" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-      <div class="border-b border-slate-100 pb-3 mb-4 flex items-center justify-between">
-        <h2 class="font-bold text-slate-800 text-sm flex items-center space-x-1.5">
-          <span>🏁</span>
-          <span>เช็กเอาต์ & สรุปปิดงาน</span>
-        </h2>
-        <button type="button" onclick="loadSystemData()" class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">🔄 โหลดใหม่</button>
-      </div>
-
-      <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">🏁 ค้นหาหรือระบุงานที่ต้องการปิด <span class="text-red-500">*</span></label>
-          <div id="activeListContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1">
-            <p class="text-slate-400 text-xs text-center py-4">กำลังโหลดรายการงาน...</p>
-          </div>
-        </div>
-
-        <button type="submit" id="btnCheckoutSubmit" disabled class="w-full bg-slate-300 text-white font-bold py-3.5 px-4 rounded-xl shadow transition-all flex items-center justify-center space-x-2 text-sm cursor-not-allowed">
-          <span>🏁</span>
-          <span>ยืนยันปิดงาน & แชร์เข้ากลุ่ม</span>
-        </button>
-      </form>
-    </div>
-
-    <div class="mt-5 text-center text-[11px] text-slate-400">
-      <p>FORESEE TECHNOLOGY CO., LTD. • Field Service Tracking</p>
-    </div>
+    </section>
 
   </main>
 
-  <!-- Modal Loading / Result -->
-  <div id="statusModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl p-6 max-w-xs w-full text-center shadow-xl">
-      <div id="modalIcon" class="text-4xl mb-3 animate-spin">⏳</div>
-      <h3 id="modalTitle" class="text-base font-bold text-slate-800 mb-1">กำลังบันทึกข้อมูล...</h3>
-      <p id="modalMsg" class="text-xs text-slate-500 mb-4">ระบบกำลังประมวลผลข้อมูล</p>
-      <button id="modalCloseBtn" onclick="closeModal()" class="hidden w-full py-2.5 bg-slate-800 text-white text-xs font-bold rounded-xl shadow">
+  <!-- ==================== CLEAN CORPORATE STATUS MODAL ==================== -->
+  <div id="statusModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl p-5 max-w-xs w-full text-center shadow-xl border border-slate-100">
+      
+      <!-- Icon Container (Clean SVG, NO runaway spinning) -->
+      <div id="modalIconContainer" class="flex items-center justify-center mb-3">
+        <!-- Will be populated dynamically by showStatusModal() -->
+      </div>
+
+      <h3 id="modalTitle" class="text-sm font-bold text-slate-900 mb-1">กำลังดำเนินการ</h3>
+      <p id="modalMsg" class="text-xs text-slate-600 mb-4 leading-relaxed">กรุณารอสักครู่ ระบบกำลังประมวลผล</p>
+
+      <button id="modalCloseBtn" onclick="closeStatusModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors">
         ตกลง
       </button>
     </div>
   </div>
 
+  <!-- ==================== CLEAN ADD TECHNICIAN MODAL ==================== -->
+  <div id="addTechModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl p-5 max-w-xs w-full shadow-xl border border-slate-100">
+      <h3 class="text-sm font-bold text-slate-900 mb-1">เพิ่มรายชื่อช่างใหม่</h3>
+      <p class="text-xs text-slate-500 mb-3">รายชื่อจะปรากฏในระบบทันทีและบันทึกอัตโนมัติ</p>
+      
+      <input type="text" id="newTechNameInput" placeholder="ระบุชื่อ-นามสกุลช่าง" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800 mb-3.5">
+      
+      <div class="flex space-x-2">
+        <button type="button" onclick="closeAddTechModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg text-xs transition-colors">
+          ยกเลิก
+        </button>
+        <button type="button" onclick="confirmAddTech()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-lg text-xs transition-colors">
+          บันทึก
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Configuration
     const MY_LIFF_ID = "2011782806-0If1jko9";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw6r3Yk3zJtL0p9m7_xxxxxxxxx/exec";
 
-    // ใส่ URL ของ Web App จาก Google Apps Script (ที่ลงท้ายด้วย /exec)
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw6r3Yk3zJtL0p9m7_xxxxxxxxx/exec"; 
-
-    let allTechnicians = ["ช่างกนก", "ช่างมณเฑียร", "ช่างสายฟ้า"];
+    // Application State
     let currentLat = null;
     let currentLng = null;
+    let allTechnicians = ["สมชาย สุขสันต์", "วิชัย มั่นคง", "กิตติพงษ์ เจริญผล"];
+    let assignedTasks = [];
+    let activeTasks = [
+      { id: "CHK-001", tech: "สมชาย สุขสันต์", task: "ติดตั้งกล้องวงจรปิด ซอยลาซาล 32", time: "09:15" },
+      { id: "CHK-002", tech: "วิชัย มั่นคง", task: "ตรวจเช็กสัญญาณ Router บริษัท ABC", time: "10:00" }
+    ];
     let selectedActiveItem = null;
 
-    window.onload = async function() {
-      const targetTab = detectTargetTab() || "checkin";
-      switchTab(targetTab);
-
-      populateTechDropdowns(allTechnicians);
-      requestLocation();
-      await initLiff();
-      loadSystemData();
-    };
-
-    function detectTargetTab() {
+    // Initialize Application
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Load saved technicians from localStorage if available
       try {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has("tab")) return urlParams.get("tab");
-        const liffState = urlParams.get("liff.state");
-        if (liffState) {
-          const decoded = decodeURIComponent(liffState);
-          const stateParams = new URLSearchParams(decoded.startsWith("?") ? decoded : "?" + decoded);
-          if (stateParams.has("tab")) return stateParams.get("tab");
+        const savedTechs = localStorage.getItem("foresee_techs");
+        if (savedTechs) {
+          allTechnicians = JSON.parse(savedTechs);
         }
       } catch(e) {}
-      return null;
-    }
 
+      updateTechDropdowns();
+      renderActiveCheckoutList(activeTasks);
+
+      // Check URL query parameters for default tab
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get("tab");
+      if (tabParam && ["assign", "checkin", "checkout"].includes(tabParam)) {
+        switchTab(tabParam);
+      }
+
+      // Initialize LIFF and GPS
+      initLiff();
+      requestLocation();
+
+      // Fetch background data from Google Sheets if connected
+      loadSystemData();
+    });
+
+    // LIFF Initialization
     async function initLiff() {
       if (typeof liff === "undefined") return;
       try {
@@ -247,121 +291,190 @@
       }
     }
 
-    function promptAddNewTech() {
-      const name = prompt("กรุณากรอกชื่อช่างใหม่:");
-      if (name && name.trim() !== "") {
-        const cleanName = name.trim();
-        if (!allTechnicians.includes(cleanName)) {
-          allTechnicians.push(cleanName);
-          populateTechDropdowns(allTechnicians);
-          document.getElementById("techSelect").value = cleanName;
-          document.getElementById("assignTechSelect").value = cleanName;
-
-          callGasApi({ action: "addNewTechnician", name: cleanName });
-          alert(`เพิ่ม "${cleanName}" เข้าสู่ระบบเรียบร้อยแล้ว!`);
-        }
-      }
-    }
-
+    // Geolocation Services
     function requestLocation() {
-      const badge = document.getElementById("gpsBadge");
-      const text = document.getElementById("gpsText");
-      const title = document.getElementById("locationTitle");
-      const coords = document.getElementById("locationCoords");
+      const badge = document.getElementById("gpsStatusBadge");
+      const dot = document.getElementById("gpsDot");
+      const text = document.getElementById("gpsStatusText");
+      const title = document.getElementById("gpsLocationTitle");
+      const coords = document.getElementById("gpsCoordsText");
+
+      title.innerText = "กำลังระบุตำแหน่งอัตโนมัติ...";
+      text.innerText = "รอพิกัด GPS";
+      dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
 
       if (!navigator.geolocation) {
         title.innerText = "อุปกรณ์ไม่รองรับ GPS";
+        coords.innerText = "ระบบจะใช้พิกัดมาตรฐานในการบันทึก";
+        text.innerText = "GPS ปิดอยู่";
+        dot.className = "w-2 h-2 rounded-full bg-slate-400";
         return;
       }
 
       navigator.geolocation.getCurrentPosition(
-        function(pos) {
+        (pos) => {
           currentLat = pos.coords.latitude.toFixed(6);
           currentLng = pos.coords.longitude.toFixed(6);
           const acc = Math.round(pos.coords.accuracy);
 
-          badge.className = "text-[11px] px-2.5 py-1 rounded-full font-semibold bg-emerald-600 text-white flex items-center space-x-1";
-          text.innerText = "GPS พร้อม";
-          title.innerText = "จับพิกัดตำแหน่งสำเร็จ";
+          text.innerText = "GPS เชื่อมต่อแล้ว";
+          dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+          title.innerText = "ระบุตำแหน่งสำเร็จ";
           coords.innerText = `${currentLat}, ${currentLng} (ความแม่นยำ ~${acc} ม.)`;
         },
-        function(err) {
-          badge.className = "text-[11px] px-2.5 py-1 rounded-full font-semibold bg-rose-500 text-white flex items-center space-x-1";
-          text.innerText = "GPS ปิดอยู่";
-          title.innerText = "ไม่สามารถดึงพิกัดได้";
-          coords.innerText = "กรุณาเปิด Location ในมือถือ";
+        (err) => {
+          console.warn("GPS error:", err);
+          text.innerText = "ไม่พบ GPS";
+          dot.className = "w-2 h-2 rounded-full bg-rose-400";
+          title.innerText = "ไม่สามารถเข้าถึงพิกัดได้";
+          coords.innerText = "กรุณาเปิดสิทธิ์ Location บนเบราว์เซอร์";
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
     }
 
-    async function loadSystemData() {
-      try {
-        const res = await callGasApi({ action: "getInitialData" });
-        if (res) onDataLoaded(res);
-      } catch (err) {
-        console.warn("Load data err:", err);
+    // UI Tab Navigation
+    function switchTab(tab) {
+      const tabs = ["checkin", "checkout", "assign"];
+      tabs.forEach(t => {
+        const sec = document.getElementById(`${t}Section`);
+        const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (!sec || !btn) return;
+
+        if (t === tab) {
+          sec.classList.remove("hidden");
+          btn.className = "py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold";
+        } else {
+          sec.classList.add("hidden");
+          btn.className = "py-2 rounded-lg transition-all hover:text-slate-900 font-medium text-slate-600";
+        }
+      });
+
+      const gpsPanel = document.getElementById("gpsPanel");
+      if (gpsPanel) {
+        if (tab === "checkin") gpsPanel.classList.remove("hidden");
+        else gpsPanel.classList.add("hidden");
       }
     }
 
-    function populateTechDropdowns(list) {
-      ["techSelect", "assignTechSelect"].forEach(elemId => {
-        const sel = document.getElementById(elemId);
+    // Technician Management
+    function updateTechDropdowns() {
+      const selects = [document.getElementById("techSelect"), document.getElementById("assignTechSelect")];
+      selects.forEach(sel => {
         if (!sel) return;
         const currentVal = sel.value;
-        sel.innerHTML = '<option value="">-- เลือกช่าง --</option>';
-        list.forEach(name => {
+        sel.innerHTML = '<option value="">-- กรุณาเลือกช่าง --</option>';
+        allTechnicians.forEach(name => {
           const opt = document.createElement("option");
           opt.value = name;
           opt.innerText = name;
           sel.appendChild(opt);
         });
-        if (currentVal) sel.value = currentVal;
+        if (currentVal && allTechnicians.includes(currentVal)) {
+          sel.value = currentVal;
+        }
       });
     }
 
-    function onDataLoaded(data) {
-      if (!data) return;
-      if (data.technicians && data.technicians.length > 0) {
-        allTechnicians = data.technicians;
-        populateTechDropdowns(allTechnicians);
-      }
-      if (data.tasks) {
-        const taskSelect = document.getElementById("presetTaskSelect");
-        if (taskSelect) {
-          taskSelect.innerHTML = '<option value="">-- เลือกจากงานในระบบ หรือพิมพ์เองด้านล่าง --</option>';
-          data.tasks.forEach(t => {
-            const opt = document.createElement("option");
-            opt.value = t.title;
-            opt.innerText = t.title;
-            taskSelect.appendChild(opt);
-          });
-        }
-      }
-      renderActiveList(data.activeCheckins);
+    function openAddTechModal() {
+      document.getElementById("newTechNameInput").value = "";
+      document.getElementById("addTechModal").classList.remove("hidden");
     }
 
-    function renderActiveList(items) {
+    function closeAddTechModal() {
+      document.getElementById("addTechModal").classList.add("hidden");
+    }
+
+    function confirmAddTech() {
+      const input = document.getElementById("newTechNameInput");
+      const name = input.value.trim();
+      if (!name) return;
+
+      if (!allTechnicians.includes(name)) {
+        allTechnicians.push(name);
+        try {
+          localStorage.setItem("foresee_techs", JSON.stringify(allTechnicians));
+        } catch(e) {}
+        updateTechDropdowns();
+
+        const techSel = document.getElementById("techSelect");
+        if (techSel) techSel.value = name;
+        const assignSel = document.getElementById("assignTechSelect");
+        if (assignSel) assignSel.value = name;
+
+        // Background sync to GAS
+        callGasApi({ action: "addNewTechnician", name: name });
+      }
+
+      closeAddTechModal();
+    }
+
+    // System Data Syncing
+    async function loadSystemData() {
+      if (GAS_API_URL.includes("xxxxxxxxx")) return;
+      try {
+        const response = await fetch(`${GAS_API_URL}?action=getInitialData`);
+        const data = await response.json();
+        if (data.technicians && data.technicians.length > 0) {
+          allTechnicians = Array.from(new Set([...allTechnicians, ...data.technicians]));
+          updateTechDropdowns();
+        }
+        if (data.assignedTasks) {
+          assignedTasks = data.assignedTasks;
+          updatePresetTasks();
+        }
+        if (data.activeCheckins) {
+          activeTasks = data.activeCheckins;
+          renderActiveCheckoutList(activeTasks);
+        }
+      } catch (err) {
+        console.warn("Backend sync error:", err);
+      }
+    }
+
+    function updatePresetTasks() {
+      const sel = document.getElementById("presetTaskSelect");
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- เลือกจากงานในระบบ หรือพิมพ์ระบุเองด้านล่าง --</option>';
+      assignedTasks.forEach(task => {
+        const opt = document.createElement("option");
+        opt.value = `${task.title} - ${task.customerLoc}`;
+        opt.innerText = `[${task.priority}] ${task.title} (${task.technician})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function onPresetTaskChange() {
+      const preset = document.getElementById("presetTaskSelect").value;
+      if (preset) {
+        document.getElementById("customTaskInput").value = preset;
+      }
+    }
+
+    function renderActiveCheckoutList(items) {
       const container = document.getElementById("activeListContainer");
       if (!container) return;
+
       if (!items || items.length === 0) {
-        container.innerHTML = '<p class="text-slate-400 text-xs text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">ไม่มีงานที่กำลังปฏิบัติงานอยู่ (ลองเช็กอินงานใหม่ก่อนครับ)</p>';
+        container.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-200">ไม่มีรายการงานคงค้างในระบบ</div>';
         return;
       }
 
       container.innerHTML = "";
       items.forEach(item => {
         const card = document.createElement("div");
-        card.className = "p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50/50 cursor-pointer transition-all flex items-center justify-between";
+        card.className = "p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors flex items-center justify-between";
         card.onclick = () => selectCheckoutItem(item, card);
         card.id = `item-${item.id}`;
         card.innerHTML = `
           <div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800">${item.id}</span>
-            <p class="font-bold text-xs text-slate-800 mt-1">${item.task}</p>
-            <p class="text-[11px] text-slate-500">ช่าง: ${item.tech} • เริ่ม: ${item.time}</p>
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">${item.id}</span>
+              <span class="text-xs font-semibold text-slate-900">${item.task}</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">ช่าง: ${item.tech} • เข้างาน: ${item.time} น.</p>
           </div>
-          <div class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center radio-check"></div>
+          <div class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center radio-dot"></div>
         `;
         container.appendChild(card);
       });
@@ -370,186 +483,151 @@
     function selectCheckoutItem(item, elem) {
       selectedActiveItem = item;
       document.querySelectorAll("#activeListContainer > div").forEach(d => {
-        d.classList.remove("border-teal-600", "bg-teal-50");
-        d.querySelector(".radio-check").innerHTML = "";
+        d.classList.remove("border-slate-800", "bg-slate-100");
+        const dot = d.querySelector(".radio-dot");
+        if (dot) dot.innerHTML = "";
       });
-      elem.classList.add("border-teal-600", "bg-teal-50");
-      elem.querySelector(".radio-check").innerHTML = '<div class="w-3 h-3 bg-teal-600 rounded-full"></div>';
+      elem.classList.add("border-slate-800", "bg-slate-100");
+      const currentDot = elem.querySelector(".radio-dot");
+      if (currentDot) {
+        currentDot.innerHTML = '<div class="w-2.5 h-2.5 bg-slate-900 rounded-full"></div>';
+      }
 
       const btn = document.getElementById("btnCheckoutSubmit");
       btn.disabled = false;
-      btn.className = "w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center space-x-2 text-sm";
-    }
-
-    function onPresetTaskChange() {
-      const preset = document.getElementById("presetTaskSelect").value;
-      if (preset) document.getElementById("customTaskInput").value = preset;
-    }
-
-    function switchTab(tab) {
-      const tabs = ["assign", "checkin", "checkout"];
-      tabs.forEach(t => {
-        const sec = document.getElementById(`${t}Section`);
-        const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}Btn`);
-        if (!sec || !btn) return;
-        if (t === tab) {
-          sec.classList.remove("hidden");
-          btn.className = "py-2.5 rounded-xl transition-all duration-200 bg-white text-slate-900 shadow-sm flex flex-col items-center justify-center space-y-0.5 font-bold";
-        } else {
-          sec.classList.add("hidden");
-          btn.className = "py-2.5 rounded-xl transition-all duration-200 flex flex-col items-center justify-center space-y-0.5 text-slate-600 hover:text-slate-900";
-        }
-      });
-
-      const gpsBar = document.getElementById("gpsBar");
-      if (gpsBar) {
-        if (tab === "checkin") gpsBar.classList.remove("hidden");
-        else gpsBar.classList.add("hidden");
-      }
+      btn.className = "w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center justify-center space-x-2";
+      btn.innerHTML = `<span>บันทึกปิดงาน (${item.id}) & แชร์เข้ากลุ่ม LINE</span>`;
     }
 
     // ==========================================
-    // 📤 1. จัดการมอบหมายงาน & สร้างการ์ดแชร์ทันที
-    // ==========================================
-    async function handleAssign(e) {
-      e.preventDefault();
-      const title = document.getElementById("taskTitleInput").value;
-      const cust = document.getElementById("customerLocInput").value;
-      const tech = document.getElementById("assignTechSelect").value;
-      const priority = document.getElementById("prioritySelect").value;
-      const dl = document.getElementById("deadlineInput").value;
-
-      showModal("⏳", "กำลังประมวลผล...", "กำลังสร้างการ์ดแจ้งเตือน", false);
-
-      const isUrgent = priority.includes("ด่วน");
-      const flexCard = {
-        type: "flex",
-        altText: `📋 มอบหมายงาน: ${title} (ถึง ${tech})`,
-        contents: {
-          type: "bubble", size: "mega",
-          header: {
-            type: "box", layout: "vertical", backgroundColor: isUrgent ? "#DC2626" : "#1D4ED8", paddingAll: "18px",
-            contents: [{
-              type: "box", layout: "horizontal",
-              contents: [
-                { type: "text", text: isUrgent ? `🔥 ${priority}` : "📋 มอบหมายงานใหม่", weight: "bold", color: "#FFFFFF", size: "md", flex: 1 },
-                { type: "text", text: "FORESEE", weight: "bold", color: "#E0E7FF", size: "xs", align: "end" }
-              ]
-            }]
-          },
-          body: {
-            type: "box", layout: "vertical", spacing: "md",
-            contents: [
-              { type: "text", text: title, weight: "bold", size: "md", color: "#0F172A", wrap: true },
-              { type: "separator" },
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "ช่างผู้รับผิดชอบ:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: tech, size: "xs", weight: "bold", color: "#0F172A", flex: 5 }
-              ]},
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "สถานที่ / ลูกค้า:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: cust || "-", size: "xs", color: "#334155", wrap: true, flex: 5 }
-              ]},
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "กำหนดส่ง:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: `⏰ ${dl ? dl.replace("T", " ") : "-"}`, size: "xs", weight: "bold", color: isUrgent ? "#DC2626" : "#1E40AF", flex: 5 }
-              ]}
-            ]
-          }
-        }
-      };
-
-      // ส่งลงชีตเบื้องหลัง
-      callGasApi({
-        action: "saveTask",
-        taskTitle: title, customerLoc: cust, technician: tech,
-        priority: priority, deadline: dl ? dl.replace("T", " ") : "-"
-      });
-
-      await triggerLiffShare(flexCard, "มอบหมายงานสำเร็จ!");
-    }
-
-    // ==========================================
-    // 📍 2. จัดการเช็กอิน & สร้างการ์ดแชร์ทันที
+    // ACTION 1: CHECK-IN
     // ==========================================
     async function handleCheckin(e) {
       e.preventDefault();
       const tech = document.getElementById("techSelect").value;
-      const task = document.getElementById("customTaskInput").value;
+      const task = document.getElementById("customTaskInput").value.trim();
 
       if (!tech || !task) {
         alert("กรุณากรอกข้อมูลให้ครบถ้วน");
         return;
       }
 
-      showModal("⏳", "กำลังบันทึกเวลา...", "กำลังเตรียมเปิดหน้าต่างแชร์เข้ากลุ่ม", false);
-
       const now = new Date();
       const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
       const dateStr = now.toLocaleDateString("th-TH");
-      const lat = currentLat || "13.7563";
-      const lng = currentLng || "100.5018";
+      const lat = currentLat || "13.756300";
+      const lng = currentLng || "100.501800";
       const mapUrl = `https://maps.google.com/?q=${lat},${lng}`;
 
+      // Build LINE Flex Message (100% compliant with LINE Messaging API specifications)
       const flexCard = {
         type: "flex",
-        altText: `📍 ${tech} เช็กอินถึงหน้างานแล้ว (${timeStr} น.)`,
+        altText: `[เช็กอิน] ${tech} ถึงหน้างานแล้ว (${timeStr} น.)`,
         contents: {
-          type: "bubble", size: "mega",
+          type: "bubble",
+          size: "kilo",
           header: {
-            type: "box", layout: "vertical", backgroundColor: "#0F766E", paddingAll: "18px",
-            contents: [{
-              type: "box", layout: "horizontal",
-              contents: [
-                { type: "text", text: "📍 เช็กอินถึงหน้างานแล้ว", weight: "bold", color: "#FFFFFF", size: "md", flex: 1 },
-                { type: "text", text: `${timeStr} น.`, weight: "bold", color: "#CCFBF1", size: "xs", align: "end" }
-              ]
-            }]
+            type: "box",
+            layout: "vertical",
+            backgroundColor: "#0F172A",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box",
+                layout: "horizontal",
+                contents: [
+                  { type: "text", text: "FORESEE TECHNOLOGY", weight: "bold", color: "#94A3B8", size: "xxs" },
+                  { type: "text", text: `${timeStr} น.`, color: "#F8FAFC", size: "xs", align: "end", weight: "bold" }
+                ]
+              },
+              {
+                type: "text",
+                text: "บันทึกเวลาเข้าหน้างาน",
+                weight: "bold",
+                color: "#FFFFFF",
+                size: "md",
+                margin: "sm"
+              }
+            ]
           },
           body: {
-            type: "box", layout: "vertical", spacing: "md",
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            paddingAll: "16px",
             contents: [
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "ช่างผู้รับผิดชอบ:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: tech, size: "xs", weight: "bold", color: "#0F172A", flex: 5 }
-              ]},
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "งาน / ลูกค้า:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: task, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 5 }
-              ]},
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "วันที่:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: dateStr, size: "xs", color: "#334155", flex: 5 }
-              ]},
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "สถานะ:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: "🟡 กำลังปฏิบัติงาน", size: "xs", weight: "bold", color: "#D97706", flex: 5 }
-              ]}
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "รายละเอียดงาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: task, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "วันที่", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: dateStr, size: "xs", color: "#334155", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "สถานะ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: "กำลังปฏิบัติงาน", size: "xs", weight: "bold", color: "#0D9488", flex: 6 }
+                ]
+              }
             ]
           },
           footer: {
-            type: "box", layout: "vertical",
-            contents: [{
-              type: "button", style: "primary", color: "#0F766E", height: "sm",
-              action: { type: "uri", label: "🗺️ เปิดดูพิกัดบน Google Maps", uri: mapUrl }
-            }]
+            type: "box",
+            layout: "vertical",
+            paddingAll: "12px",
+            paddingTop: "0px",
+            contents: [
+              {
+                type: "button",
+                style: "secondary",
+                height: "sm",
+                color: "#F1F5F9",
+                action: {
+                  type: "uri",
+                  label: "เปิด Google Maps",
+                  uri: mapUrl
+                }
+              }
+            ]
           }
         }
       };
 
-      // ยิงบันทึกลง Google Sheets ในพื้นหลัง
+      // Add to local active list for immediate checkout capability
+      activeTasks.unshift({
+        id: `CHK-${Math.floor(100 + Math.random() * 900)}`,
+        tech: tech,
+        task: task,
+        time: timeStr
+      });
+      renderActiveCheckoutList(activeTasks);
+
+      // Async background record to GAS
       callGasApi({
         action: "saveCheckin",
-        technician: tech, taskName: task,
-        lat: lat, lng: lng
+        technician: tech,
+        taskName: task,
+        lat: lat,
+        lng: lng
       });
 
-      // สั่งเปิดหน้าต่างแชร์เข้ากลุ่มทันที!
-      await triggerLiffShare(flexCard, "เช็กอินเข้าหน้างานสำเร็จ!");
+      // Launch Native LINE Share Picker
+      await triggerLiffShare(flexCard, "เช็กอินเข้าหน้างานสำเร็จ");
     }
 
     // ==========================================
-    // 🏁 3. จัดการปิดงาน & สร้างการ์ดแชร์ทันที
+    // ACTION 2: CHECK-OUT
     // ==========================================
     async function handleCheckout(e) {
       e.preventDefault();
@@ -558,88 +636,215 @@
         return;
       }
 
-      showModal("⏳", "กำลังบันทึกปิดงาน...", "กำลังเตรียมการ์ดสรุปงาน", false);
-
       const now = new Date();
       const outTimeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
       const flexCard = {
         type: "flex",
-        altText: `🏁 ${selectedActiveItem.tech} เช็กเอาต์ปิดงานแล้ว (${outTimeStr} น.)`,
+        altText: `[ปิดงาน] ${selectedActiveItem.tech} ปิดงานสำเร็จ (${outTimeStr} น.)`,
         contents: {
-          type: "bubble", size: "mega",
+          type: "bubble",
+          size: "kilo",
           header: {
-            type: "box", layout: "vertical", backgroundColor: "#166534", paddingAll: "18px",
-            contents: [{
-              type: "box", layout: "horizontal",
-              contents: [
-                { type: "text", text: "🏁 เช็กเอาต์ปิดงานเรียบร้อย", weight: "bold", color: "#FFFFFF", size: "md", flex: 1 },
-                { type: "text", text: `${outTimeStr} น.`, weight: "bold", color: "#DCFCE7", size: "xs", align: "end" }
-              ]
-            }]
+            type: "box",
+            layout: "vertical",
+            backgroundColor: "#14532D",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box",
+                layout: "horizontal",
+                contents: [
+                  { type: "text", text: "FORESEE TECHNOLOGY", weight: "bold", color: "#86EFAC", size: "xxs" },
+                  { type: "text", text: `${outTimeStr} น.`, color: "#DCFCE7", size: "xs", align: "end", weight: "bold" }
+                ]
+              },
+              {
+                type: "text",
+                text: "เช็กเอาต์ปิดงานเรียบร้อย",
+                weight: "bold",
+                color: "#FFFFFF",
+                size: "md",
+                margin: "sm"
+              }
+            ]
           },
           body: {
-            type: "box", layout: "vertical", spacing: "md",
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            paddingAll: "16px",
             contents: [
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "ช่างผู้รับผิดชอบ:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: selectedActiveItem.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 5 }
-              ]},
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "งาน / ลูกค้า:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: selectedActiveItem.task, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 5 }
-              ]},
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "เวลาเริ่มงาน:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: selectedActiveItem.time, size: "xs", color: "#334155", flex: 5 }
-              ]},
-              { type: "box", layout: "horizontal", contents: [
-                { type: "text", text: "สถานะ:", size: "xs", color: "#64748B", flex: 3 },
-                { type: "text", text: "🟢 ปิดงานสำเร็จ", size: "xs", weight: "bold", color: "#166534", flex: 5 }
-              ]}
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: selectedActiveItem.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "รายละเอียดงาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: selectedActiveItem.task, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "เวลาเริ่มงาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: `${selectedActiveItem.time} น.`, size: "xs", color: "#334155", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "สถานะ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: "เสร็จสิ้นเรียบร้อย", size: "xs", weight: "bold", color: "#16A34A", flex: 6 }
+                ]
+              }
             ]
           }
         }
       };
 
-      callGasApi({ action: "saveCheckout", id: selectedActiveItem.id });
-      await triggerLiffShare(flexCard, "ปิดงานสำเร็จเรียบร้อย!");
+      const closingId = selectedActiveItem.id;
+      // Remove from active list
+      activeTasks = activeTasks.filter(item => item.id !== closingId);
+      selectedActiveItem = null;
+      renderActiveCheckoutList(activeTasks);
+
+      // Async background record to GAS
+      callGasApi({ action: "saveCheckout", id: closingId });
+
+      await triggerLiffShare(flexCard, "บันทึกปิดงานสำเร็จ");
     }
 
     // ==========================================
-    // 📲 สั่งเปิดหน้าต่างแชร์เข้ากลุ่ม LINE ตรงๆ 100%
+    // ACTION 3: ASSIGN TASK
     // ==========================================
-    async function triggerLiffShare(flexMessage, successText) {
+    async function handleAssign(e) {
+      e.preventDefault();
+      const title = document.getElementById("taskTitleInput").value.trim();
+      const cust = document.getElementById("customerLocInput").value.trim();
+      const tech = document.getElementById("assignTechSelect").value;
+      const priority = document.getElementById("prioritySelect").value;
+      const dl = document.getElementById("deadlineInput").value;
+
+      const isUrgent = priority.includes("ด่วน");
+
+      const flexCard = {
+        type: "flex",
+        altText: `[มอบหมายงาน] ${title} (${tech})`,
+        contents: {
+          type: "bubble",
+          size: "kilo",
+          header: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: isUrgent ? "#991B1B" : "#1E3A8A",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box",
+                layout: "horizontal",
+                contents: [
+                  { type: "text", text: "FORESEE TECHNOLOGY", weight: "bold", color: isUrgent ? "#FECACA" : "#BFDBFE", size: "xxs" },
+                  { type: "text", text: priority, color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
+                ]
+              },
+              {
+                type: "text",
+                text: "มอบหมายงานใหม่",
+                weight: "bold",
+                color: "#FFFFFF",
+                size: "md",
+                margin: "sm"
+              }
+            ]
+          },
+          body: {
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ชื่องาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: title, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "สถานที่ / ลูกค้า", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: cust || "-", size: "xs", color: "#334155", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "กำหนดส่งมอบ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: dl ? dl.replace("T", " ") : "-", size: "xs", weight: "bold", color: isUrgent ? "#DC2626" : "#1E40AF", flex: 6 }
+                ]
+              }
+            ]
+          }
+        }
+      };
+
+      // Background record to GAS
+      callGasApi({
+        action: "saveTask",
+        taskTitle: title,
+        customerLoc: cust,
+        technician: tech,
+        priority: priority,
+        deadline: dl ? dl.replace("T", " ") : "-"
+      });
+
+      await triggerLiffShare(flexCard, "มอบหมายงานสำเร็จ");
+    }
+
+    // ==========================================
+    // NATIVE LINE SHARE TARGET PICKER
+    // ==========================================
+    async function triggerLiffShare(flexMessage, actionTitle) {
       if (typeof liff === "undefined") {
-        alert("ไม่พบ LINE LIFF SDK");
-        showModal("✅", successText, "บันทึกข้อมูลเรียบร้อยแล้ว", true);
+        showStatusModal("error", "ไม่พบ LINE SDK", "กรุณาเปิดใช้งานผ่านแอปพลิเคชัน LINE");
         return;
       }
 
-      // รอให้ LIFF โหลดพร้อม 100%
-      await liff.ready;
-
-      if (!liff.isApiAvailable("shareTargetPicker")) {
-        alert("⚠️ LINE ไม่อนุญาตให้เปิดหน้าต่างแชร์ (shareTargetPicker ยังไม่พร้อม)");
-        showModal("✅", successText, "บันทึกข้อมูลเรียบร้อยแล้ว", true);
-        return;
-      }
+      showStatusModal("loading", "กำลังเตรียมส่งการ์ด...", "กำลังเปิดหน้าต่างเลือกห้องแชทใน LINE");
 
       try {
-        // เปิดหน้าต่างเลือกกลุ่ม LINE ทันที!
+        await liff.ready;
+
+        if (!liff.isApiAvailable("shareTargetPicker")) {
+          showStatusModal("error", "ฟังก์ชันแชร์ไม่พร้อมใช้งาน", "กรุณาตรวจสอบว่าเปิด ShareTargetPicker ใน LINE Console แล้ว");
+          return;
+        }
+
         const res = await liff.shareTargetPicker([flexMessage]);
         if (res) {
-          showModal("🎉", successText, "ส่งการ์ดแจ้งเตือนเข้ากลุ่มเรียบร้อยแล้ว", true);
-          setTimeout(() => { if (liff.closeWindow) liff.closeWindow(); }, 1500);
+          showStatusModal("success", "ส่งเข้ากลุ่มสำเร็จ!", "ระบบส่งการ์ดข้อมูลไปยังห้องแชทที่เลือกเรียบร้อยแล้ว");
+          setTimeout(() => {
+            if (liff.isInClient && liff.isInClient()) {
+              liff.closeWindow();
+            }
+          }, 1500);
         } else {
-          showModal("✅", successText, "บันทึกข้อมูลแล้ว (ยกเลิกการเลือกกลุ่ม)", true);
+          // User dismissed or cancelled the share picker
+          showStatusModal("info", "ยกเลิกการแชร์", "ข้อมูลถูกบันทึกแล้ว แต่ไม่ได้ส่งการ์ดเข้ากลุ่ม");
         }
       } catch (err) {
-        alert("LINE Share error: " + err.message);
-        showModal("✅", successText, "บันทึกข้อมูลเรียบร้อยแล้ว", true);
+        console.error("LIFF Share Error:", err);
+        showStatusModal("error", "การส่งข้อมูลขัดข้อง", err.message || "เกิดข้อผิดพลาดในการส่งข้อมูลเข้า LINE");
       }
     }
 
+    // Background GAS API Call
     async function callGasApi(payload) {
       if (GAS_API_URL.includes("xxxxxxxxx")) return { success: true };
       try {
@@ -654,17 +859,59 @@
       }
     }
 
-    function showModal(icon, title, msg, showBtn) {
-      document.getElementById("modalIcon").innerText = icon;
-      document.getElementById("modalTitle").innerText = title;
-      document.getElementById("modalMsg").innerText = msg;
-      const btn = document.getElementById("modalCloseBtn");
-      if (showBtn) btn.classList.remove("hidden");
-      else btn.classList.add("hidden");
+    // Status Modal Controls (Corporate & Non-AI-Slop)
+    function showStatusModal(type, title, message) {
+      const container = document.getElementById("modalIconContainer");
+      const titleElem = document.getElementById("modalTitle");
+      const msgElem = document.getElementById("modalMsg");
+      const closeBtn = document.getElementById("modalCloseBtn");
+
+      titleElem.innerText = title;
+      msgElem.innerText = message;
+
+      if (type === "loading") {
+        container.innerHTML = `
+          <div class="w-10 h-10 flex items-center justify-center">
+            <svg class="animate-spin h-6 w-6 text-slate-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+          </div>
+        `;
+        closeBtn.classList.add("hidden");
+      } else if (type === "success") {
+        container.innerHTML = `
+          <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+        `;
+        closeBtn.classList.remove("hidden");
+      } else if (type === "error") {
+        container.innerHTML = `
+          <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        `;
+        closeBtn.classList.remove("hidden");
+      } else {
+        container.innerHTML = `
+          <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        `;
+        closeBtn.classList.remove("hidden");
+      }
+
       document.getElementById("statusModal").classList.remove("hidden");
     }
 
-    function closeModal() {
+    function closeStatusModal() {
       document.getElementById("statusModal").classList.add("hidden");
       if (typeof liff !== "undefined" && liff.isInClient && liff.isInClient()) {
         liff.closeWindow();
