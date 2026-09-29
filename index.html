@@ -3,339 +3,560 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Foresee Field Service Management</title>
+  <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
       background-color: #F8FAFC;
     }
-    input, select, textarea {
+    input, select, textarea, button {
       font-family: 'Prompt', sans-serif;
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
     }
   </style>
 </head>
-<body class="text-slate-800 min-h-screen pb-12 antialiased selection:bg-slate-200">
+<body class="text-slate-800 min-h-screen pb-16 antialiased selection:bg-blue-100">
 
-  <!-- Enterprise Header -->
+  <!-- ==================== ENTERPRISE APP HEADER ==================== -->
   <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 text-white">
-    <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-white tracking-wider">
+    <div class="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-xs text-white shadow-sm">
           FS
         </div>
         <div>
-          <div class="text-xs font-bold tracking-widest text-slate-200 uppercase">FORESEE TECHNOLOGY</div>
-          <div class="text-[11px] text-slate-400">ระบบจัดการงานช่างภาคสนาม</div>
+          <div class="text-xs font-bold tracking-wider text-slate-100 uppercase">FORESEE TECHNOLOGY</div>
+          <div class="text-[10px] text-slate-400">ระบบจัดการงานปฏิบัติการ & บันทึกเวลาช่าง</div>
         </div>
       </div>
-      <div id="gpsStatusBadge" class="text-[11px] px-2.5 py-1 rounded-md font-medium bg-slate-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5">
-        <span id="gpsDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-        <span id="gpsStatusText">รอพิกัด GPS</span>
+      <div id="gpsStatusBadge" class="text-[10px] px-2 py-1 rounded-md font-medium bg-slate-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5">
+        <span id="gpsDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span id="gpsStatusText">GPS พร้อม</span>
       </div>
     </div>
   </header>
 
-  <main class="max-w-md mx-auto px-4 pt-3.5 space-y-3.5">
+  <main class="max-w-md mx-auto px-3.5 pt-3 space-y-3">
 
-    <!-- iOS-Style Segmented Navigation -->
-    <div class="bg-slate-200/80 p-1 rounded-xl grid grid-cols-3 gap-1 text-xs font-medium text-slate-600">
-      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold">
-        เช็กอินหน้างาน
+    <!-- ==================== SEGMENTED CONTROL ==================== -->
+    <div class="bg-slate-200/90 p-1 rounded-xl grid grid-cols-3 gap-1 text-xs font-medium text-slate-600 shadow-inner">
+      <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold flex items-center justify-center space-x-1">
+        <span>งานปฏิบัติการ</span>
       </button>
-      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 rounded-lg transition-all hover:text-slate-900">
-        ปิดงาน
+      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
+        <span>เช็กอินหน้างาน</span>
       </button>
-      <button id="tabBtnAssign" onclick="switchTab('assign')" class="py-2 rounded-lg transition-all hover:text-slate-900">
-        มอบหมายงาน
-      </button>
-    </div>
-
-    <!-- GPS Coordinate Panel -->
-    <div id="gpsPanel" class="bg-white rounded-xl p-3 border border-slate-200/80 shadow-sm flex items-center justify-between">
-      <div class="flex items-start space-x-2.5">
-        <div class="mt-0.5 text-slate-400">
-          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-        </div>
-        <div>
-          <div id="gpsLocationTitle" class="text-xs font-semibold text-slate-800">กำลังระบุตำแหน่งอัตโนมัติ...</div>
-          <div id="gpsCoordsText" class="text-[11px] text-slate-500">กรุณาเปิดระบบ GPS บนอุปกรณ์</div>
-        </div>
-      </div>
-      <button type="button" onclick="requestLocation()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-md border border-slate-200 transition-colors flex items-center space-x-1">
-        <span>รีเฟรช</span>
+      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
+        <span>ปิดงาน</span>
       </button>
     </div>
 
-    <!-- ==================== TAB 1: CHECK-IN ==================== -->
-    <section id="checkinSection" class="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-      <div class="border-b border-slate-100 pb-3 mb-3.5">
-        <h2 class="text-sm font-bold text-slate-900">บันทึกเวลาเข้าหน้างาน</h2>
-        <p class="text-[11px] text-slate-500">ระบบจะจับเวลาและพิกัด GPS อัตโนมัติ เพื่อส่งการ์ดแจ้งเตือนเข้ากลุ่ม LINE</p>
-      </div>
-
-      <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-3.5">
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-xs font-semibold text-slate-700">ช่างผู้รับผิดชอบ <span class="text-rose-500">*</span></label>
-            <button type="button" onclick="openAddTechModal()" class="text-[11px] text-blue-600 hover:text-blue-800 font-medium">+ เพิ่มช่างใหม่</button>
+    <!-- ========================================================================= -->
+    <!-- TAB 1: งานปฏิบัติการ & มอบหมายงาน (MATCHING USER SCREENSHOTS) -->
+    <!-- ========================================================================= -->
+    <section id="tasksSection" class="space-y-3">
+      
+      <!-- User Overview Header Card (Matching media_1790655853486.png) -->
+      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-full bg-rose-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+              ม
+            </div>
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-xs font-bold text-slate-900" id="currentOfficerName">มณเฑียร แซ่ตั้ง</span>
+                <span class="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-medium">Project Support Officer</span>
+              </div>
+              <div class="text-[10px] text-slate-500 mt-0.5" id="taskSummaryCount">ภาระงานทั้งหมด 3 รายการ • สำเร็จ 67%</div>
+            </div>
           </div>
-          <select id="techSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-            <option value="">-- กรุณาเลือกช่าง --</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">เลือกงานที่มอบหมายไว้ (ถ้ามี)</label>
-          <select id="presetTaskSelect" onchange="onPresetTaskChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-            <option value="">-- เลือกจากงานในระบบ หรือพิมพ์ระบุเองด้านล่าง --</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">รายละเอียดงาน / สถานที่ติดตั้ง <span class="text-rose-500">*</span></label>
-          <textarea id="customTaskInput" rows="2" required placeholder="เช่น ติดตั้งกล้องวงจรปิด Hikvision 4 จุด - ซอยลาซาล 32" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800"></textarea>
-        </div>
-
-        <div class="pt-1.5">
-          <button type="submit" id="btnCheckinSubmit" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center justify-center space-x-2">
-            <span>บันทึกเช็กอิน & แชร์เข้ากลุ่ม LINE</span>
+          <button type="button" onclick="openAssignModal()" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-medium text-xs px-2.5 py-1.5 rounded-lg shadow-sm transition-all flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>มอบหมายงาน</span>
           </button>
         </div>
-      </form>
+
+        <!-- Metric Pills -->
+        <div class="grid grid-cols-3 gap-1.5 text-center text-[11px] pt-1 border-t border-slate-100">
+          <div class="bg-rose-50 border border-rose-200/80 rounded-lg py-1.5 px-1 text-rose-700 font-medium flex items-center justify-center space-x-1">
+            <span>🚨 เกินกำหนด</span>
+            <span class="font-bold text-rose-800" id="statOverdue">0</span>
+          </div>
+          <div class="bg-amber-50 border border-amber-200/80 rounded-lg py-1.5 px-1 text-amber-700 font-medium flex items-center justify-center space-x-1">
+            <span>⏳ กำลังทำ</span>
+            <span class="font-bold text-amber-800" id="statInProgress">2</span>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200/80 rounded-lg py-1.5 px-1 text-emerald-700 font-medium flex items-center justify-center space-x-1">
+            <span>✅ เสร็จ</span>
+            <span class="font-bold text-emerald-800" id="statCompleted">1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Table/List Header -->
+      <div class="flex items-center justify-between px-1">
+        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide">รายการงานปฏิบัติการ</h3>
+        <span class="text-[11px] text-slate-500">อัปเดตและขยายเวลาได้ทีละงาน</span>
+      </div>
+
+      <!-- Task Card Rows (Rendered Dynamically) -->
+      <div id="taskListContainer" class="space-y-2.5">
+        <!-- Javascript renders tasks here -->
+      </div>
     </section>
 
-    <!-- ==================== TAB 2: CHECK-OUT ==================== -->
-    <section id="checkoutSection" class="hidden bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-      <div class="border-b border-slate-100 pb-3 mb-3.5 flex items-center justify-between">
-        <div>
-          <h2 class="text-sm font-bold text-slate-900">ปิดงานและบันทึกเวลาจบ</h2>
-          <p class="text-[11px] text-slate-500">เลือกงานที่ต้องการปิดเพื่อส่งการ์ดสรุปงานเข้ากลุ่ม</p>
+    <!-- ========================================================================= -->
+    <!-- TAB 2: CHECK-IN (GPS CAPTURE) -->
+    <!-- ========================================================================= -->
+    <section id="checkinSection" class="hidden space-y-3">
+      <!-- GPS Bar -->
+      <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div class="flex items-start space-x-2.5">
+          <div class="mt-0.5 text-slate-500">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <div>
+            <div id="gpsLocationTitle" class="text-xs font-semibold text-slate-800">กำลังดึงตำแหน่ง GPS...</div>
+            <div id="gpsCoordsText" class="text-[10px] text-slate-500">เปิด GPS บนอุปกรณ์เพื่อบันทึกพิกัดที่แท้จริง</div>
+          </div>
         </div>
-        <button type="button" onclick="loadSystemData()" class="text-[11px] text-slate-600 hover:text-slate-900 font-medium bg-slate-100 px-2 py-1 rounded border border-slate-200">
-          รีเฟรชงาน
+        <button type="button" onclick="requestLocation()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded border border-slate-200 transition-colors">
+          รีเฟรช
         </button>
       </div>
 
-      <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3.5">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-2">เลือกงานที่กำลังดำเนินงานอยู่ <span class="text-rose-500">*</span></label>
-          <div id="activeListContainer" class="space-y-2 max-h-60 overflow-y-auto pr-0.5">
-            <div class="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-200">
-              กำลังโหลดรายการงานคงค้าง...
-            </div>
-          </div>
+      <!-- Checkin Form -->
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <div class="border-b border-slate-100 pb-2.5 mb-3">
+          <h2 class="text-sm font-bold text-slate-900">บันทึกเวลาเข้าหน้างาน</h2>
+          <p class="text-[11px] text-slate-500">จับเวลาและพิกัดอัตโนมัติ เพื่อส่งการ์ดแจ้งเตือนเข้ากลุ่ม LINE</p>
         </div>
 
-        <div class="pt-1.5">
-          <button type="submit" id="btnCheckoutSubmit" disabled class="w-full bg-slate-300 text-slate-500 font-semibold py-3 px-4 rounded-lg text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed">
-            <span>เลือกงานด้านบนเพื่อบันทึกปิดงาน</span>
-          </button>
-        </div>
-      </form>
+        <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-semibold text-slate-700">ช่างผู้รับผิดชอบ <span class="text-rose-500">*</span></label>
+              <button type="button" onclick="openAddTechModal()" class="text-[11px] text-blue-600 font-medium hover:underline">+ เพิ่มช่างใหม่</button>
+            </div>
+            <select id="techSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+              <option value="">-- กรุณาเลือกช่าง --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">เลือกงานที่มอบหมายไว้ (ถ้ามี)</label>
+            <select id="presetTaskSelect" onchange="onPresetTaskChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+              <option value="">-- เลือกจากงานในระบบ หรือพิมพ์ระบุเองด้านล่าง --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดงาน / สถานที่ <span class="text-rose-500">*</span></label>
+            <textarea id="customTaskInput" rows="2" required placeholder="เช่น ติดตั้งกล้องวงจรปิด Hikvision 4 จุด - ซอยลาซาล 32" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800"></textarea>
+          </div>
+
+          <div class="pt-1">
+            <button type="submit" id="btnCheckinSubmit" class="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-medium py-2.5 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center justify-center space-x-2">
+              <span>บันทึกเช็กอิน & แชร์เข้ากลุ่ม LINE</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </section>
 
-    <!-- ==================== TAB 3: ASSIGN TASK ==================== -->
-    <section id="assignSection" class="hidden bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-      <div class="border-b border-slate-100 pb-3 mb-3.5">
-        <h2 class="text-sm font-bold text-slate-900">สร้างงานใหม่และมอบหมายช่าง</h2>
-        <p class="text-[11px] text-slate-500">ระบบจะสร้างการ์ดมอบหมายงานส่งตรงเข้ากลุ่ม LINE ทันที</p>
-      </div>
-
-      <form id="assignForm" onsubmit="handleAssign(event)" class="space-y-3.5">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">ชื่องาน / รายละเอียดงาน <span class="text-rose-500">*</span></label>
-          <input type="text" id="taskTitleInput" required placeholder="เช่น ติดตั้งระบบกล้อง IP Camera 8 ตัว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">สถานที่ติดตั้ง / ลูกค้า</label>
-          <input type="text" id="customerLocInput" placeholder="เช่น อาคารไทยสมุทร ชั้น 4 ถ.สาทรใต้" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
+    <!-- ========================================================================= -->
+    <!-- TAB 3: CHECK-OUT (CLOSE WORK) -->
+    <!-- ========================================================================= -->
+    <section id="checkoutSection" class="hidden space-y-3">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <div class="border-b border-slate-100 pb-2.5 mb-3 flex items-center justify-between">
           <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="text-xs font-semibold text-slate-700">มอบหมายช่าง <span class="text-rose-500">*</span></label>
-            </div>
-            <select id="assignTechSelect" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-              <option value="">-- เลือกช่าง --</option>
-            </select>
+            <h2 class="text-sm font-bold text-slate-900">ปิดงานและบันทึกเวลาจบ</h2>
+            <p class="text-[11px] text-slate-500">เลือกงานที่ต้องการปิดเพื่อส่งการ์ดสรุปงานเข้ากลุ่ม</p>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">ระดับความสำคัญ</label>
-            <select id="prioritySelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-              <option value="ปกติ">ปกติ</option>
-              <option value="ด่วน">ด่วน</option>
-              <option value="ด่วนที่สุด">ด่วนที่สุด</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">กำหนดส่งมอบงาน</label>
-          <input type="datetime-local" id="deadlineInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-        </div>
-
-        <div class="pt-1.5">
-          <button type="submit" id="btnAssignSubmit" class="w-full bg-blue-700 hover:bg-blue-800 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center justify-center space-x-2">
-            <span>สร้างงาน & แชร์การ์ดเข้ากลุ่ม LINE</span>
+          <button type="button" onclick="renderActiveCheckoutList(activeTasks)" class="text-[11px] text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded border border-slate-200">
+            รีเฟรช
           </button>
         </div>
-      </form>
+
+        <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-2">เลือกงานที่กำลังดำเนินงานอยู่ <span class="text-rose-500">*</span></label>
+            <div id="activeListContainer" class="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+              <!-- Active tasks rendered here -->
+            </div>
+          </div>
+
+          <div class="pt-1">
+            <button type="submit" id="btnCheckoutSubmit" disabled class="w-full bg-slate-300 text-slate-500 font-medium py-2.5 px-4 rounded-lg text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed">
+              <span>เลือกงานด้านบนเพื่อบันทึกปิดงาน</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </section>
 
   </main>
 
-  <!-- ==================== CLEAN CORPORATE STATUS MODAL ==================== -->
-  <div id="statusModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl p-5 max-w-xs w-full text-center shadow-xl border border-slate-100">
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: มอบหมายงานปฏิบัติการ (MATCHING EXACT media_1790655831073.png) -->
+  <!-- ========================================================================= -->
+  <div id="assignModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3.5 z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto">
       
-      <!-- Icon Container (Clean SVG, NO runaway spinning) -->
-      <div id="modalIconContainer" class="flex items-center justify-center mb-3">
-        <!-- Will be populated dynamically by showStatusModal() -->
+      <!-- Modal Header with Blue Icon Badge -->
+      <div class="flex items-start justify-between mb-3.5">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <h3 class="text-sm font-bold text-slate-900">มอบหมายงานปฏิบัติการ</h3>
+              <span class="text-[10px] bg-blue-50 text-blue-600 font-semibold px-2 py-0.5 rounded-full border border-blue-200">งานใหม่</span>
+            </div>
+            <p class="text-[10px] text-slate-500 leading-tight mt-0.5">สร้างงานมอบหมาย ระบบจะส่งแจ้งเตือนลงกลุ่ม LINE อัตโนมัติ</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeAssignModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
-      <h3 id="modalTitle" class="text-sm font-bold text-slate-900 mb-1">กำลังดำเนินการ</h3>
-      <p id="modalMsg" class="text-xs text-slate-600 mb-4 leading-relaxed">กรุณารอสักครู่ ระบบกำลังประมวลผล</p>
+      <!-- Initial Status Dropdown -->
+      <div class="mb-3.5">
+        <label class="block text-xs font-semibold text-slate-700 mb-1">สถานะงานเริ่มต้น (สำหรับทุกงานในกลุ่มนี้)</label>
+        <select id="modalInitialStatus" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+          <option value="กำลังทำเลย">กำลังทำเลย</option>
+          <option value="รอดำเนินการ">รอดำเนินการ</option>
+          <option value="ด่วน">ด่วน</option>
+        </select>
+      </div>
 
-      <button id="modalCloseBtn" onclick="closeStatusModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors">
-        ตกลง
-      </button>
+      <!-- Row Count & Add Row Button -->
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-700" id="assignRowCountLabel">รายการงานที่ต้องการมอบหมาย (1 งาน)</span>
+        <button type="button" onclick="addAssignRow()" class="text-[11px] text-slate-700 hover:text-slate-900 font-medium bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors flex items-center space-x-1">
+          <span>+ เพิ่มงานอีกแถว</span>
+        </button>
+      </div>
+
+      <!-- Work Item Cards Container -->
+      <div id="assignRowsContainer" class="space-y-3 max-h-[55vh] overflow-y-auto pr-1 mb-4">
+        <!-- Row 1 template injected dynamically -->
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+        <button type="button" onclick="closeAssignModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3.5 rounded-lg text-xs transition-colors">
+          ยกเลิก
+        </button>
+        <button type="button" onclick="submitAssignModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center space-x-1.5">
+          <span>บันทึกและส่งแจ้งเตือน LINE</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
-  <!-- ==================== CLEAN ADD TECHNICIAN MODAL ==================== -->
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: อัปเดตงานเป็นขั้นๆ (PROGRESS UPDATE - MATCHING RED BOX 1) -->
+  <!-- ========================================================================= -->
+  <div id="updateProgressModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl border border-slate-100">
+      
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-slate-900">อัปเดตความคืบหน้างาน</h3>
+            <p class="text-[10px] text-slate-500" id="updateTaskTitleLabel">งานนิวเคลียร์ สรุปราคา</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeUpdateProgressModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">สถานะงานปัจจุบัน</label>
+          <select id="updateStatusSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none">
+            <option value="กำลังทำ">กำลังทำ</option>
+            <option value="รอตรวจรับ">รอตรวจรับ</option>
+            <option value="รออะไหล่">รออะไหล่</option>
+            <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">ความคืบหน้า (%): <span id="progressPercentVal" class="text-blue-600 font-bold">50%</span></label>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button type="button" onclick="setProgressPercent(25)" class="py-1 text-xs rounded border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 font-medium">25%</button>
+            <button type="button" onclick="setProgressPercent(50)" class="py-1 text-xs rounded border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 font-medium">50%</button>
+            <button type="button" onclick="setProgressPercent(75)" class="py-1 text-xs rounded border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 font-medium">75%</button>
+            <button type="button" onclick="setProgressPercent(100)" class="py-1 text-xs rounded border border-slate-200 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 font-medium">100%</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">ข้อความความคืบหน้าล่าสุด <span class="text-rose-500">*</span></label>
+          <textarea id="updateNoteInput" rows="3" placeholder="ระบุสิ่งที่ทำเสร็จแล้ว หรือสิ่งที่กำลังติดปัญหา..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800"></textarea>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeUpdateProgressModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg text-xs">
+            ยกเลิก
+          </button>
+          <button type="button" onclick="submitUpdateProgress()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-xs shadow-sm">
+            ส่งอัปเดตเข้า LINE
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: ขยายระยะเวลางาน (EXTEND DEADLINE - MATCHING RED BOX 2) -->
+  <!-- ========================================================================= -->
+  <div id="extendDeadlineModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl border border-slate-100">
+      
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-slate-900">ขยายระยะเวลางาน</h3>
+            <p class="text-[10px] text-slate-500" id="extendTaskTitleLabel">งานนิวเคลียร์ สรุปราคา</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeExtendModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-xs">
+          <span class="text-slate-500 text-[11px]">กำหนดส่งเดิม:</span>
+          <div class="font-bold text-slate-800" id="currentDeadlineDisplay">6 ตุลาคม 2026</div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">เลือกกำหนดส่งใหม่ <span class="text-rose-500">*</span></label>
+          <div class="relative bg-slate-100 hover:bg-slate-200/80 border border-slate-300 rounded-lg p-2 flex items-center space-x-2 text-xs text-slate-800 cursor-pointer">
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span id="extendDatePreviewText" class="font-medium text-slate-700">คลิกเพื่อเลือกวันที่ใหม่</span>
+            <input type="date" id="newDeadlineInput" onchange="onNewDeadlineChanged(this.value)" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">เหตุผลในการขยายเวลา <span class="text-rose-500">*</span></label>
+          <textarea id="extendReasonInput" rows="2" placeholder="เช่น รอลูกค้าปรับปรุงสถานที่, รออะไหล่ส่งมอบ..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800"></textarea>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeExtendModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg text-xs">
+            ยกเลิก
+          </button>
+          <button type="button" onclick="submitExtendDeadline()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 rounded-lg text-xs shadow-sm">
+            บันทึกขยายเวลา
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD TECHNICIAN -->
+  <!-- ========================================================================= -->
   <div id="addTechModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-xl p-5 max-w-xs w-full shadow-xl border border-slate-100">
-      <h3 class="text-sm font-bold text-slate-900 mb-1">เพิ่มรายชื่อช่างใหม่</h3>
-      <p class="text-xs text-slate-500 mb-3">รายชื่อจะปรากฏในระบบทันทีและบันทึกอัตโนมัติ</p>
+      <h3 class="text-xs font-bold text-slate-900 mb-1">เพิ่มรายชื่อช่างใหม่</h3>
+      <p class="text-[11px] text-slate-500 mb-3">รายชื่อจะปรากฏในตัวเลือกทันที</p>
       
-      <input type="text" id="newTechNameInput" placeholder="ระบุชื่อ-นามสกุลช่าง" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800 mb-3.5">
+      <input type="text" id="newTechNameInput" placeholder="ระบุชื่อ-นามสกุลช่าง" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800 mb-3">
       
       <div class="flex space-x-2">
-        <button type="button" onclick="closeAddTechModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg text-xs transition-colors">
+        <button type="button" onclick="closeAddTechModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg text-xs">
           ยกเลิก
         </button>
-        <button type="button" onclick="confirmAddTech()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-lg text-xs transition-colors">
+        <button type="button" onclick="confirmAddTech()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-lg text-xs">
           บันทึก
         </button>
       </div>
     </div>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- STATUS MODAL (CLEAN & NON-AI-SLOP) -->
+  <!-- ========================================================================= -->
+  <div id="statusModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl p-5 max-w-xs w-full text-center shadow-2xl border border-slate-100">
+      <div id="modalIconContainer" class="flex items-center justify-center mb-2.5"></div>
+      <h3 id="modalTitle" class="text-xs font-bold text-slate-900 mb-1">กำลังดำเนินการ</h3>
+      <p id="modalMsg" class="text-[11px] text-slate-600 mb-3.5 leading-relaxed">กรุณารอสักครู่</p>
+      <button id="modalCloseBtn" onclick="closeStatusModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-lg text-xs transition-colors">
+        ตกลง
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC -->
+  <!-- ========================================================================= -->
   <script>
     // Configuration
     const MY_LIFF_ID = "2011782806-0If1jko9";
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw6r3Yk3zJtL0p9m7_xxxxxxxxx/exec";
 
-    // Application State
+    const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    // App State
     let currentLat = null;
     let currentLng = null;
-    let allTechnicians = ["สมชาย สุขสันต์", "วิชัย มั่นคง", "กิตติพงษ์ เจริญผล"];
-    let assignedTasks = [];
+    let allTechnicians = ["มณเฑียร", "กนกศักดิ์", "ชุติมา", "สายฟ้า", "สมชาย", "วิชัย"];
+    
+    // Dynamic Assign Modal Rows
+    let assignRows = [];
+
+    // Working Tasks List (Sample matches screenshot media_1790655853486.png)
+    let tasksList = [
+      {
+        id: "TSK-01",
+        title: "งานนิวเคลียร์ สรุปราคา (ใส่ราคาอุปกรณ์อัพเดท)",
+        desc: "สรุปราคาอุปกรณ์อัพเดทส่งตรวจ",
+        tech: "มณเฑียร",
+        startDate: "2026-07-07",
+        deadline: "2026-07-08",
+        status: "เสร็จสิ้น",
+        progress: 100,
+        latestUpdate: "เหลือราคา ขายึดจอกับส่วนของ...",
+        updateBy: "มณเฑียร แซ่ตั้ง",
+        updateTime: "2026-07-08 14:20"
+      },
+      {
+        id: "TSK-02",
+        title: "ไล่ของเคลม ของที่อยู่กับพี่หมู (ต่อไปยกให้เบสทำ)",
+        desc: "ตรวจนับอุปกรณ์เคลมประกัน",
+        tech: "กนกศักดิ์",
+        startDate: "2026-07-07",
+        deadline: "2026-07-09",
+        status: "กำลังทำ",
+        progress: 60,
+        latestUpdate: "เปลี่ยนสถานะงานเป็น: กำลังทำ กำลังแยกอุปกรณ์",
+        updateBy: "กนกศักดิ์",
+        updateTime: "2026-07-08 11:00"
+      },
+      {
+        id: "TSK-03",
+        title: "ติดตั้งกล้องวงจรปิด Hikvision 4 จุด - ลาซาล 32",
+        desc: "เดินสายสัญญาณและตั้งค่า Router",
+        tech: "สมชาย",
+        startDate: "2026-09-29",
+        deadline: "2026-10-06",
+        status: "กำลังทำ",
+        progress: 40,
+        latestUpdate: "เข้าหน้างานแล้ว กำลังเดินท่อร้อยสาย",
+        updateBy: "สมชาย",
+        updateTime: "2026-09-29 09:30"
+      }
+    ];
+
     let activeTasks = [
-      { id: "CHK-001", tech: "สมชาย สุขสันต์", task: "ติดตั้งกล้องวงจรปิด ซอยลาซาล 32", time: "09:15" },
-      { id: "CHK-002", tech: "วิชัย มั่นคง", task: "ตรวจเช็กสัญญาณ Router บริษัท ABC", time: "10:00" }
+      { id: "CHK-001", tech: "สมชาย", task: "ติดตั้งกล้องวงจรปิด ซอยลาซาล 32", time: "09:30" }
     ];
     let selectedActiveItem = null;
 
-    // Initialize Application
-    document.addEventListener("DOMContentLoaded", async () => {
-      // Load saved technicians from localStorage if available
+    // Currently editing task IDs
+    let currentUpdatingTaskId = null;
+    let currentExtendingTaskId = null;
+    let currentUpdatingProgressPercent = 50;
+
+    // Initialize App
+    document.addEventListener("DOMContentLoaded", () => {
+      // LocalStorage restore
       try {
-        const savedTechs = localStorage.getItem("foresee_techs");
-        if (savedTechs) {
-          allTechnicians = JSON.parse(savedTechs);
-        }
+        const savedTechs = localStorage.getItem("fs_techs");
+        if (savedTechs) allTechnicians = JSON.parse(savedTechs);
+        const savedTasks = localStorage.getItem("fs_tasks");
+        if (savedTasks) tasksList = JSON.parse(savedTasks);
       } catch(e) {}
 
       updateTechDropdowns();
+      renderTasksList();
       renderActiveCheckoutList(activeTasks);
 
-      // Check URL query parameters for default tab
+      // Check tab query parameter
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get("tab");
-      if (tabParam && ["assign", "checkin", "checkout"].includes(tabParam)) {
-        switchTab(tabParam);
+      if (tabParam && ["tasks", "checkin", "checkout", "assign"].includes(tabParam)) {
+        if (tabParam === "assign") {
+          switchTab("tasks");
+          openAssignModal();
+        } else {
+          switchTab(tabParam);
+        }
       }
 
-      // Initialize LIFF and GPS
       initLiff();
       requestLocation();
-
-      // Fetch background data from Google Sheets if connected
-      loadSystemData();
     });
 
-    // LIFF Initialization
-    async function initLiff() {
-      if (typeof liff === "undefined") return;
-      try {
-        await liff.init({ liffId: MY_LIFF_ID });
-        await liff.ready;
-        console.log("LIFF Ready. LoggedIn:", liff.isLoggedIn());
-        if (!liff.isLoggedIn() && liff.isInClient && !liff.isInClient()) {
-          liff.login();
-        }
-      } catch (err) {
-        console.warn("LIFF Init error:", err);
-      }
+    // Formatting date helper: returns "29 กันยายน 2026"
+    function formatThaiDateDisplay(dateStr) {
+      if (!dateStr) return "-";
+      const parts = dateStr.split("-");
+      if (parts.length < 3) return dateStr;
+      const y = parts[0];
+      const mIdx = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      return `${d} ${THAI_MONTHS[mIdx]} ${y}`;
     }
 
-    // Geolocation Services
-    function requestLocation() {
-      const badge = document.getElementById("gpsStatusBadge");
-      const dot = document.getElementById("gpsDot");
-      const text = document.getElementById("gpsStatusText");
-      const title = document.getElementById("gpsLocationTitle");
-      const coords = document.getElementById("gpsCoordsText");
-
-      title.innerText = "กำลังระบุตำแหน่งอัตโนมัติ...";
-      text.innerText = "รอพิกัด GPS";
-      dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
-
-      if (!navigator.geolocation) {
-        title.innerText = "อุปกรณ์ไม่รองรับ GPS";
-        coords.innerText = "ระบบจะใช้พิกัดมาตรฐานในการบันทึก";
-        text.innerText = "GPS ปิดอยู่";
-        dot.className = "w-2 h-2 rounded-full bg-slate-400";
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          currentLat = pos.coords.latitude.toFixed(6);
-          currentLng = pos.coords.longitude.toFixed(6);
-          const acc = Math.round(pos.coords.accuracy);
-
-          text.innerText = "GPS เชื่อมต่อแล้ว";
-          dot.className = "w-2 h-2 rounded-full bg-emerald-400";
-          title.innerText = "ระบุตำแหน่งสำเร็จ";
-          coords.innerText = `${currentLat}, ${currentLng} (ความแม่นยำ ~${acc} ม.)`;
-        },
-        (err) => {
-          console.warn("GPS error:", err);
-          text.innerText = "ไม่พบ GPS";
-          dot.className = "w-2 h-2 rounded-full bg-rose-400";
-          title.innerText = "ไม่สามารถเข้าถึงพิกัดได้";
-          coords.innerText = "กรุณาเปิดสิทธิ์ Location บนเบราว์เซอร์";
-        },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-      );
+    function getTodayYMD() {
+      const d = new Date();
+      return d.toISOString().split("T")[0];
     }
 
-    // UI Tab Navigation
+    function getSevenDaysLaterYMD() {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      return d.toISOString().split("T")[0];
+    }
+
+    // Tab Switcher
     function switchTab(tab) {
-      const tabs = ["checkin", "checkout", "assign"];
+      const tabs = ["tasks", "checkin", "checkout"];
       tabs.forEach(t => {
         const sec = document.getElementById(`${t}Section`);
         const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
@@ -343,165 +564,698 @@
 
         if (t === tab) {
           sec.classList.remove("hidden");
-          btn.className = "py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold";
+          btn.className = "py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold flex items-center justify-center space-x-1";
         } else {
           sec.classList.add("hidden");
-          btn.className = "py-2 rounded-lg transition-all hover:text-slate-900 font-medium text-slate-600";
-        }
-      });
-
-      const gpsPanel = document.getElementById("gpsPanel");
-      if (gpsPanel) {
-        if (tab === "checkin") gpsPanel.classList.remove("hidden");
-        else gpsPanel.classList.add("hidden");
-      }
-    }
-
-    // Technician Management
-    function updateTechDropdowns() {
-      const selects = [document.getElementById("techSelect"), document.getElementById("assignTechSelect")];
-      selects.forEach(sel => {
-        if (!sel) return;
-        const currentVal = sel.value;
-        sel.innerHTML = '<option value="">-- กรุณาเลือกช่าง --</option>';
-        allTechnicians.forEach(name => {
-          const opt = document.createElement("option");
-          opt.value = name;
-          opt.innerText = name;
-          sel.appendChild(opt);
-        });
-        if (currentVal && allTechnicians.includes(currentVal)) {
-          sel.value = currentVal;
+          btn.className = "py-2 rounded-lg transition-all hover:text-slate-900 font-medium text-slate-600 flex items-center justify-center space-x-1";
         }
       });
     }
 
-    function openAddTechModal() {
-      document.getElementById("newTechNameInput").value = "";
-      document.getElementById("addTechModal").classList.remove("hidden");
-    }
-
-    function closeAddTechModal() {
-      document.getElementById("addTechModal").classList.add("hidden");
-    }
-
-    function confirmAddTech() {
-      const input = document.getElementById("newTechNameInput");
-      const name = input.value.trim();
-      if (!name) return;
-
-      if (!allTechnicians.includes(name)) {
-        allTechnicians.push(name);
-        try {
-          localStorage.setItem("foresee_techs", JSON.stringify(allTechnicians));
-        } catch(e) {}
-        updateTechDropdowns();
-
-        const techSel = document.getElementById("techSelect");
-        if (techSel) techSel.value = name;
-        const assignSel = document.getElementById("assignTechSelect");
-        if (assignSel) assignSel.value = name;
-
-        // Background sync to GAS
-        callGasApi({ action: "addNewTechnician", name: name });
-      }
-
-      closeAddTechModal();
-    }
-
-    // System Data Syncing
-    async function loadSystemData() {
-      if (GAS_API_URL.includes("xxxxxxxxx")) return;
-      try {
-        const response = await fetch(`${GAS_API_URL}?action=getInitialData`);
-        const data = await response.json();
-        if (data.technicians && data.technicians.length > 0) {
-          allTechnicians = Array.from(new Set([...allTechnicians, ...data.technicians]));
-          updateTechDropdowns();
-        }
-        if (data.assignedTasks) {
-          assignedTasks = data.assignedTasks;
-          updatePresetTasks();
-        }
-        if (data.activeCheckins) {
-          activeTasks = data.activeCheckins;
-          renderActiveCheckoutList(activeTasks);
-        }
-      } catch (err) {
-        console.warn("Backend sync error:", err);
-      }
-    }
-
-    function updatePresetTasks() {
-      const sel = document.getElementById("presetTaskSelect");
-      if (!sel) return;
-      sel.innerHTML = '<option value="">-- เลือกจากงานในระบบ หรือพิมพ์ระบุเองด้านล่าง --</option>';
-      assignedTasks.forEach(task => {
-        const opt = document.createElement("option");
-        opt.value = `${task.title} - ${task.customerLoc}`;
-        opt.innerText = `[${task.priority}] ${task.title} (${task.technician})`;
-        sel.appendChild(opt);
-      });
-    }
-
-    function onPresetTaskChange() {
-      const preset = document.getElementById("presetTaskSelect").value;
-      if (preset) {
-        document.getElementById("customTaskInput").value = preset;
-      }
-    }
-
-    function renderActiveCheckoutList(items) {
-      const container = document.getElementById("activeListContainer");
+    // =========================================================================
+    // TASK DASHBOARD RENDERING (MATCHING SCREENSHOT media_1790655853486.png)
+    // =========================================================================
+    function renderTasksList() {
+      const container = document.getElementById("taskListContainer");
       if (!container) return;
 
-      if (!items || items.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-200">ไม่มีรายการงานคงค้างในระบบ</div>';
-        return;
-      }
+      // Update metrics
+      let overdue = 0, inprog = 0, completed = 0;
+      const today = getTodayYMD();
+      tasksList.forEach(t => {
+        if (t.status === "เสร็จสิ้น") completed++;
+        else if (t.deadline < today) overdue++;
+        else inprog++;
+      });
+      document.getElementById("statOverdue").innerText = overdue;
+      document.getElementById("statInProgress").innerText = inprog;
+      document.getElementById("statCompleted").innerText = completed;
+
+      const total = tasksList.length;
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      document.getElementById("taskSummaryCount").innerText = `ภาระงานทั้งหมด ${total} รายการ • ความสำเร็จ ${pct}%`;
 
       container.innerHTML = "";
-      items.forEach(item => {
+      tasksList.forEach((task, index) => {
+        const isDone = task.status === "เสร็จสิ้น";
+        const statusBadge = isDone
+          ? '<span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold px-2 py-0.5 rounded-full">เสร็จสิ้น</span>'
+          : '<span class="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 font-semibold px-2 py-0.5 rounded-full">กำลังทำ</span>';
+
         const card = document.createElement("div");
-        card.className = "p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors flex items-center justify-between";
-        card.onclick = () => selectCheckoutItem(item, card);
-        card.id = `item-${item.id}`;
+        card.className = "bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm space-y-2.5 transition-all";
         card.innerHTML = `
-          <div>
-            <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">${item.id}</span>
-              <span class="text-xs font-semibold text-slate-900">${item.task}</span>
+          <!-- Row 1: Title & Status -->
+          <div class="flex items-start justify-between">
+            <div class="pr-2">
+              <div class="flex items-center space-x-1.5 mb-0.5">
+                <span class="text-[10px] text-slate-400 font-mono">#${index + 1}</span>
+                <h4 class="text-xs font-bold text-slate-900 leading-snug">${task.title}</h4>
+              </div>
+              <p class="text-[11px] text-slate-500">${task.desc || '-'}</p>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">ช่าง: ${item.tech} • เข้างาน: ${item.time} น.</p>
+            <div>${statusBadge}</div>
           </div>
-          <div class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center radio-dot"></div>
+
+          <!-- Row 2: Dates & Assignee -->
+          <div class="flex items-center justify-between text-[11px] bg-slate-50 p-2 rounded-lg border border-slate-100">
+            <div class="flex items-center space-x-1 text-slate-600">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span>${task.startDate} &rarr; ${task.deadline}</span>
+            </div>
+            <div class="font-medium text-slate-700">
+              ช่าง: <span class="font-bold text-slate-900">${task.tech}</span>
+            </div>
+          </div>
+
+          <!-- Row 3: Latest Progress Note (Speech Bubble) -->
+          <div class="flex items-start space-x-1.5 text-[11px] text-slate-600 pl-1">
+            <svg class="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>
+            <div class="leading-relaxed">
+              <span class="text-slate-800 font-medium">${task.latestUpdate || 'ยังไม่มีการบันทึกอัปเดต'}</span>
+              <span class="text-[10px] text-slate-400 block">${task.updateBy ? `โดย ${task.updateBy} (${task.updateTime})` : ''}</span>
+            </div>
+          </div>
+
+          <!-- Row 4: Action Buttons (Matching Red Boxes in Screenshot media_1790655853486.png) -->
+          <div class="flex items-center justify-end space-x-2 pt-1 border-t border-slate-100">
+            <!-- Red Box 1: [ 💬 อัปเดต ] -->
+            <button type="button" onclick="openUpdateProgressModal('${task.id}')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md text-[11px] font-semibold flex items-center space-x-1 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+              <span>อัปเดต</span>
+            </button>
+
+            <!-- Red Box 2: [ 📅 ขยายเวลา ] -->
+            <button type="button" onclick="openExtendModal('${task.id}')" title="ขยายระยะเวลางาน" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-md text-xs transition-colors flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </button>
+
+            <!-- Quick Share to LINE button -->
+            <button type="button" onclick="shareExistingTask('${task.id}')" title="แชร์การ์ดเข้า LINE" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-md text-xs transition-colors flex items-center justify-center">
+              <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+            </button>
+          </div>
         `;
         container.appendChild(card);
       });
     }
 
-    function selectCheckoutItem(item, elem) {
-      selectedActiveItem = item;
-      document.querySelectorAll("#activeListContainer > div").forEach(d => {
-        d.classList.remove("border-slate-800", "bg-slate-100");
-        const dot = d.querySelector(".radio-dot");
-        if (dot) dot.innerHTML = "";
-      });
-      elem.classList.add("border-slate-800", "bg-slate-100");
-      const currentDot = elem.querySelector(".radio-dot");
-      if (currentDot) {
-        currentDot.innerHTML = '<div class="w-2.5 h-2.5 bg-slate-900 rounded-full"></div>';
-      }
-
-      const btn = document.getElementById("btnCheckoutSubmit");
-      btn.disabled = false;
-      btn.className = "w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center justify-center space-x-2";
-      btn.innerHTML = `<span>บันทึกปิดงาน (${item.id}) & แชร์เข้ากลุ่ม LINE</span>`;
+    // =========================================================================
+    // MODAL 1: มอบหมายงาน (MATCHING EXACT media_1790655831073.png)
+    // =========================================================================
+    function openAssignModal() {
+      assignRows = [
+        {
+          id: 1,
+          title: "",
+          desc: "",
+          startDate: getTodayYMD(),
+          deadline: getSevenDaysLaterYMD(),
+          tech: allTechnicians[0] || "มณเฑียร"
+        }
+      ];
+      renderAssignRows();
+      document.getElementById("assignModal").classList.remove("hidden");
     }
 
-    // ==========================================
-    // ACTION 1: CHECK-IN
-    // ==========================================
+    function closeAssignModal() {
+      document.getElementById("assignModal").classList.add("hidden");
+    }
+
+    function addAssignRow() {
+      const nextId = assignRows.length + 1;
+      assignRows.push({
+        id: nextId,
+        title: "",
+        desc: "",
+        startDate: getTodayYMD(),
+        deadline: getSevenDaysLaterYMD(),
+        tech: allTechnicians[0] || "มณเฑียร"
+      });
+      renderAssignRows();
+    }
+
+    function renderAssignRows() {
+      const container = document.getElementById("assignRowsContainer");
+      const label = document.getElementById("assignRowCountLabel");
+      label.innerText = `รายการงานที่ต้องการมอบหมาย (${assignRows.length} งาน)`;
+      container.innerHTML = "";
+
+      assignRows.forEach((row, idx) => {
+        const card = document.createElement("div");
+        card.className = "bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-sm space-y-2.5";
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+            <span>งานที่ ${idx + 1}</span>
+            ${assignRows.length > 1 ? `<button type="button" onclick="removeAssignRow(${idx})" class="text-rose-500 hover:text-rose-700">ลบแถวนี้</button>` : ''}
+          </div>
+
+          <!-- Input 1: ชื่องาน -->
+          <input type="text" value="${row.title}" oninput="assignRows[${idx}].title = this.value" placeholder="พิมพ์ชื่องานปฏิบัติการ เช่น เดินสายกล้องวงจรปิด L4..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
+
+          <!-- Input 2: รายละเอียดเพิ่มเติม -->
+          <input type="text" value="${row.desc}" oninput="assignRows[${idx}].desc = this.value" placeholder="รายละเอียดงานเพิ่มเติม (ระบุหรือไม่ระบุก็ได้)..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
+
+          <!-- 2 Columns: เริ่มงาน & กำหนดส่ง (Styled Date Pickers with Calendar Icon) -->
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <!-- เริ่มงาน -->
+            <div>
+              <span class="block text-[11px] text-slate-600 font-medium mb-1">เริ่มงาน</span>
+              <div class="relative bg-slate-100 hover:bg-slate-200/70 border border-slate-200 rounded-lg p-2 flex items-center space-x-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="text-[11px] text-slate-700 font-medium truncate" id="disp-start-${idx}">${formatThaiDateDisplay(row.startDate)}</span>
+                <input type="date" value="${row.startDate}" onchange="updateRowDate(${idx}, 'startDate', this.value)" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer">
+              </div>
+            </div>
+
+            <!-- กำหนดส่ง -->
+            <div>
+              <span class="block text-[11px] text-slate-600 font-medium mb-1">กำหนดส่ง</span>
+              <div class="relative bg-slate-100 hover:bg-slate-200/70 border border-slate-200 rounded-lg p-2 flex items-center space-x-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="text-[11px] text-slate-700 font-medium truncate" id="disp-deadline-${idx}">${formatThaiDateDisplay(row.deadline)}</span>
+                <input type="date" value="${row.deadline}" onchange="updateRowDate(${idx}, 'deadline', this.value)" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer">
+              </div>
+            </div>
+          </div>
+
+          <!-- Row: คนทำ (Technician Tag Chips) -->
+          <div>
+            <div class="flex items-center space-x-1.5 mb-1.5">
+              <span class="text-[11px] text-slate-600 font-medium">คนทำ:</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${allTechnicians.map(tName => `
+                <button type="button" onclick="selectRowTech(${idx}, '${tName}')" class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  row.tech === tName
+                    ? 'bg-slate-900 text-white font-semibold shadow-sm'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                }">
+                  ${tName}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function removeAssignRow(idx) {
+      assignRows.splice(idx, 1);
+      renderAssignRows();
+    }
+
+    function updateRowDate(rowIdx, field, val) {
+      if (!val) return;
+      assignRows[rowIdx][field] = val;
+      const elem = document.getElementById(`disp-${field === 'startDate' ? 'start' : 'deadline'}-${rowIdx}`);
+      if (elem) elem.innerText = formatThaiDateDisplay(val);
+    }
+
+    function selectRowTech(rowIdx, tName) {
+      assignRows[rowIdx].tech = tName;
+      renderAssignRows();
+    }
+
+    async function submitAssignModal() {
+      // Validate
+      const validRows = assignRows.filter(r => r.title.trim() !== "");
+      if (validRows.length === 0) {
+        alert("กรุณากรอกชื่องานอย่างน้อย 1 รายการ");
+        return;
+      }
+
+      const initialStatus = document.getElementById("modalInitialStatus").value;
+      closeAssignModal();
+
+      // Add to tasksList
+      const newItems = validRows.map((r, i) => ({
+        id: `TSK-${Math.floor(10 + Math.random() * 90)}`,
+        title: r.title,
+        desc: r.desc,
+        tech: r.tech,
+        startDate: r.startDate,
+        deadline: r.deadline,
+        status: initialStatus.includes("กำลังทำ") ? "กำลังทำ" : initialStatus,
+        progress: 0,
+        latestUpdate: `มอบหมายงานเริ่มต้น: ${initialStatus}`,
+        updateBy: "มณเฑียร",
+        updateTime: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
+      }));
+
+      newItems.forEach(item => tasksList.unshift(item));
+      localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+      renderTasksList();
+
+      // Create LINE Flex Message
+      const first = newItems[0];
+      const isUrgent = initialStatus.includes("ด่วน");
+
+      const flexCard = {
+        type: "flex",
+        altText: `[งานใหม่] ${first.title} (ถึง ${first.tech})`,
+        contents: {
+          type: "bubble",
+          size: "kilo",
+          header: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: isUrgent ? "#991B1B" : "#1E3A8A",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box",
+                layout: "horizontal",
+                contents: [
+                  { type: "text", text: "FORESEE TECHNOLOGY", weight: "bold", color: "#93C5FD", size: "xxs" },
+                  { type: "text", text: initialStatus, color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
+                ]
+              },
+              {
+                type: "text",
+                text: "มอบหมายงานปฏิบัติการ",
+                weight: "bold",
+                color: "#FFFFFF",
+                size: "md",
+                margin: "sm"
+              }
+            ]
+          },
+          body: {
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: first.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ชื่องาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: first.title, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ช่วงเวลา", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: `${first.startDate} ถึง ${first.deadline}`, size: "xs", color: "#334155", flex: 6 }
+                ]
+              }
+            ]
+          },
+          footer: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "12px",
+            paddingTop: "0px",
+            contents: [
+              {
+                type: "button",
+                style: "primary",
+                color: "#1E3A8A",
+                height: "sm",
+                action: {
+                  type: "uri",
+                  label: "เปิดดูงานในระบบ",
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks`
+                }
+              }
+            ]
+          }
+        }
+      };
+
+      await triggerLiffShare(flexCard, "มอบหมายงานและส่งเข้ากลุ่ม LINE เรียบร้อยแล้ว");
+    }
+
+    // =========================================================================
+    // MODAL 2: PROGRESS UPDATE (อัปเดตงานเป็นขั้นๆ)
+    // =========================================================================
+    function openUpdateProgressModal(taskId) {
+      currentUpdatingTaskId = taskId;
+      const task = tasksList.find(t => t.id === taskId);
+      if (!task) return;
+
+      document.getElementById("updateTaskTitleLabel").innerText = task.title;
+      document.getElementById("updateStatusSelect").value = task.status;
+      setProgressPercent(task.progress || 50);
+      document.getElementById("updateNoteInput").value = "";
+
+      document.getElementById("updateProgressModal").classList.remove("hidden");
+    }
+
+    function closeUpdateProgressModal() {
+      document.getElementById("updateProgressModal").classList.add("hidden");
+    }
+
+    function setProgressPercent(val) {
+      currentUpdatingProgressPercent = val;
+      document.getElementById("progressPercentVal").innerText = `${val}%`;
+    }
+
+    async function submitUpdateProgress() {
+      const note = document.getElementById("updateNoteInput").value.trim();
+      if (!note) {
+        alert("กรุณากรอกข้อความความคืบหน้า");
+        return;
+      }
+
+      const status = document.getElementById("updateStatusSelect").value;
+      const task = tasksList.find(t => t.id === currentUpdatingTaskId);
+      if (!task) return;
+
+      task.status = status;
+      task.progress = currentUpdatingProgressPercent;
+      task.latestUpdate = note;
+      task.updateBy = "มณเฑียร แซ่ตั้ง";
+      const now = new Date();
+      task.updateTime = `${now.toLocaleDateString("th-TH")} ${now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}`;
+
+      localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+      renderTasksList();
+      closeUpdateProgressModal();
+
+      // LINE Flex Card for progress update
+      const flexCard = {
+        type: "flex",
+        altText: `[อัปเดตงาน] ${task.title} (${task.status} ${task.progress}%)`,
+        contents: {
+          type: "bubble",
+          size: "kilo",
+          header: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: "#0F172A",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box",
+                layout: "horizontal",
+                contents: [
+                  { type: "text", text: "FORESEE TECHNOLOGY", weight: "bold", color: "#94A3B8", size: "xxs" },
+                  { type: "text", text: `${task.progress}%`, color: "#38BDF8", size: "xs", align: "end", weight: "bold" }
+                ]
+              },
+              {
+                type: "text",
+                text: "อัปเดตความคืบหน้างาน",
+                weight: "bold",
+                color: "#FFFFFF",
+                size: "md",
+                margin: "sm"
+              }
+            ]
+          },
+          body: {
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ช่างผู้ดูแล", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: task.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ชื่องาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: task.title, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "สถานะ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: `${task.status} (${task.progress}%)`, size: "xs", weight: "bold", color: "#2563EB", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "vertical", margin: "md", contents: [
+                  { type: "text", text: "ความคืบหน้าล่าสุด:", size: "xs", color: "#64748B", weight: "bold" },
+                  { type: "text", text: `"${note}"`, size: "xs", color: "#0F172A", wrap: true, margin: "xs" }
+                ]
+              }
+            ]
+          },
+          footer: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "12px",
+            paddingTop: "0px",
+            contents: [
+              {
+                type: "button",
+                style: "primary",
+                color: "#0F172A",
+                height: "sm",
+                action: {
+                  type: "uri",
+                  label: "เปิดดูงานในระบบ",
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks`
+                }
+              }
+            ]
+          }
+        }
+      };
+
+      await triggerLiffShare(flexCard, "อัปเดตความคืบหน้าเข้ากลุ่ม LINE เรียบร้อยแล้ว");
+    }
+
+    // =========================================================================
+    // MODAL 3: EXTEND DEADLINE (ขยายระยะเวลางาน)
+    // =========================================================================
+    function openExtendModal(taskId) {
+      currentExtendingTaskId = taskId;
+      const task = tasksList.find(t => t.id === taskId);
+      if (!task) return;
+
+      document.getElementById("extendTaskTitleLabel").innerText = task.title;
+      document.getElementById("currentDeadlineDisplay").innerText = formatThaiDateDisplay(task.deadline);
+      document.getElementById("newDeadlineInput").value = "";
+      document.getElementById("extendDatePreviewText").innerText = "คลิกเพื่อเลือกวันที่ใหม่";
+      document.getElementById("extendReasonInput").value = "";
+
+      document.getElementById("extendDeadlineModal").classList.remove("hidden");
+    }
+
+    function closeExtendModal() {
+      document.getElementById("extendDeadlineModal").classList.add("hidden");
+    }
+
+    function onNewDeadlineChanged(val) {
+      if (!val) return;
+      document.getElementById("extendDatePreviewText").innerText = formatThaiDateDisplay(val);
+    }
+
+    async function submitExtendDeadline() {
+      const newVal = document.getElementById("newDeadlineInput").value;
+      const reason = document.getElementById("extendReasonInput").value.trim();
+
+      if (!newVal) {
+        alert("กรุณาเลือกกำหนดส่งใหม่");
+        return;
+      }
+      if (!reason) {
+        alert("กรุณาระบุเหตุผลการขยายเวลา");
+        return;
+      }
+
+      const task = tasksList.find(t => t.id === currentExtendingTaskId);
+      if (!task) return;
+
+      const oldDeadline = task.deadline;
+      task.deadline = newVal;
+      task.latestUpdate = `ขยายกำหนดส่งเป็น ${newVal} (เหตุผล: ${reason})`;
+      task.updateBy = "มณเฑียร แซ่ตั้ง";
+      task.updateTime = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+      localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+      renderTasksList();
+      closeExtendModal();
+
+      // LINE Flex Card for deadline extension
+      const flexCard = {
+        type: "flex",
+        altText: `[ขยายเวลา] ${task.title} (เลื่อนเป็น ${newVal})`,
+        contents: {
+          type: "bubble",
+          size: "kilo",
+          header: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: "#78350F",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box",
+                layout: "horizontal",
+                contents: [
+                  { type: "text", text: "FORESEE TECHNOLOGY", weight: "bold", color: "#FDE68A", size: "xxs" },
+                  { type: "text", text: "ขยายเวลา", color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
+                ]
+              },
+              {
+                type: "text",
+                text: "แจ้งขยายระยะเวลางาน",
+                weight: "bold",
+                color: "#FFFFFF",
+                size: "md",
+                margin: "sm"
+              }
+            ]
+          },
+          body: {
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ชื่องาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: task.title, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "กำหนดส่งเดิม", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: oldDeadline, size: "xs", color: "#64748B", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "กำหนดส่งใหม่", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: newVal, size: "xs", weight: "bold", color: "#B45309", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "vertical", margin: "md", contents: [
+                  { type: "text", text: "เหตุผลการขยายเวลา:", size: "xs", color: "#64748B", weight: "bold" },
+                  { type: "text", text: `"${reason}"`, size: "xs", color: "#0F172A", wrap: true, margin: "xs" }
+                ]
+              }
+            ]
+          },
+          footer: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "12px",
+            paddingTop: "0px",
+            contents: [
+              {
+                type: "button",
+                style: "primary",
+                color: "#78350F",
+                height: "sm",
+                action: {
+                  type: "uri",
+                  label: "เปิดดูงานในระบบ",
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks`
+                }
+              }
+            ]
+          }
+        }
+      };
+
+      await triggerLiffShare(flexCard, "แจ้งขยายเวลากำหนดส่งเข้า LINE สำเร็จ");
+    }
+
+    async function shareExistingTask(taskId) {
+      const task = tasksList.find(t => t.id === taskId);
+      if (!task) return;
+
+      const flexCard = {
+        type: "flex",
+        altText: `[งานปฏิบัติการ] ${task.title} (${task.tech})`,
+        contents: {
+          type: "bubble",
+          size: "kilo",
+          header: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: "#0F172A",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box",
+                layout: "horizontal",
+                contents: [
+                  { type: "text", text: "FORESEE TECHNOLOGY", weight: "bold", color: "#94A3B8", size: "xxs" },
+                  { type: "text", text: task.status, color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
+                ]
+              },
+              {
+                type: "text",
+                text: "รายละเอียดงานปฏิบัติการ",
+                weight: "bold",
+                color: "#FFFFFF",
+                size: "md",
+                margin: "sm"
+              }
+            ]
+          },
+          body: {
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            paddingAll: "16px",
+            contents: [
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: task.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ชื่องาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: task.title, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "กำหนดส่ง", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: task.deadline, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                ]
+              }
+            ]
+          },
+          footer: {
+            type: "box",
+            layout: "vertical",
+            paddingAll: "12px",
+            paddingTop: "0px",
+            contents: [
+              {
+                type: "button",
+                style: "primary",
+                color: "#0F172A",
+                height: "sm",
+                action: {
+                  type: "uri",
+                  label: "เปิดดูงานในระบบ",
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks`
+                }
+              }
+            ]
+          }
+        }
+      };
+
+      await triggerLiffShare(flexCard, "แชร์ข้อมูลงานเข้ากลุ่มเรียบร้อย");
+    }
+
+    // =========================================================================
+    // CHECK-IN & CHECK-OUT HANDLERS
+    // =========================================================================
     async function handleCheckin(e) {
       e.preventDefault();
       const tech = document.getElementById("techSelect").value;
@@ -519,7 +1273,6 @@
       const lng = currentLng || "100.501800";
       const mapUrl = `https://maps.google.com/?q=${lat},${lng}`;
 
-      // Build LINE Flex Message (100% compliant with LINE Messaging API specifications)
       const flexCard = {
         type: "flex",
         altText: `[เช็กอิน] ${tech} ถึงหน้างานแล้ว (${timeStr} น.)`,
@@ -573,12 +1326,6 @@
                   { type: "text", text: "วันที่", size: "xs", color: "#64748B", flex: 4 },
                   { type: "text", text: dateStr, size: "xs", color: "#334155", flex: 6 }
                 ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "สถานะ", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: "กำลังปฏิบัติงาน", size: "xs", weight: "bold", color: "#0D9488", flex: 6 }
-                ]
               }
             ]
           },
@@ -604,7 +1351,6 @@
         }
       };
 
-      // Add to local active list for immediate checkout capability
       activeTasks.unshift({
         id: `CHK-${Math.floor(100 + Math.random() * 900)}`,
         tech: tech,
@@ -613,22 +1359,9 @@
       });
       renderActiveCheckoutList(activeTasks);
 
-      // Async background record to GAS
-      callGasApi({
-        action: "saveCheckin",
-        technician: tech,
-        taskName: task,
-        lat: lat,
-        lng: lng
-      });
-
-      // Launch Native LINE Share Picker
       await triggerLiffShare(flexCard, "เช็กอินเข้าหน้างานสำเร็จ");
     }
 
-    // ==========================================
-    // ACTION 2: CHECK-OUT
-    // ==========================================
     async function handleCheckout(e) {
       e.preventDefault();
       if (!selectedActiveItem) {
@@ -686,18 +1419,6 @@
                   { type: "text", text: "รายละเอียดงาน", size: "xs", color: "#64748B", flex: 4 },
                   { type: "text", text: selectedActiveItem.task, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
                 ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "เวลาเริ่มงาน", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: `${selectedActiveItem.time} น.`, size: "xs", color: "#334155", flex: 6 }
-                ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "สถานะ", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: "เสร็จสิ้นเรียบร้อย", size: "xs", weight: "bold", color: "#16A34A", flex: 6 }
-                ]
               }
             ]
           }
@@ -705,111 +1426,16 @@
       };
 
       const closingId = selectedActiveItem.id;
-      // Remove from active list
       activeTasks = activeTasks.filter(item => item.id !== closingId);
       selectedActiveItem = null;
       renderActiveCheckoutList(activeTasks);
 
-      // Async background record to GAS
-      callGasApi({ action: "saveCheckout", id: closingId });
-
       await triggerLiffShare(flexCard, "บันทึกปิดงานสำเร็จ");
     }
 
-    // ==========================================
-    // ACTION 3: ASSIGN TASK
-    // ==========================================
-    async function handleAssign(e) {
-      e.preventDefault();
-      const title = document.getElementById("taskTitleInput").value.trim();
-      const cust = document.getElementById("customerLocInput").value.trim();
-      const tech = document.getElementById("assignTechSelect").value;
-      const priority = document.getElementById("prioritySelect").value;
-      const dl = document.getElementById("deadlineInput").value;
-
-      const isUrgent = priority.includes("ด่วน");
-
-      const flexCard = {
-        type: "flex",
-        altText: `[มอบหมายงาน] ${title} (${tech})`,
-        contents: {
-          type: "bubble",
-          size: "kilo",
-          header: {
-            type: "box",
-            layout: "vertical",
-            backgroundColor: isUrgent ? "#991B1B" : "#1E3A8A",
-            paddingAll: "16px",
-            contents: [
-              {
-                type: "box",
-                layout: "horizontal",
-                contents: [
-                  { type: "text", text: "FORESEE TECHNOLOGY", weight: "bold", color: isUrgent ? "#FECACA" : "#BFDBFE", size: "xxs" },
-                  { type: "text", text: priority, color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
-                ]
-              },
-              {
-                type: "text",
-                text: "มอบหมายงานใหม่",
-                weight: "bold",
-                color: "#FFFFFF",
-                size: "md",
-                margin: "sm"
-              }
-            ]
-          },
-          body: {
-            type: "box",
-            layout: "vertical",
-            spacing: "sm",
-            paddingAll: "16px",
-            contents: [
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
-                ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "ชื่องาน", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: title, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
-                ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "สถานที่ / ลูกค้า", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: cust || "-", size: "xs", color: "#334155", wrap: true, flex: 6 }
-                ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "กำหนดส่งมอบ", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: dl ? dl.replace("T", " ") : "-", size: "xs", weight: "bold", color: isUrgent ? "#DC2626" : "#1E40AF", flex: 6 }
-                ]
-              }
-            ]
-          }
-        }
-      };
-
-      // Background record to GAS
-      callGasApi({
-        action: "saveTask",
-        taskTitle: title,
-        customerLoc: cust,
-        technician: tech,
-        priority: priority,
-        deadline: dl ? dl.replace("T", " ") : "-"
-      });
-
-      await triggerLiffShare(flexCard, "มอบหมายงานสำเร็จ");
-    }
-
-    // ==========================================
-    // NATIVE LINE SHARE TARGET PICKER
-    // ==========================================
+    // =========================================================================
+    // NATIVE LINE LIFF SHARE
+    // =========================================================================
     async function triggerLiffShare(flexMessage, actionTitle) {
       if (typeof liff === "undefined") {
         showStatusModal("error", "ไม่พบ LINE SDK", "กรุณาเปิดใช้งานผ่านแอปพลิเคชัน LINE");
@@ -822,7 +1448,7 @@
         await liff.ready;
 
         if (!liff.isApiAvailable("shareTargetPicker")) {
-          showStatusModal("error", "ฟังก์ชันแชร์ไม่พร้อมใช้งาน", "กรุณาตรวจสอบว่าเปิด ShareTargetPicker ใน LINE Console แล้ว");
+          showStatusModal("error", "ฟังก์ชันแชร์ไม่พร้อมใช้งาน", "กรุณาตรวจสอบว่าเปิด ShareTargetPicker ใน LINE Developers Console แล้ว");
           return;
         }
 
@@ -835,7 +1461,6 @@
             }
           }, 1500);
         } else {
-          // User dismissed or cancelled the share picker
           showStatusModal("info", "ยกเลิกการแชร์", "ข้อมูลถูกบันทึกแล้ว แต่ไม่ได้ส่งการ์ดเข้ากลุ่ม");
         }
       } catch (err) {
@@ -844,22 +1469,150 @@
       }
     }
 
-    // Background GAS API Call
-    async function callGasApi(payload) {
-      if (GAS_API_URL.includes("xxxxxxxxx")) return { success: true };
+    // =========================================================================
+    // SUPPORTING UTILITIES
+    // =========================================================================
+    async function initLiff() {
+      if (typeof liff === "undefined") return;
       try {
-        const response = await fetch(GAS_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-        return await response.json();
-      } catch(e) {
-        return { success: false };
+        await liff.init({ liffId: MY_LIFF_ID });
+        await liff.ready;
+        if (!liff.isLoggedIn() && liff.isInClient && !liff.isInClient()) {
+          liff.login();
+        }
+      } catch (err) {
+        console.warn("LIFF Init error:", err);
       }
     }
 
-    // Status Modal Controls (Corporate & Non-AI-Slop)
+    function requestLocation() {
+      const dot = document.getElementById("gpsDot");
+      const text = document.getElementById("gpsStatusText");
+      const title = document.getElementById("gpsLocationTitle");
+      const coords = document.getElementById("gpsCoordsText");
+
+      if (title) title.innerText = "กำลังระบุตำแหน่งอัตโนมัติ...";
+      if (text) text.innerText = "รอพิกัด GPS";
+      if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
+
+      if (!navigator.geolocation) {
+        if (title) title.innerText = "อุปกรณ์ไม่รองรับ GPS";
+        if (text) text.innerText = "GPS ปิดอยู่";
+        if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-slate-400";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          currentLat = pos.coords.latitude.toFixed(6);
+          currentLng = pos.coords.longitude.toFixed(6);
+          const acc = Math.round(pos.coords.accuracy);
+
+          if (text) text.innerText = "GPS พร้อม";
+          if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
+          if (title) title.innerText = "ระบุตำแหน่งสำเร็จ";
+          if (coords) coords.innerText = `${currentLat}, ${currentLng} (~${acc} ม.)`;
+        },
+        (err) => {
+          if (text) text.innerText = "ไม่พบ GPS";
+          if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-rose-400";
+          if (title) title.innerText = "ไม่สามารถเข้าถึงพิกัดได้";
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    }
+
+    function updateTechDropdowns() {
+      const selects = [document.getElementById("techSelect")];
+      selects.forEach(sel => {
+        if (!sel) return;
+        const currentVal = sel.value;
+        sel.innerHTML = '<option value="">-- กรุณาเลือกช่าง --</option>';
+        allTechnicians.forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.innerText = name;
+          sel.appendChild(opt);
+        });
+        if (currentVal && allTechnicians.includes(currentVal)) {
+          sel.value = currentVal;
+        }
+      });
+    }
+
+    function openAddTechModal() {
+      document.getElementById("newTechNameInput").value = "";
+      document.getElementById("addTechModal").classList.remove("hidden");
+    }
+
+    function closeAddTechModal() {
+      document.getElementById("addTechModal").classList.add("hidden");
+    }
+
+    function confirmAddTech() {
+      const name = document.getElementById("newTechNameInput").value.trim();
+      if (!name) return;
+      if (!allTechnicians.includes(name)) {
+        allTechnicians.push(name);
+        try { localStorage.setItem("fs_techs", JSON.stringify(allTechnicians)); } catch(e) {}
+        updateTechDropdowns();
+      }
+      closeAddTechModal();
+    }
+
+    function onPresetTaskChange() {
+      const preset = document.getElementById("presetTaskSelect").value;
+      if (preset) document.getElementById("customTaskInput").value = preset;
+    }
+
+    function renderActiveCheckoutList(items) {
+      const container = document.getElementById("activeListContainer");
+      if (!container) return;
+
+      if (!items || items.length === 0) {
+        container.innerHTML = '<div class="text-center py-5 text-slate-400 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-200">ไม่มีรายการงานคงค้างในระบบ</div>';
+        return;
+      }
+
+      container.innerHTML = "";
+      items.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors flex items-center justify-between";
+        card.onclick = () => selectCheckoutItem(item, card);
+        card.id = `item-${item.id}`;
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">${item.id}</span>
+              <span class="text-xs font-semibold text-slate-900">${item.task}</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-0.5">ช่าง: ${item.tech} • เข้างาน: ${item.time} น.</p>
+          </div>
+          <div class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center radio-dot"></div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectCheckoutItem(item, elem) {
+      selectedActiveItem = item;
+      document.querySelectorAll("#activeListContainer > div").forEach(d => {
+        d.classList.remove("border-slate-800", "bg-slate-100");
+        const dot = d.querySelector(".radio-dot");
+        if (dot) dot.innerHTML = "";
+      });
+      elem.classList.add("border-slate-800", "bg-slate-100");
+      const currentDot = elem.querySelector(".radio-dot");
+      if (currentDot) {
+        currentDot.innerHTML = '<div class="w-2.5 h-2.5 bg-slate-900 rounded-full"></div>';
+      }
+
+      const btn = document.getElementById("btnCheckoutSubmit");
+      btn.disabled = false;
+      btn.className = "w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-medium py-2.5 px-4 rounded-lg text-xs shadow-sm transition-all flex items-center justify-center space-x-2";
+      btn.innerHTML = `<span>บันทึกปิดงาน (${item.id}) & แชร์เข้ากลุ่ม LINE</span>`;
+    }
+
     function showStatusModal(type, title, message) {
       const container = document.getElementById("modalIconContainer");
       const titleElem = document.getElementById("modalTitle");
@@ -871,7 +1624,7 @@
 
       if (type === "loading") {
         container.innerHTML = `
-          <div class="w-10 h-10 flex items-center justify-center">
+          <div class="w-9 h-9 flex items-center justify-center">
             <svg class="animate-spin h-6 w-6 text-slate-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
@@ -881,28 +1634,22 @@
         closeBtn.classList.add("hidden");
       } else if (type === "success") {
         container.innerHTML = `
-          <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-            </svg>
+          <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
           </div>
         `;
         closeBtn.classList.remove("hidden");
       } else if (type === "error") {
         container.innerHTML = `
-          <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+          <div class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           </div>
         `;
         closeBtn.classList.remove("hidden");
       } else {
         container.innerHTML = `
-          <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+          <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           </div>
         `;
         closeBtn.classList.remove("hidden");
@@ -913,9 +1660,6 @@
 
     function closeStatusModal() {
       document.getElementById("statusModal").classList.add("hidden");
-      if (typeof liff !== "undefined" && liff.isInClient && liff.isInClient()) {
-        liff.closeWindow();
-      }
     }
   </script>
 </body>
