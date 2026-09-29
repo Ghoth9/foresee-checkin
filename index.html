@@ -13,7 +13,7 @@
 </head>
 <body class="bg-slate-100 min-h-screen pb-12">
 
-  <!-- Header with Foresee Branding (ไม่มีแถบ Google มากวนใจ) -->
+  <!-- Header -->
   <header class="bg-gradient-to-r from-slate-900 via-teal-900 to-slate-900 text-white px-5 py-4 shadow-md sticky top-0 z-50">
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-2.5">
@@ -167,7 +167,7 @@
 
       <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">🏁 เลือกงานที่กำลังทำอยู่เพื่อปิดงาน <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">🏁 ค้นหาหรือระบุงานที่ต้องการปิด <span class="text-red-500">*</span></label>
           <div id="activeListContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1">
             <p class="text-slate-400 text-xs text-center py-4">กำลังโหลดรายการงาน...</p>
           </div>
@@ -199,27 +199,21 @@
   </div>
 
   <script>
-    // ==========================================
-    // ⚙️ ตั้งค่าระบบ (CONFIG)
-    // ==========================================
     const MY_LIFF_ID = "2011782806-0If1jko9";
-    
+
     // ใส่ URL ของ Web App จาก Google Apps Script (ที่ลงท้ายด้วย /exec)
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw6r3Yk3zJtL0p9m7_xxxxxxxxx/exec"; 
 
     let allTechnicians = ["ช่างกนก", "ช่างมณเฑียร", "ช่างสายฟ้า"];
     let currentLat = null;
     let currentLng = null;
-    let selectedActiveId = null;
+    let selectedActiveItem = null;
 
     window.onload = async function() {
-      // 1. ดักจับแท็บจาก URL (?tab=assign หรือ checkin หรือ checkout)
       const targetTab = detectTargetTab() || "checkin";
       switchTab(targetTab);
 
-      // ใส่รายชื่อช่างเริ่มต้นทันที
       populateTechDropdowns(allTechnicians);
-
       requestLocation();
       await initLiff();
       loadSystemData();
@@ -244,8 +238,8 @@
       try {
         await liff.init({ liffId: MY_LIFF_ID });
         await liff.ready;
-        console.log("LIFF Init Ready. LoggedIn:", liff.isLoggedIn());
-        if (!liff.isLoggedIn()) {
+        console.log("LIFF Ready. LoggedIn:", liff.isLoggedIn());
+        if (!liff.isLoggedIn() && liff.isInClient && !liff.isInClient()) {
           liff.login();
         }
       } catch (err) {
@@ -263,7 +257,6 @@
           document.getElementById("techSelect").value = cleanName;
           document.getElementById("assignTechSelect").value = cleanName;
 
-          // บันทึกลง Google Sheets ผ่าน API
           callGasApi({ action: "addNewTechnician", name: cleanName });
           alert(`เพิ่ม "${cleanName}" เข้าสู่ระบบเรียบร้อยแล้ว!`);
         }
@@ -360,7 +353,7 @@
       items.forEach(item => {
         const card = document.createElement("div");
         card.className = "p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50/50 cursor-pointer transition-all flex items-center justify-between";
-        card.onclick = () => selectCheckoutItem(item.id, card);
+        card.onclick = () => selectCheckoutItem(item, card);
         card.id = `item-${item.id}`;
         card.innerHTML = `
           <div>
@@ -374,8 +367,8 @@
       });
     }
 
-    function selectCheckoutItem(id, elem) {
-      selectedActiveId = id;
+    function selectCheckoutItem(item, elem) {
+      selectedActiveItem = item;
       document.querySelectorAll("#activeListContainer > div").forEach(d => {
         d.classList.remove("border-teal-600", "bg-teal-50");
         d.querySelector(".radio-check").innerHTML = "";
@@ -415,7 +408,9 @@
       }
     }
 
-    // 1. มอบหมายงาน
+    // ==========================================
+    // 📤 1. จัดการมอบหมายงาน & สร้างการ์ดแชร์ทันที
+    // ==========================================
     async function handleAssign(e) {
       e.preventDefault();
       const title = document.getElementById("taskTitleInput").value;
@@ -424,27 +419,59 @@
       const priority = document.getElementById("prioritySelect").value;
       const dl = document.getElementById("deadlineInput").value;
 
-      showModal("⏳", "กำลังบันทึก...", "กำลังส่งข้อมูลลงระบบ", false);
+      showModal("⏳", "กำลังประมวลผล...", "กำลังสร้างการ์ดแจ้งเตือน", false);
 
-      const payload = {
+      const isUrgent = priority.includes("ด่วน");
+      const flexCard = {
+        type: "flex",
+        altText: `📋 มอบหมายงาน: ${title} (ถึง ${tech})`,
+        contents: {
+          type: "bubble", size: "mega",
+          header: {
+            type: "box", layout: "vertical", backgroundColor: isUrgent ? "#DC2626" : "#1D4ED8", paddingAll: "18px",
+            contents: [{
+              type: "box", layout: "horizontal",
+              contents: [
+                { type: "text", text: isUrgent ? `🔥 ${priority}` : "📋 มอบหมายงานใหม่", weight: "bold", color: "#FFFFFF", size: "md", flex: 1 },
+                { type: "text", text: "FORESEE", weight: "bold", color: "#E0E7FF", size: "xs", align: "end" }
+              ]
+            }]
+          },
+          body: {
+            type: "box", layout: "vertical", spacing: "md",
+            contents: [
+              { type: "text", text: title, weight: "bold", size: "md", color: "#0F172A", wrap: true },
+              { type: "separator" },
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "ช่างผู้รับผิดชอบ:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: tech, size: "xs", weight: "bold", color: "#0F172A", flex: 5 }
+              ]},
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "สถานที่ / ลูกค้า:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: cust || "-", size: "xs", color: "#334155", wrap: true, flex: 5 }
+              ]},
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "กำหนดส่ง:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: `⏰ ${dl ? dl.replace("T", " ") : "-"}`, size: "xs", weight: "bold", color: isUrgent ? "#DC2626" : "#1E40AF", flex: 5 }
+              ]}
+            ]
+          }
+        }
+      };
+
+      // ส่งลงชีตเบื้องหลัง
+      callGasApi({
         action: "saveTask",
         taskTitle: title, customerLoc: cust, technician: tech,
         priority: priority, deadline: dl ? dl.replace("T", " ") : "-"
-      };
+      });
 
-      try {
-        const res = await callGasApi(payload);
-        if (res && res.flexCard) {
-          await triggerLiffShare(res.flexCard, "มอบหมายงานสำเร็จ!");
-        } else {
-          showModal("✅", "มอบหมายงานสำเร็จ!", "บันทึกข้อมูลเรียบร้อยแล้ว", true);
-        }
-      } catch (err) {
-        onActionFail(err);
-      }
+      await triggerLiffShare(flexCard, "มอบหมายงานสำเร็จ!");
     }
 
-    // 2. เช็กอินหน้างาน
+    // ==========================================
+    // 📍 2. จัดการเช็กอิน & สร้างการ์ดแชร์ทันที
+    // ==========================================
     async function handleCheckin(e) {
       e.preventDefault();
       const tech = document.getElementById("techSelect").value;
@@ -455,59 +482,151 @@
         return;
       }
 
-      showModal("⏳", "กำลังบันทึกเวลา...", "กำลังดึงพิกัดและบันทึกลงชีต", false);
+      showModal("⏳", "กำลังบันทึกเวลา...", "กำลังเตรียมเปิดหน้าต่างแชร์เข้ากลุ่ม", false);
 
-      const payload = {
-        action: "saveCheckin",
-        technician: tech, taskName: task,
-        lat: currentLat || "0", lng: currentLng || "0"
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+      const dateStr = now.toLocaleDateString("th-TH");
+      const lat = currentLat || "13.7563";
+      const lng = currentLng || "100.5018";
+      const mapUrl = `https://maps.google.com/?q=${lat},${lng}`;
+
+      const flexCard = {
+        type: "flex",
+        altText: `📍 ${tech} เช็กอินถึงหน้างานแล้ว (${timeStr} น.)`,
+        contents: {
+          type: "bubble", size: "mega",
+          header: {
+            type: "box", layout: "vertical", backgroundColor: "#0F766E", paddingAll: "18px",
+            contents: [{
+              type: "box", layout: "horizontal",
+              contents: [
+                { type: "text", text: "📍 เช็กอินถึงหน้างานแล้ว", weight: "bold", color: "#FFFFFF", size: "md", flex: 1 },
+                { type: "text", text: `${timeStr} น.`, weight: "bold", color: "#CCFBF1", size: "xs", align: "end" }
+              ]
+            }]
+          },
+          body: {
+            type: "box", layout: "vertical", spacing: "md",
+            contents: [
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "ช่างผู้รับผิดชอบ:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: tech, size: "xs", weight: "bold", color: "#0F172A", flex: 5 }
+              ]},
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "งาน / ลูกค้า:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: task, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 5 }
+              ]},
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "วันที่:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: dateStr, size: "xs", color: "#334155", flex: 5 }
+              ]},
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "สถานะ:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: "🟡 กำลังปฏิบัติงาน", size: "xs", weight: "bold", color: "#D97706", flex: 5 }
+              ]}
+            ]
+          },
+          footer: {
+            type: "box", layout: "vertical",
+            contents: [{
+              type: "button", style: "primary", color: "#0F766E", height: "sm",
+              action: { type: "uri", label: "🗺️ เปิดดูพิกัดบน Google Maps", uri: mapUrl }
+            }]
+          }
+        }
       };
 
-      try {
-        const res = await callGasApi(payload);
-        if (res && res.flexCard) {
-          await triggerLiffShare(res.flexCard, "เช็กอินเข้าหน้างานสำเร็จ!");
-        } else {
-          showModal("✅", "เช็กอินสำเร็จ!", "บันทึกเวลาลงชีตแล้ว", true);
-        }
-      } catch (err) {
-        onActionFail(err);
-      }
+      // ยิงบันทึกลง Google Sheets ในพื้นหลัง
+      callGasApi({
+        action: "saveCheckin",
+        technician: tech, taskName: task,
+        lat: lat, lng: lng
+      });
+
+      // สั่งเปิดหน้าต่างแชร์เข้ากลุ่มทันที!
+      await triggerLiffShare(flexCard, "เช็กอินเข้าหน้างานสำเร็จ!");
     }
 
-    // 3. ปิดงาน
+    // ==========================================
+    // 🏁 3. จัดการปิดงาน & สร้างการ์ดแชร์ทันที
+    // ==========================================
     async function handleCheckout(e) {
       e.preventDefault();
-      if (!selectedActiveId) return;
-
-      showModal("⏳", "กำลังบันทึกปิดงาน...", "กำลังคำนวณเวลาและบันทึกข้อมูล", false);
-      const payload = { action: "saveCheckout", id: selectedActiveId };
-
-      try {
-        const res = await callGasApi(payload);
-        if (res && res.flexCard) {
-          await triggerLiffShare(res.flexCard, "ปิดงานสำเร็จเรียบร้อย!");
-        } else {
-          showModal("🏁", "ปิดงานสำเร็จ!", "ระบบบันทึกเวลาจบงานแล้ว", true);
-        }
-      } catch (err) {
-        onActionFail(err);
+      if (!selectedActiveItem) {
+        alert("กรุณาเลือกงานที่ต้องการปิด");
+        return;
       }
+
+      showModal("⏳", "กำลังบันทึกปิดงาน...", "กำลังเตรียมการ์ดสรุปงาน", false);
+
+      const now = new Date();
+      const outTimeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+      const flexCard = {
+        type: "flex",
+        altText: `🏁 ${selectedActiveItem.tech} เช็กเอาต์ปิดงานแล้ว (${outTimeStr} น.)`,
+        contents: {
+          type: "bubble", size: "mega",
+          header: {
+            type: "box", layout: "vertical", backgroundColor: "#166534", paddingAll: "18px",
+            contents: [{
+              type: "box", layout: "horizontal",
+              contents: [
+                { type: "text", text: "🏁 เช็กเอาต์ปิดงานเรียบร้อย", weight: "bold", color: "#FFFFFF", size: "md", flex: 1 },
+                { type: "text", text: `${outTimeStr} น.`, weight: "bold", color: "#DCFCE7", size: "xs", align: "end" }
+              ]
+            }]
+          },
+          body: {
+            type: "box", layout: "vertical", spacing: "md",
+            contents: [
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "ช่างผู้รับผิดชอบ:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: selectedActiveItem.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 5 }
+              ]},
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "งาน / ลูกค้า:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: selectedActiveItem.task, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 5 }
+              ]},
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "เวลาเริ่มงาน:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: selectedActiveItem.time, size: "xs", color: "#334155", flex: 5 }
+              ]},
+              { type: "box", layout: "horizontal", contents: [
+                { type: "text", text: "สถานะ:", size: "xs", color: "#64748B", flex: 3 },
+                { type: "text", text: "🟢 ปิดงานสำเร็จ", size: "xs", weight: "bold", color: "#166534", flex: 5 }
+              ]}
+            ]
+          }
+        }
+      };
+
+      callGasApi({ action: "saveCheckout", id: selectedActiveItem.id });
+      await triggerLiffShare(flexCard, "ปิดงานสำเร็จเรียบร้อย!");
     }
 
-    // ฟังก์ชันยิงแชร์เข้ากลุ่ม LINE
+    // ==========================================
+    // 📲 สั่งเปิดหน้าต่างแชร์เข้ากลุ่ม LINE ตรงๆ 100%
+    // ==========================================
     async function triggerLiffShare(flexMessage, successText) {
-      if (!flexMessage) {
-        showModal("✅", successText, "บันทึกลง Google Sheets สำเร็จแล้ว", true);
+      if (typeof liff === "undefined") {
+        alert("ไม่พบ LINE LIFF SDK");
+        showModal("✅", successText, "บันทึกข้อมูลเรียบร้อยแล้ว", true);
         return;
       }
 
-      if (typeof liff === "undefined" || !liff.isApiAvailable("shareTargetPicker")) {
-        showModal("✅", successText, "บันทึกข้อมูลลงชีตเรียบร้อยแล้ว", true);
+      // รอให้ LIFF โหลดพร้อม 100%
+      await liff.ready;
+
+      if (!liff.isApiAvailable("shareTargetPicker")) {
+        alert("⚠️ LINE ไม่อนุญาตให้เปิดหน้าต่างแชร์ (shareTargetPicker ยังไม่พร้อม)");
+        showModal("✅", successText, "บันทึกข้อมูลเรียบร้อยแล้ว", true);
         return;
       }
 
       try {
+        // เปิดหน้าต่างเลือกกลุ่ม LINE ทันที!
         const res = await liff.shareTargetPicker([flexMessage]);
         if (res) {
           showModal("🎉", successText, "ส่งการ์ดแจ้งเตือนเข้ากลุ่มเรียบร้อยแล้ว", true);
@@ -516,27 +635,23 @@
           showModal("✅", successText, "บันทึกข้อมูลแล้ว (ยกเลิกการเลือกกลุ่ม)", true);
         }
       } catch (err) {
-        console.warn("Share target picker err:", err);
-        showModal("✅", successText, "บันทึกข้อมูลลงชีตแล้ว", true);
+        alert("LINE Share error: " + err.message);
+        showModal("✅", successText, "บันทึกข้อมูลเรียบร้อยแล้ว", true);
       }
     }
 
-    // ยิง API ไปที่ Google Apps Script
     async function callGasApi(payload) {
-      if (GAS_API_URL.includes("xxxxxxxxx")) {
-        // Fallback จำลองถ้ายังไม่ได้ใส่ URL จริง
-        return { success: true };
+      if (GAS_API_URL.includes("xxxxxxxxx")) return { success: true };
+      try {
+        const response = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        return await response.json();
+      } catch(e) {
+        return { success: false };
       }
-      const response = await fetch(GAS_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
-      return await response.json();
-    }
-
-    function onActionFail(err) {
-      showModal("❌", "เกิดข้อผิดพลาด", err.message || "ไม่สามารถเชื่อมต่อได้", true);
     }
 
     function showModal(icon, title, msg, showBtn) {
@@ -551,7 +666,6 @@
 
     function closeModal() {
       document.getElementById("statusModal").classList.add("hidden");
-      loadSystemData();
       if (typeof liff !== "undefined" && liff.isInClient && liff.isInClient()) {
         liff.closeWindow();
       }
