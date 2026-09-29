@@ -66,10 +66,10 @@
         <span>📍 เช็กอินหน้างาน</span>
       </button>
       <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
-        <span>🏁 ปิดงาน</span>
+        <span>🏁 ปิดงานหน้างาน</span>
       </button>
       <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
-        <span>📋 มอบหมาย/ติดตาม</span>
+        <span>📋 มอบหมายงาน (ที่ทำงาน)</span>
       </button>
     </div>
 
@@ -103,7 +103,7 @@
         <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
           <div>
             <h2 class="text-sm font-bold text-slate-900">เช็กอินถึงหน้างาน (ช่าง CCTV)</h2>
-            <p class="text-[11px] text-slate-500">เลือกทีมช่างแล้วแตะงานที่เข้าทำได้เลย ไม่ต้องพิมพ์ยาว</p>
+            <p class="text-[11px] text-slate-500">สำหรับช่างปฏิบัติงานจริงหน้างาน เลือกทีมช่างและประเภทงาน</p>
           </div>
           <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">พิกัดจริง</span>
         </div>
@@ -119,40 +119,24 @@
           </div>
         </div>
 
-        <!-- 2. เลือกงานที่จะเข้าทำ -->
+        <!-- 2. ประเภทงานหน้างาน CCTV (Quick 1-Tap Chips) -->
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <label class="text-xs font-semibold text-slate-700">2. เลือกงานที่เข้าปฏิบัติการ <span class="text-rose-500">*</span></label>
-            <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-[11px]">
-              <button type="button" id="btnModeAssigned" onclick="setCheckinMode('assigned')" class="px-2 py-0.5 rounded-md font-medium bg-white text-slate-900 shadow-sm transition-all">
-                งานที่ได้รับมอบหมาย
-              </button>
-              <button type="button" id="btnModeCustom" onclick="setCheckinMode('custom')" class="px-2 py-0.5 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all">
-                งานด่วน / งานใหม่
-              </button>
-            </div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">2. ประเภทงานหน้างาน (CCTV) <span class="text-rose-500">*</span></label>
+          <div class="grid grid-cols-2 gap-1.5" id="cctvQuickChipsContainer">
+            <!-- 6 CCTV quick preset chips rendered dynamically -->
           </div>
+        </div>
 
-          <!-- Mode A: งานที่ได้รับมอบหมาย (Cards - 1 Tap to select!) -->
-          <div id="checkinModeAssignedSection" class="space-y-2">
-            <div id="checkinAssignedCardsContainer" class="space-y-2 max-h-60 overflow-y-auto pr-0.5">
-              <!-- Rendered dynamically -->
-            </div>
-          </div>
+        <!-- 3. สถานที่ / ไซต์งาน / ลูกค้า -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">3. สถานที่ / ไซต์งาน / ชื่อลูกค้า <span class="text-rose-500">*</span></label>
+          <input type="text" id="fieldLocationInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32 หรือ บจก. นิวเคลียร์" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+        </div>
 
-          <!-- Mode B: งานด่วน / หน้างานใหม่ (Quick CCTV Chips + Short Location) -->
-          <div id="checkinModeCustomSection" class="hidden space-y-3">
-            <div>
-              <div class="text-[11px] text-slate-500 font-medium mb-1.5">แตะเลือกประเภทงาน CCTV:</div>
-              <div class="grid grid-cols-2 gap-1.5" id="cctvQuickChipsContainer">
-                <!-- Rendered dynamically -->
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">สถานที่ / ชื่อลูกค้า <span class="text-rose-500">*</span></label>
-              <input type="text" id="quickLocationInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32 หรือ บจก. นิวเคลียร์" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-            </div>
-          </div>
+        <!-- 4. รายละเอียดหน้างาน / อาการ (ถ้ามี) -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">4. รายละเอียดหน้างาน / อาการ (ถ้ามี)</label>
+          <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
         </div>
 
         <!-- Big Touch-Friendly Action Button -->
@@ -173,8 +157,8 @@
         
         <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
           <div>
-            <h2 class="text-sm font-bold text-slate-900">ปิดงานและบันทึกเวลาจบ (ช่าง CCTV)</h2>
-            <p class="text-[11px] text-slate-500">เลือกงานที่ต้องการปิดและสรุปผลงาน</p>
+            <h2 class="text-sm font-bold text-slate-900">ปิดงานหน้างานและบันทึกเวลาจบ (ช่าง CCTV)</h2>
+            <p class="text-[11px] text-slate-500">เลือกงานหน้างานที่ต้องการปิดและสรุปผลงาน</p>
           </div>
           <button type="button" onclick="renderActiveCheckoutList(activeTasks)" class="text-[11px] text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded border border-slate-200">
             รีเฟรช
@@ -182,7 +166,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-2">1. เลือกงานที่กำลังทำอยู่หน้างาน <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-semibold text-slate-700 mb-2">1. เลือกงานหน้างานที่กำลังทำอยู่ <span class="text-rose-500">*</span></label>
           <div id="activeListContainer" class="space-y-2 max-h-56 overflow-y-auto pr-0.5">
             <!-- Active tasks rendered here -->
           </div>
@@ -190,7 +174,7 @@
 
         <!-- Outcome Selection Section -->
         <div id="checkoutOutcomeSection" class="hidden space-y-2.5 pt-2 border-t border-slate-100">
-          <label class="block text-xs font-semibold text-slate-700">2. สรุปผลการปฏิบัติงาน <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-semibold text-slate-700">2. สรุปผลการปฏิบัติงานหน้างาน <span class="text-rose-500">*</span></label>
           <div class="space-y-1.5 text-xs" id="checkoutOutcomesContainer">
             <!-- Rendered dynamically -->
           </div>
@@ -210,7 +194,7 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- TAB 3: มอบหมาย & ติดตามงาน (MANAGEMENT & SUPERVISOR OPERATIONS) -->
+    <!-- TAB 3: มอบหมายงาน (ที่ทำงาน) - OFFICE TASK MANAGEMENT -->
     <!-- ========================================================================= -->
     <section id="tasksSection" class="hidden space-y-3">
       
@@ -223,10 +207,10 @@
             </div>
             <div>
               <div class="flex items-center space-x-1.5">
-                <span class="text-xs font-bold text-slate-900" id="currentOfficerName">ภาพรวมงานปฏิบัติการ</span>
-                <span class="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 font-medium">ทีมช่าง Foresee</span>
+                <span class="text-xs font-bold text-slate-900" id="currentOfficerName">งานมอบหมาย (ในที่ทำงาน)</span>
+                <span class="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 font-medium">ภายในสำนักงาน</span>
               </div>
-              <div class="text-[10px] text-slate-500 mt-0.5" id="taskSummaryCount">ภาระงานทั้งหมด 0 รายการ</div>
+              <div class="text-[10px] text-slate-500 mt-0.5" id="taskSummaryCount">ภาระงานในที่ทำงานทั้งหมด 0 รายการ</div>
             </div>
           </div>
           <button type="button" onclick="openAssignModal()" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-medium text-xs px-2.5 py-1.5 rounded-lg shadow-sm transition-all flex items-center space-x-1">
@@ -253,7 +237,7 @@
 
         <!-- Filter by Technician Row -->
         <div class="pt-2 border-t border-slate-100">
-          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">กรองดูตามช่าง:</div>
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">กรองดูตามผู้รับผิดชอบ:</div>
           <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-0.5" id="techFilterContainer">
             <!-- Filter chips injected dynamically -->
           </div>
@@ -262,8 +246,8 @@
 
       <!-- Task List Header -->
       <div class="flex items-center justify-between px-1">
-        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide" id="taskListSectionHeader">รายการงานปฏิบัติการทั้งหมด</h3>
-        <span class="text-[11px] text-slate-500">กดแก้ไข/อัปเดต/ขยายเวลาได้</span>
+        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide" id="taskListSectionHeader">รายการงานมอบหมาย (ในที่ทำงาน)</h3>
+        <span class="text-[11px] text-slate-500">ติดตาม/อัปเดต/ขยายเวลา</span>
       </div>
 
       <!-- Task Card Rows Container -->
@@ -275,7 +259,7 @@
   </main>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: มอบหมายงานปฏิบัติการ (SUPERVISOR / ADMIN TASK CREATION) -->
+  <!-- MODAL: มอบหมายงานใหม่ (ในที่ทำงาน) -->
   <!-- ========================================================================= -->
   <div id="assignModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3.5 z-50 overflow-y-auto modal-scroll-container">
     <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto">
@@ -289,10 +273,10 @@
           </div>
           <div>
             <div class="flex items-center space-x-1.5">
-              <h3 class="text-sm font-bold text-slate-900">มอบหมายงานปฏิบัติการ</h3>
-              <span class="text-[10px] bg-blue-50 text-blue-600 font-semibold px-2 py-0.5 rounded-full border border-blue-200">งานใหม่</span>
+              <h3 class="text-sm font-bold text-slate-900">มอบหมายงานใหม่ (ในที่ทำงาน)</h3>
+              <span class="text-[10px] bg-blue-50 text-blue-600 font-semibold px-2 py-0.5 rounded-full border border-blue-200">งานในออฟฟิศ</span>
             </div>
-            <p class="text-[10px] text-slate-500 leading-tight mt-0.5">สร้างงานมอบหมาย ระบบจะส่งแจ้งเตือนลงกลุ่ม LINE อัตโนมัติ</p>
+            <p class="text-[10px] text-slate-500 leading-tight mt-0.5">สั่งงาน/มอบหมายงานภายในที่ทำงาน หรือเตรียมงานในสำนักงาน</p>
           </div>
         </div>
         <button type="button" onclick="closeAssignModal()" class="text-slate-400 hover:text-slate-600 p-1">
@@ -657,64 +641,62 @@
     let allTechnicians = ["สายฟ้า", "สมชาย", "กนกศักดิ์", "ชุติมา", "มณเฑียร", "วิชัย"];
     let selectedTechFilter = "ทั้งหมด";
     
-    // Check-in State
+    // Check-in State (Field Operations)
     let checkinSelectedTechs = ["สายฟ้า"];
-    let checkinMode = "assigned"; // "assigned" or "custom"
-    let checkinSelectedAssignedTaskId = null;
     let checkinSelectedQuickJob = CCTV_PRESET_JOBS[0];
 
-    // Checkout State
+    // Checkout State (Field Operations)
     let selectedCheckoutOutcome = CCTV_OUTCOMES[0];
 
     // Dynamic Assign Rows for Supervisor
     let assignRows = [];
     let selectedAssignStatus = "กำลังทำ";
 
-    // Working CCTV Tasks List
+    // Working Tasks List (Internal Workplace & Office Tasks)
     let tasksList = [
       {
         id: "TSK-01",
-        title: "ติดตั้งกล้องวงจรปิด Hikvision 4 จุด - ลาซาล 32",
-        desc: "เดินท่อร้อยสายและตั้งค่าเครื่องบันทึก NVR",
+        title: "ทำใบเสนอราคาและจัดสเปกกล้อง บจก.ไทยรุ่งเรือง",
+        desc: "จัดเตรียมเอกสารสเปก Hikvision 8 จุด และใบเสนอราคาส่งฝ่ายจัดซื้อ",
         techs: ["สายฟ้า", "สมชาย"],
         startDate: "2026-09-29",
         deadline: "2026-10-06",
         status: "กำลังทำ",
-        progress: 40,
-        latestUpdate: "เข้าหน้างานแล้ว กำลังเดินท่อร้อยสาย",
+        progress: 50,
+        latestUpdate: "ส่งเอกสารรอบแรกให้ลูกค้าตรวจสอบแล้ว รอคอนเฟิร์ม",
         updateBy: "สายฟ้า",
         updateTime: "2026-09-29 09:30"
       },
       {
         id: "TSK-02",
-        title: "งานนิวเคลียร์ ตรวจเช็กระบบกล้องดับ / ภาพไม่ขึ้น",
-        desc: "ตรวจสอบสายสัญญาณและเปลี่ยน Power Supply",
+        title: "ตรวจเช็กสต็อกกล้องวงจรปิดและอุปกรณ์ NVR ในคลัง",
+        desc: "นับยอดคงเหลือเครื่องบันทึกและสายสัญญาณ RG6 ในสต็อกสินค้า",
         techs: ["มณเฑียร"],
-        startDate: "2026-07-07",
-        deadline: "2026-07-08",
+        startDate: "2026-09-28",
+        deadline: "2026-10-02",
         status: "เสร็จสิ้น",
         progress: 100,
-        latestUpdate: "เปลี่ยนหัว BNC และทดสอบภาพขึ้นครบ 8 กล้อง",
+        latestUpdate: "สรุปยอดคลังสินค้าส่งฝ่ายบัญชีเรียบร้อย",
         updateBy: "มณเฑียร",
-        updateTime: "2026-07-08 14:20"
+        updateTime: "2026-09-29 11:20"
       },
       {
         id: "TSK-03",
-        title: "ไล่ของเคลม ตรวจเช็กอุปกรณ์กล้องค้างส่ง",
-        desc: "ตรวจนับอุปกรณ์เคลมประกันส่งศูนย์",
+        title: "รวบรวมอุปกรณ์และทำใบส่งเคลมประกันศูนย์ Hikvision",
+        desc: "กล้องเสีย 3 ตัว และ Adapter 2 ตัว รอส่งเคลมศูนย์",
         techs: ["กนกศักดิ์", "ชุติมา"],
-        startDate: "2026-07-07",
-        deadline: "2026-07-09",
+        startDate: "2026-09-27",
+        deadline: "2026-10-05",
         status: "กำลังทำ",
-        progress: 60,
-        latestUpdate: "กำลังรวบรวมอุปกรณ์และทำใบส่งเคลม",
-        updateBy: "กนกศักดิ์",
-        updateTime: "2026-07-08 11:00"
+        progress: 75,
+        latestUpdate: "แพ็กของเรียบร้อย รอแมสเซ็นเจอร์มารับไปส่งศูนย์",
+        updateBy: "ชุติมา",
+        updateTime: "2026-09-29 10:15"
       }
     ];
 
     let activeTasks = [
-      { id: "CHK-001", techs: ["สายฟ้า", "สมชาย"], task: "ติดตั้งกล้องวงจรปิด ซอยลาซาล 32", time: "09:30" }
+      { id: "CHK-01", techs: ["สายฟ้า", "สมชาย"], task: "📹 ติดตั้งกล้องชุดใหม่ (บ้านคุณสมชาย ซอยลาซาล 32)", time: "09:30" }
     ];
     let selectedActiveItem = null;
 
@@ -755,7 +737,6 @@
       } catch(e) {}
 
       renderCheckinTechChips();
-      renderCheckinAssignedCards();
       renderCctvQuickChips();
       renderCheckoutOutcomes();
       renderTechFilterChips();
@@ -858,89 +839,8 @@
           }
           try { localStorage.setItem("fs_my_checkin_techs", JSON.stringify(checkinSelectedTechs)); } catch(e) {}
           renderCheckinTechChips();
-          renderCheckinAssignedCards(); // Re-highlight matching jobs!
         };
         container.appendChild(btn);
-      });
-    }
-
-    function setCheckinMode(mode) {
-      checkinMode = mode;
-      const btnAssigned = document.getElementById("btnModeAssigned");
-      const btnCustom = document.getElementById("btnModeCustom");
-      const secAssigned = document.getElementById("checkinModeAssignedSection");
-      const secCustom = document.getElementById("checkinModeCustomSection");
-
-      if (mode === "assigned") {
-        btnAssigned.className = "px-2 py-0.5 rounded-md font-medium bg-white text-slate-900 shadow-sm transition-all";
-        btnCustom.className = "px-2 py-0.5 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all";
-        secAssigned.classList.remove("hidden");
-        secCustom.classList.add("hidden");
-      } else {
-        btnCustom.className = "px-2 py-0.5 rounded-md font-medium bg-white text-slate-900 shadow-sm transition-all";
-        btnAssigned.className = "px-2 py-0.5 rounded-md font-medium text-slate-600 hover:text-slate-900 transition-all";
-        secCustom.classList.remove("hidden");
-        secAssigned.classList.add("hidden");
-      }
-    }
-
-    function renderCheckinAssignedCards() {
-      const container = document.getElementById("checkinAssignedCardsContainer");
-      if (!container) return;
-
-      // Filter active (non-completed) tasks
-      const activeAssigned = tasksList.filter(t => t.status !== "เสร็จสิ้น");
-      if (activeAssigned.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            ไม่มีงานค้างที่มอบหมายไว้ แตะที่ "งานด่วน / งานใหม่" ด้านบนเพื่อเช็กอิน
-          </div>
-        `;
-        return;
-      }
-
-      // Default select first if none selected
-      if (!checkinSelectedAssignedTaskId && activeAssigned.length > 0) {
-        checkinSelectedAssignedTaskId = activeAssigned[0].id;
-      }
-
-      container.innerHTML = "";
-      activeAssigned.forEach(task => {
-        const isSelected = checkinSelectedAssignedTaskId === task.id;
-        const techs = getTaskTechs(task);
-        // Is this job matching currently selected technicians?
-        const isMyTeam = techs.some(t => checkinSelectedTechs.includes(t));
-
-        const card = document.createElement("div");
-        card.className = `p-3 rounded-xl border transition-all cursor-pointer ${
-          isSelected
-            ? "border-blue-600 bg-blue-50/70 shadow-sm"
-            : "border-slate-200 bg-slate-50 hover:bg-slate-100/70"
-        }`;
-        card.onclick = () => {
-          checkinSelectedAssignedTaskId = task.id;
-          renderCheckinAssignedCards();
-        };
-
-        card.innerHTML = `
-          <div class="flex items-start justify-between">
-            <div class="pr-2">
-              <div class="flex items-center space-x-1.5 mb-1">
-                ${isMyTeam ? '<span class="text-[9px] bg-blue-600 text-white font-bold px-1.5 py-0.5 rounded">งานทีมคุณ</span>' : ''}
-                <span class="text-[10px] text-slate-500 font-mono">${task.id}</span>
-              </div>
-              <h4 class="text-xs font-bold text-slate-900 leading-snug">${task.title}</h4>
-              <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-1">${task.desc || '-'}</p>
-              <div class="text-[10px] text-slate-400 mt-1">ช่าง: ${techs.join(', ')} • กำหนดส่ง: ${task.deadline}</div>
-            </div>
-            <div class="w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 mt-1 ${
-              isSelected ? "border-blue-600 bg-blue-600 text-white font-bold text-xs" : "border-slate-300"
-            }">
-              ${isSelected ? "✓" : ""}
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
       });
     }
 
@@ -973,26 +873,13 @@
         return;
       }
 
-      let jobTitle = "";
-      let jobLocation = "";
-
-      if (checkinMode === "assigned") {
-        const task = tasksList.find(t => t.id === checkinSelectedAssignedTaskId);
-        if (!task) {
-          alert("กรุณาเลือกงานที่ได้รับมอบหมาย");
-          return;
-        }
-        jobTitle = task.title;
-        jobLocation = task.desc || "ไซต์งานลูกค้า";
-      } else {
-        const loc = document.getElementById("quickLocationInput").value.trim();
-        if (!loc) {
-          alert("กรุณาระบุสถานที่หรือชื่อลูกค้า");
-          return;
-        }
-        jobTitle = checkinSelectedQuickJob;
-        jobLocation = loc;
+      const jobTitle = checkinSelectedQuickJob || "📹 ติดตั้งกล้องชุดใหม่";
+      const loc = document.getElementById("fieldLocationInput").value.trim();
+      if (!loc) {
+        alert("กรุณาระบุสถานที่หรือชื่อลูกค้าหน้างาน");
+        return;
       }
+      const note = document.getElementById("fieldNoteInput").value.trim();
 
       const now = new Date();
       const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
@@ -1006,16 +893,57 @@
       const newActive = {
         id: `CHK-${Math.floor(100 + Math.random() * 900)}`,
         techs: [...checkinSelectedTechs],
-        task: `${jobTitle} (${jobLocation})`,
+        task: `${jobTitle} (${loc})`,
         time: timeStr
       };
       activeTasks.unshift(newActive);
       renderActiveCheckoutList(activeTasks);
 
+      // Reset field inputs
+      document.getElementById("fieldLocationInput").value = "";
+      document.getElementById("fieldNoteInput").value = "";
+
       // LINE Flex Card specifically for Foresee CCTV
+      const bodyContents = [
+        {
+          type: "box", layout: "horizontal", contents: [
+            { type: "text", text: "ทีมช่างหน้างาน", size: "xs", color: "#64748B", flex: 4 },
+            { type: "text", text: techDisplayStr, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+          ]
+        },
+        {
+          type: "box", layout: "horizontal", contents: [
+            { type: "text", text: "ประเภทงาน", size: "xs", color: "#64748B", flex: 4 },
+            { type: "text", text: jobTitle, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+          ]
+        },
+        {
+          type: "box", layout: "horizontal", contents: [
+            { type: "text", text: "สถานที่ / ไซต์", size: "xs", color: "#64748B", flex: 4 },
+            { type: "text", text: loc, size: "xs", color: "#334155", wrap: true, flex: 6 }
+          ]
+        }
+      ];
+
+      if (note) {
+        bodyContents.push({
+          type: "box", layout: "horizontal", contents: [
+            { type: "text", text: "รายละเอียด", size: "xs", color: "#64748B", flex: 4 },
+            { type: "text", text: note, size: "xs", color: "#334155", wrap: true, flex: 6 }
+          ]
+        });
+      }
+
+      bodyContents.push({
+        type: "box", layout: "horizontal", contents: [
+          { type: "text", text: "วันที่", size: "xs", color: "#64748B", flex: 4 },
+          { type: "text", text: dateStr, size: "xs", color: "#334155", flex: 6 }
+        ]
+      });
+
       const flexCard = {
         type: "flex",
-        altText: `[เช็กอิน CCTV] ${techDisplayStr} ถึงหน้างานแล้ว (${timeStr} น.)`,
+        altText: `[เช็กอิน CCTV] ${techDisplayStr} ถึงหน้างาน ${loc} (${timeStr} น.)`,
         contents: {
           type: "bubble",
           size: "kilo",
@@ -1048,32 +976,7 @@
             layout: "vertical",
             spacing: "sm",
             paddingAll: "16px",
-            contents: [
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "ทีมช่างหน้างาน", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: techDisplayStr, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
-                ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "งานที่เข้าทำ", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: jobTitle, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
-                ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "สถานที่ / ลูกค้า", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: jobLocation, size: "xs", color: "#334155", wrap: true, flex: 6 }
-                ]
-              },
-              {
-                type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "วันที่", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: dateStr, size: "xs", color: "#334155", flex: 6 }
-                ]
-              }
-            ]
+            contents: bodyContents
           },
           footer: {
             type: "box",
@@ -1689,7 +1592,6 @@
       newItems.forEach(item => tasksList.unshift(item));
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
       renderTasksList();
-      renderCheckinAssignedCards(); // Update check-in tab as well!
 
       const first = newItems[0];
       const isUrgent = selectedAssignStatus.includes("ด่วน");
@@ -1697,7 +1599,7 @@
 
       const flexCard = {
         type: "flex",
-        altText: `[งานใหม่ CCTV] ${first.title} (ถึง ${techDisplayStr})`,
+        altText: `[มอบหมายงาน] ${first.title} (ถึง ${techDisplayStr})`,
         contents: {
           type: "bubble",
           size: "kilo",
@@ -1711,13 +1613,13 @@
                 type: "box",
                 layout: "horizontal",
                 contents: [
-                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#93C5FD", size: "xxs" },
+                  { type: "text", text: "FORESEE WORKPLACE", weight: "bold", color: "#93C5FD", size: "xxs" },
                   { type: "text", text: selectedAssignStatus, color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
                 ]
               },
               {
                 type: "text",
-                text: "มอบหมายงานปฏิบัติการ",
+                text: "📋 มอบหมายงาน (ที่ทำงาน)",
                 weight: "bold",
                 color: "#FFFFFF",
                 size: "md",
@@ -1733,7 +1635,7 @@
             contents: [
               {
                 type: "box", layout: "horizontal", contents: [
-                  { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: "ผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
                   { type: "text", text: techDisplayStr, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
                 ]
               },
@@ -2165,7 +2067,6 @@
 
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
       renderTasksList();
-      renderCheckinAssignedCards();
       closeEditTaskModal();
     }
 
@@ -2174,7 +2075,6 @@
       tasksList = tasksList.filter(t => t.id !== currentEditingTaskId);
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
       renderTasksList();
-      renderCheckinAssignedCards();
       closeEditTaskModal();
     }
 
