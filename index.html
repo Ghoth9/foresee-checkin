@@ -28,6 +28,14 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
     }
+    /* Hide scrollbar for clean filter pill row */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
 <body class="text-slate-800 min-h-screen pb-16 antialiased selection:bg-blue-100">
@@ -67,23 +75,23 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- TAB 1: งานปฏิบัติการ (SPACIOUS, MOBILE POLISHED LAYOUT) -->
+    <!-- TAB 1: งานปฏิบัติการ (OPERATIONS DASHBOARD) -->
     <!-- ========================================================================= -->
     <section id="tasksSection" class="space-y-3">
       
-      <!-- Officer Header Overview -->
+      <!-- Operations Overview Header Card -->
       <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center space-x-2.5">
-            <div class="w-9 h-9 rounded-full bg-rose-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
-              ม
+            <div class="w-9 h-9 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center text-sm shadow-sm" id="userAvatarElem">
+              FS
             </div>
             <div>
               <div class="flex items-center space-x-1.5">
-                <span class="text-xs font-bold text-slate-900">มณเฑียร แซ่ตั้ง</span>
-                <span class="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-medium">Project Support Officer</span>
+                <span class="text-xs font-bold text-slate-900" id="currentOfficerName">ภาพรวมงานปฏิบัติการ</span>
+                <span class="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 font-medium" id="officerRoleBadge">ทีมช่าง Foresee</span>
               </div>
-              <div class="text-[10px] text-slate-500 mt-0.5" id="taskSummaryCount">ภาระงานทั้งหมด 3 รายการ • สำเร็จ 67%</div>
+              <div class="text-[10px] text-slate-500 mt-0.5" id="taskSummaryCount">ภาระงานทั้งหมด 0 รายการ</div>
             </div>
           </div>
           <button type="button" onclick="openAssignModal()" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-medium text-xs px-2.5 py-1.5 rounded-lg shadow-sm transition-all flex items-center space-x-1">
@@ -93,25 +101,33 @@
         </div>
 
         <!-- Metric Pills -->
-        <div class="grid grid-cols-3 gap-1.5 text-center text-[11px] pt-1 border-t border-slate-100">
+        <div class="grid grid-cols-3 gap-1.5 text-center text-[11px] pt-1 border-t border-slate-100 mb-3">
           <div class="bg-rose-50 border border-rose-200/80 rounded-lg py-1.5 px-1 text-rose-700 font-medium flex items-center justify-center space-x-1">
             <span>🚨 เกินกำหนด</span>
             <span class="font-bold text-rose-800" id="statOverdue">0</span>
           </div>
           <div class="bg-amber-50 border border-amber-200/80 rounded-lg py-1.5 px-1 text-amber-700 font-medium flex items-center justify-center space-x-1">
             <span>⏳ กำลังทำ</span>
-            <span class="font-bold text-amber-800" id="statInProgress">2</span>
+            <span class="font-bold text-amber-800" id="statInProgress">0</span>
           </div>
           <div class="bg-emerald-50 border border-emerald-200/80 rounded-lg py-1.5 px-1 text-emerald-700 font-medium flex items-center justify-center space-x-1">
             <span>✅ เสร็จ</span>
-            <span class="font-bold text-emerald-800" id="statCompleted">1</span>
+            <span class="font-bold text-emerald-800" id="statCompleted">0</span>
+          </div>
+        </div>
+
+        <!-- Filter by Technician Row -->
+        <div class="pt-2 border-t border-slate-100">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">กรองดูตามช่าง:</div>
+          <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-0.5" id="techFilterContainer">
+            <!-- Filter chips injected dynamically -->
           </div>
         </div>
       </div>
 
       <!-- Task List Header -->
       <div class="flex items-center justify-between px-1">
-        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide">รายการงานปฏิบัติการ</h3>
+        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide" id="taskListSectionHeader">รายการงานปฏิบัติการ</h3>
         <span class="text-[11px] text-slate-500">กดแก้ไข/อัปเดต/ขยายเวลาได้</span>
       </div>
 
@@ -216,7 +232,7 @@
   </main>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 1: มอบหมายงานปฏิบัติการ (CUSTOM DROPDOWN & CUSTOM CALENDAR) -->
+  <!-- MODAL 1: มอบหมายงานปฏิบัติการ (MULTI-SELECT TECHNICIANS SUPPORT) -->
   <!-- ========================================================================= -->
   <div id="assignModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3.5 z-50 overflow-y-auto modal-scroll-container">
     <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto">
@@ -242,7 +258,7 @@
         </button>
       </div>
 
-      <!-- Custom Initial Status Selector (No native ugly Android radio dialog!) -->
+      <!-- Custom Initial Status Selector -->
       <div class="mb-3.5">
         <label class="block text-xs font-semibold text-slate-700 mb-1">สถานะงานเริ่มต้น (สำหรับทุกงานในกลุ่มนี้)</label>
         <div class="relative">
@@ -411,7 +427,7 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 4: แก้ไขรายการงาน (EDIT TASK MODAL - FIX FOR POINT 5) -->
+  <!-- MODAL 4: แก้ไขรายการงาน (MULTI-SELECT TECHNICIANS SUPPORT) -->
   <!-- ========================================================================= -->
   <div id="editTaskModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3.5 z-50 overflow-y-auto modal-scroll-container">
     <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto">
@@ -442,22 +458,21 @@
           <textarea id="editTaskDescInput" rows="2" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800"></textarea>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">ช่างผู้รับผิดชอบ</label>
-            <select id="editTechSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:outline-none">
-              <!-- Populated dynamically -->
-            </select>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">ช่างผู้รับผิดชอบ (เลือกได้หลายคน)</label>
+          <div class="flex flex-wrap gap-1.5" id="editTechChipsContainer">
+            <!-- Populated dynamically -->
           </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">สถานะ</label>
-            <select id="editStatusSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:outline-none">
-              <option value="กำลังทำ">กำลังทำ</option>
-              <option value="รอดำเนินการ">รอดำเนินการ</option>
-              <option value="รออะไหล่">รออะไหล่</option>
-              <option value="เสร็จสิ้น">เสร็จสิ้น</option>
-            </select>
-          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">สถานะ</label>
+          <select id="editStatusSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:outline-none">
+            <option value="กำลังทำ">กำลังทำ</option>
+            <option value="รอดำเนินการ">รอดำเนินการ</option>
+            <option value="รออะไหล่">รออะไหล่</option>
+            <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+          </select>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
@@ -496,12 +511,11 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL 5: CUSTOM BEAUTIFUL ENTERPRISE CALENDAR (NO UGLY GREEN ANDROID POPUP!) -->
+  <!-- MODAL 5: CUSTOM CALENDAR -->
   <!-- ========================================================================= -->
   <div id="customCalendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
     <div class="bg-white rounded-2xl p-4 max-w-[320px] w-full shadow-2xl border border-slate-100 my-auto">
       
-      <!-- Calendar Header Month/Year Selector -->
       <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
         <button type="button" onclick="prevCalendarMonth()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 active:scale-95 transition-all">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -515,17 +529,14 @@
         </button>
       </div>
 
-      <!-- Weekday Labels -->
       <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-400 mb-1.5">
         <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
       </div>
 
-      <!-- Days Grid -->
       <div id="calDaysGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
         <!-- Injected dynamically -->
       </div>
 
-      <!-- Footer Buttons -->
       <div class="flex items-center justify-between pt-3 mt-3 border-t border-slate-100">
         <button type="button" onclick="selectTodayOnCalendar()" class="text-blue-600 hover:text-blue-800 text-[11px] font-semibold py-1 px-2 rounded hover:bg-blue-50">
           วันนี้
@@ -577,39 +588,40 @@
   <!-- JAVASCRIPT LOGIC -->
   <!-- ========================================================================= -->
   <script>
-    // Configuration
     const MY_LIFF_ID = "2011782806-0If1jko9";
     const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
     // App State
     let currentLat = null;
     let currentLng = null;
-    let allTechnicians = ["มณเฑียร", "กนกศักดิ์", "ชุติมา", "สายฟ้า", "สมชาย", "วิชัย"];
+    let currentLineUserName = "หัวหน้างาน";
+    let allTechnicians = ["ชุติมา", "มณเฑียร", "กนกศักดิ์", "สายฟ้า", "สมชาย", "วิชัย"];
+    let selectedTechFilter = "ทั้งหมด"; // Filter for task list
     
-    // Dynamic Assign Rows
+    // Dynamic Assign Rows (Now with MULTI-SELECT techs: array of names)
     let assignRows = [];
     let selectedAssignStatus = "กำลังทำ";
 
-    // Working Tasks List
+    // Working Tasks List (Now supports techs array or single tech)
     let tasksList = [
       {
         id: "TSK-01",
         title: "งานนิวเคลียร์ สรุปราคา (ใส่ราคาอุปกรณ์อัพเดท)",
         desc: "สรุปราคาอุปกรณ์อัพเดทส่งตรวจ",
-        tech: "มณเฑียร",
+        techs: ["มณเฑียร"],
         startDate: "2026-07-07",
         deadline: "2026-07-08",
         status: "เสร็จสิ้น",
         progress: 100,
         latestUpdate: "เหลือราคา ขายึดจอกับส่วนของ...",
-        updateBy: "มณเฑียร แซ่ตั้ง",
+        updateBy: "มณเฑียร",
         updateTime: "2026-07-08 14:20"
       },
       {
         id: "TSK-02",
         title: "ไล่ของเคลม ของที่อยู่กับพี่หมู (ต่อไปยกให้เบสทำ)",
         desc: "ตรวจนับอุปกรณ์เคลมประกัน",
-        tech: "กนกศักดิ์",
+        techs: ["กนกศักดิ์", "สายฟ้า"],
         startDate: "2026-07-07",
         deadline: "2026-07-09",
         status: "กำลังทำ",
@@ -622,7 +634,7 @@
         id: "TSK-03",
         title: "ติดตั้งกล้องวงจรปิด Hikvision 4 จุด - ลาซาล 32",
         desc: "เดินสายสัญญาณและตั้งค่า Router",
-        tech: "สมชาย",
+        techs: ["สมชาย", "วิชัย"],
         startDate: "2026-09-29",
         deadline: "2026-10-06",
         status: "กำลังทำ",
@@ -647,12 +659,13 @@
     let selectedExtendNewDeadline = null;
 
     let currentEditingTaskId = null;
+    let editingTechs = [];
     let editingStartDate = null;
     let editingDeadlineDate = null;
 
     // Custom Calendar Context
     let calCurrentYear = 2026;
-    let calCurrentMonth = 8; // 0-indexed (8 = September)
+    let calCurrentMonth = 8;
     let calSelectedDate = "2026-09-29";
     let calOnSelectCallback = null;
 
@@ -662,10 +675,18 @@
         const savedTechs = localStorage.getItem("fs_techs");
         if (savedTechs) allTechnicians = JSON.parse(savedTechs);
         const savedTasks = localStorage.getItem("fs_tasks");
-        if (savedTasks) tasksList = JSON.parse(savedTasks);
+        if (savedTasks) {
+          const parsed = JSON.parse(savedTasks);
+          // Normalize to techs array
+          tasksList = parsed.map(t => {
+            if (!t.techs) t.techs = t.tech ? [t.tech] : ["ชุติมา"];
+            return t;
+          });
+        }
       } catch(e) {}
 
       updateTechDropdowns();
+      renderTechFilterChips();
       renderTasksList();
       renderActiveCheckoutList(activeTasks);
 
@@ -684,9 +705,6 @@
       requestLocation();
     });
 
-    // =========================================================================
-    // SCROLL LOCK MANAGER (FIX FOR POINT 1: "ตอนเปิด pop up มันเลื่อนข้างหลังได้")
-    // =========================================================================
     function setModalScrollLock(lock) {
       if (lock) {
         document.body.classList.add("modal-open");
@@ -698,7 +716,6 @@
       }
     }
 
-    // Date formatting: "29 กันยายน 2026"
     function formatThaiDateDisplay(dateStr) {
       if (!dateStr) return "-";
       const parts = dateStr.split("-");
@@ -720,7 +737,6 @@
       return d.toISOString().split("T")[0];
     }
 
-    // Tab Switcher
     function switchTab(tab) {
       const tabs = ["tasks", "checkin", "checkout"];
       tabs.forEach(t => {
@@ -739,15 +755,60 @@
     }
 
     // =========================================================================
-    // TASK DASHBOARD (MOBILE POLISHED LAYOUT - FIX FOR POINT 4 & POINT 5)
+    // TECHNICIAN FILTER PILLS (ALLOWS VIEWING SPECIFIC TECH OR ALL)
+    // =========================================================================
+    function renderTechFilterChips() {
+      const container = document.getElementById("techFilterContainer");
+      if (!container) return;
+
+      const filterList = ["ทั้งหมด", ...allTechnicians];
+      container.innerHTML = "";
+
+      filterList.forEach(name => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const isActive = selectedTechFilter === name;
+        btn.className = `px-2.5 py-1 rounded-full text-[11px] font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+          isActive
+            ? "bg-slate-900 text-white font-semibold shadow-sm"
+            : "bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200"
+        }`;
+        btn.innerText = name;
+        btn.onclick = () => {
+          selectedTechFilter = name;
+          renderTechFilterChips();
+          renderTasksList();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // Helper: Normalize technician list for any task
+    function getTaskTechs(task) {
+      if (Array.isArray(task.techs) && task.techs.length > 0) return task.techs;
+      if (task.tech) return [task.tech];
+      return ["ชุติมา"];
+    }
+
+    // =========================================================================
+    // TASK DASHBOARD (WITH MULTI-TECH & FILTERING)
     // =========================================================================
     function renderTasksList() {
       const container = document.getElementById("taskListContainer");
       if (!container) return;
 
-      let overdue = 0, inprog = 0, completed = 0;
       const today = getTodayYMD();
-      tasksList.forEach(t => {
+
+      // Filter tasks by technician
+      const filteredTasks = tasksList.filter(t => {
+        if (selectedTechFilter === "ทั้งหมด") return true;
+        const techs = getTaskTechs(t);
+        return techs.includes(selectedTechFilter);
+      });
+
+      // Update metrics based on active filter
+      let overdue = 0, inprog = 0, completed = 0;
+      filteredTasks.forEach(t => {
         if (t.status === "เสร็จสิ้น") completed++;
         else if (t.deadline < today) overdue++;
         else inprog++;
@@ -756,14 +817,30 @@
       document.getElementById("statInProgress").innerText = inprog;
       document.getElementById("statCompleted").innerText = completed;
 
-      const total = tasksList.length;
+      const total = filteredTasks.length;
       const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-      document.getElementById("taskSummaryCount").innerText = `ภาระงานทั้งหมด ${total} รายการ • ความสำเร็จ ${pct}%`;
+      document.getElementById("taskSummaryCount").innerText = selectedTechFilter === "ทั้งหมด" 
+        ? `ภาระงานรวม ${total} รายการ • สำเร็จ ${pct}%`
+        : `งานของ ${selectedTechFilter} (${total} รายการ • สำเร็จ ${pct}%)`;
+
+      document.getElementById("taskListSectionHeader").innerText = selectedTechFilter === "ทั้งหมด"
+        ? "รายการงานปฏิบัติการทั้งหมด"
+        : `รายการงานของ: ${selectedTechFilter}`;
+
+      if (filteredTasks.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-xl border border-dashed border-slate-200">
+            ไม่พบงานที่มอบหมายให้ ${selectedTechFilter}
+          </div>
+        `;
+        return;
+      }
 
       container.innerHTML = "";
-      tasksList.forEach((task, index) => {
+      filteredTasks.forEach((task, index) => {
         const isDone = task.status === "เสร็จสิ้น";
         const isOver = !isDone && task.deadline < today;
+        const techs = getTaskTechs(task);
 
         let badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
         if (isDone) badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200";
@@ -772,16 +849,19 @@
         const card = document.createElement("div");
         card.className = "bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3 transition-all";
         card.innerHTML = `
-          <!-- Top Row: # Index, Technician and Status Badge (Ample breathing room) -->
+          <!-- Top Row: # Index, Technician Chips and Status Badge -->
           <div class="flex items-center justify-between text-xs">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1.5 flex-wrap">
               <span class="w-5 h-5 rounded bg-slate-100 text-slate-600 font-mono font-bold flex items-center justify-center text-[10px]">${index + 1}</span>
-              <span class="font-medium text-slate-600">ช่าง: <strong class="text-slate-900">${task.tech}</strong></span>
+              <span class="text-[11px] text-slate-500 font-medium">ช่าง:</span>
+              ${techs.map(tName => `
+                <span class="text-[10px] bg-slate-100 text-slate-800 font-semibold px-2 py-0.5 rounded border border-slate-200">${tName}</span>
+              `).join('')}
             </div>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg}">${task.status}</span>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg} flex-shrink-0">${task.status}</span>
           </div>
 
-          <!-- Title Row (Full Width - No horizontal compression or bad wrapping) -->
+          <!-- Title Row (Full Width) -->
           <div>
             <h4 class="text-sm font-bold text-slate-900 leading-snug">${task.title}</h4>
             ${task.desc ? `<p class="text-xs text-slate-500 mt-0.5 leading-relaxed">${task.desc}</p>` : ''}
@@ -805,7 +885,7 @@
             </div>
           </div>
 
-          <!-- Action Buttons Bar (Clean, Spacious, Wrap-friendly) -->
+          <!-- Action Buttons Bar -->
           <div class="flex flex-wrap items-center justify-end gap-1.5 pt-1 border-t border-slate-100">
             <!-- [ 💬 อัปเดต ] -->
             <button type="button" onclick="openUpdateProgressModal('${task.id}')" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors">
@@ -819,7 +899,7 @@
               <span>ขยายเวลา</span>
             </button>
 
-            <!-- [ ✏️ แก้ไข ] (FIX FOR POINT 5) -->
+            <!-- [ ✏️ แก้ไข ] -->
             <button type="button" onclick="openEditTaskModal('${task.id}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors">
               <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               <span>แก้ไข</span>
@@ -836,7 +916,7 @@
     }
 
     // =========================================================================
-    // CUSTOM ENTERPRISE CALENDAR (NO ANDROID POPUP - FIX FOR POINT 3)
+    // CUSTOM ENTERPRISE CALENDAR (NO ANDROID POPUP)
     // =========================================================================
     function openCustomCalendar(initialDateStr, onSelect) {
       calOnSelectCallback = onSelect;
@@ -894,7 +974,6 @@
       const daysInMonth = new Date(calCurrentYear, calCurrentMonth + 1, 0).getDate();
       const prevMonthDays = new Date(calCurrentYear, calCurrentMonth, 0).getDate();
 
-      // Leading days from previous month
       for (let i = 0; i < firstDay; i++) {
         const dNum = prevMonthDays - firstDay + i + 1;
         const cell = document.createElement("div");
@@ -903,7 +982,6 @@
         grid.appendChild(cell);
       }
 
-      // Days of current month
       const todayYMD = getTodayYMD();
       for (let d = 1; d <= daysInMonth; d++) {
         const mStr = String(calCurrentMonth + 1).padStart(2, "0");
@@ -936,10 +1014,10 @@
     }
 
     // =========================================================================
-    // MODAL 1: มอบหมายงาน (CUSTOM DROPDOWN & CUSTOM CALENDAR)
+    // MODAL 1: มอบหมายงาน (MULTI-SELECT TECHNICIANS SUPPORT)
     // =========================================================================
     function openAssignModal() {
-      selectedAssignStatus = "กำลังทำ"; // FIX FOR POINT 2: "กำลังทำ" แทน "กำลังทำเลย"
+      selectedAssignStatus = "กำลังทำ";
       document.getElementById("assignStatusText").innerText = selectedAssignStatus;
       document.getElementById("assignStatusMenu").classList.add("hidden");
 
@@ -950,7 +1028,7 @@
           desc: "",
           startDate: getTodayYMD(),
           deadline: getSevenDaysLaterYMD(),
-          tech: allTechnicians[0] || "มณเฑียร"
+          techs: ["ชุติมา"] // Multi-select array!
         }
       ];
       renderAssignRows();
@@ -989,7 +1067,7 @@
         desc: "",
         startDate: getTodayYMD(),
         deadline: getSevenDaysLaterYMD(),
-        tech: allTechnicians[0] || "มณเฑียร"
+        techs: ["ชุติมา"]
       });
       renderAssignRows();
     }
@@ -1014,13 +1092,10 @@
             ${assignRows.length > 1 ? `<button type="button" onclick="removeAssignRow(${idx})" class="text-rose-500 hover:text-rose-700">ลบแถวนี้</button>` : ''}
           </div>
 
-          <!-- Input 1: ชื่องาน -->
           <input type="text" value="${row.title}" oninput="assignRows[${idx}].title = this.value" placeholder="พิมพ์ชื่องาน เช่น เดินสายกล้องวงจรปิด..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
 
-          <!-- Input 2: รายละเอียดเพิ่มเติม -->
           <input type="text" value="${row.desc}" oninput="assignRows[${idx}].desc = this.value" placeholder="รายละเอียดงานเพิ่มเติม (ระบุหรือไม่ระบุก็ได้)..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
 
-          <!-- 2 Columns: เริ่มงาน & กำหนดส่ง (Custom Calendar trigger - No green Android popup!) -->
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div>
               <span class="block text-[11px] text-slate-600 font-medium mb-1">เริ่มงาน</span>
@@ -1039,21 +1114,26 @@
             </div>
           </div>
 
-          <!-- Row: คนทำ -->
+          <!-- Multi-select Technician Chips -->
           <div>
-            <div class="flex items-center space-x-1.5 mb-1.5">
-              <span class="text-[11px] text-slate-600 font-medium">คนทำ:</span>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] text-slate-600 font-medium">คนทำ (เลือกได้หลายคน):</span>
+              <span class="text-[10px] text-blue-600 font-semibold">เลือกแล้ว: ${row.techs.length} คน</span>
             </div>
             <div class="flex flex-wrap gap-1.5">
-              ${allTechnicians.map(tName => `
-                <button type="button" onclick="selectRowTech(${idx}, '${tName}')" class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-                  row.tech === tName
-                    ? 'bg-slate-900 text-white font-semibold shadow-sm'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }">
-                  ${tName}
-                </button>
-              `).join('')}
+              ${allTechnicians.map(tName => {
+                const isSelected = row.techs.includes(tName);
+                return `
+                  <button type="button" onclick="toggleRowTech(${idx}, '${tName}')" class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                    isSelected
+                      ? 'bg-slate-900 text-white font-semibold shadow-sm flex items-center space-x-1'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }">
+                    ${isSelected ? '<span>✓</span>' : ''}
+                    <span>${tName}</span>
+                  </button>
+                `;
+              }).join('')}
             </div>
           </div>
         `;
@@ -1070,8 +1150,17 @@
       });
     }
 
-    function selectRowTech(rowIdx, tName) {
-      assignRows[rowIdx].tech = tName;
+    // Toggle multi-select technician
+    function toggleRowTech(rowIdx, tName) {
+      let cur = assignRows[rowIdx].techs;
+      if (cur.includes(tName)) {
+        if (cur.length > 1) {
+          cur = cur.filter(t => t !== tName);
+        }
+      } else {
+        cur.push(tName);
+      }
+      assignRows[rowIdx].techs = cur;
       renderAssignRows();
     }
 
@@ -1088,13 +1177,13 @@
         id: `TSK-${Math.floor(10 + Math.random() * 90)}`,
         title: r.title,
         desc: r.desc,
-        tech: r.tech,
+        techs: [...r.techs],
         startDate: r.startDate,
         deadline: r.deadline,
         status: selectedAssignStatus,
         progress: 0,
         latestUpdate: `มอบหมายงานเริ่มต้น: ${selectedAssignStatus}`,
-        updateBy: "มณเฑียร",
+        updateBy: currentLineUserName,
         updateTime: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
       }));
 
@@ -1104,10 +1193,11 @@
 
       const first = newItems[0];
       const isUrgent = selectedAssignStatus.includes("ด่วน");
+      const techDisplayStr = first.techs.join(", ");
 
       const flexCard = {
         type: "flex",
-        altText: `[งานใหม่] ${first.title} (ถึง ${first.tech})`,
+        altText: `[งานใหม่] ${first.title} (ถึง ${techDisplayStr})`,
         contents: {
           type: "bubble",
           size: "kilo",
@@ -1144,7 +1234,7 @@
               {
                 type: "box", layout: "horizontal", contents: [
                   { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: first.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                  { type: "text", text: techDisplayStr, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
                 ]
               },
               {
@@ -1187,7 +1277,7 @@
     }
 
     // =========================================================================
-    // MODAL 2: PROGRESS UPDATE (อัปเดตงานเป็นขั้นๆ)
+    // MODAL 2: PROGRESS UPDATE
     // =========================================================================
     function openUpdateProgressModal(taskId) {
       currentUpdatingTaskId = taskId;
@@ -1248,13 +1338,15 @@
       task.status = currentUpdatingStatus;
       task.progress = currentUpdatingProgressPercent;
       task.latestUpdate = note;
-      task.updateBy = "มณเฑียร แซ่ตั้ง";
+      task.updateBy = currentLineUserName;
       const now = new Date();
       task.updateTime = `${now.toLocaleDateString("th-TH")} ${now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}`;
 
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
       renderTasksList();
       closeUpdateProgressModal();
+
+      const techs = getTaskTechs(task);
 
       const flexCard = {
         type: "flex",
@@ -1295,7 +1387,7 @@
               {
                 type: "box", layout: "horizontal", contents: [
                   { type: "text", text: "ช่างผู้ดูแล", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: task.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                  { type: "text", text: techs.join(", "), size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
                 ]
               },
               {
@@ -1344,7 +1436,7 @@
     }
 
     // =========================================================================
-    // MODAL 3: ขยายระยะเวลางาน (EXTEND DEADLINE)
+    // MODAL 3: ขยายระยะเวลางาน
     // =========================================================================
     function openExtendModal(taskId) {
       currentExtendingTaskId = taskId;
@@ -1390,7 +1482,7 @@
       const oldDeadline = task.deadline;
       task.deadline = selectedExtendNewDeadline;
       task.latestUpdate = `ขยายกำหนดส่งเป็น ${selectedExtendNewDeadline} (เหตุผล: ${reason})`;
-      task.updateBy = "มณเฑียร แซ่ตั้ง";
+      task.updateBy = currentLineUserName;
       task.updateTime = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
@@ -1485,7 +1577,7 @@
     }
 
     // =========================================================================
-    // MODAL 4: แก้ไขรายการงาน (FIX FOR POINT 5)
+    // MODAL 4: แก้ไขรายการงาน (WITH MULTI-SELECT CHIPS)
     // =========================================================================
     function openEditTaskModal(taskId) {
       currentEditingTaskId = taskId;
@@ -1495,16 +1587,8 @@
       document.getElementById("editTaskTitleInput").value = task.title;
       document.getElementById("editTaskDescInput").value = task.desc || "";
 
-      // Populate technician select
-      const techSel = document.getElementById("editTechSelect");
-      techSel.innerHTML = "";
-      allTechnicians.forEach(tName => {
-        const opt = document.createElement("option");
-        opt.value = tName;
-        opt.innerText = tName;
-        if (tName === task.tech) opt.selected = true;
-        techSel.appendChild(opt);
-      });
+      editingTechs = [...getTaskTechs(task)];
+      renderEditTechChips();
 
       document.getElementById("editStatusSelect").value = task.status || "กำลังทำ";
 
@@ -1515,6 +1599,33 @@
 
       document.getElementById("editTaskModal").classList.remove("hidden");
       setModalScrollLock(true);
+    }
+
+    function renderEditTechChips() {
+      const container = document.getElementById("editTechChipsContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      allTechnicians.forEach(tName => {
+        const isSelected = editingTechs.includes(tName);
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+          isSelected
+            ? "bg-slate-900 text-white font-semibold shadow-sm flex items-center space-x-1"
+            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+        }`;
+        btn.innerHTML = `${isSelected ? '<span>✓</span>' : ''}<span>${tName}</span>`;
+        btn.onclick = () => {
+          if (editingTechs.includes(tName)) {
+            if (editingTechs.length > 1) editingTechs = editingTechs.filter(t => t !== tName);
+          } else {
+            editingTechs.push(tName);
+          }
+          renderEditTechChips();
+        };
+        container.appendChild(btn);
+      });
     }
 
     function closeEditTaskModal() {
@@ -1547,7 +1658,7 @@
 
       task.title = title;
       task.desc = document.getElementById("editTaskDescInput").value.trim();
-      task.tech = document.getElementById("editTechSelect").value;
+      task.techs = [...editingTechs];
       task.status = document.getElementById("editStatusSelect").value;
       task.startDate = editingStartDate;
       task.deadline = editingDeadlineDate;
@@ -1569,9 +1680,11 @@
       const task = tasksList.find(t => t.id === taskId);
       if (!task) return;
 
+      const techs = getTaskTechs(task);
+
       const flexCard = {
         type: "flex",
-        altText: `[งานปฏิบัติการ] ${task.title} (${task.tech})`,
+        altText: `[งานปฏิบัติการ] ${task.title} (${techs.join(", ")})`,
         contents: {
           type: "bubble",
           size: "kilo",
@@ -1608,7 +1721,7 @@
               {
                 type: "box", layout: "horizontal", contents: [
                   { type: "text", text: "ช่างผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
-                  { type: "text", text: task.tech, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+                  { type: "text", text: techs.join(", "), size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
                 ]
               },
               {
@@ -1874,7 +1987,18 @@
       try {
         await liff.init({ liffId: MY_LIFF_ID });
         await liff.ready;
-        if (!liff.isLoggedIn() && liff.isInClient && !liff.isInClient()) {
+        if (liff.isLoggedIn()) {
+          try {
+            const profile = await liff.getProfile();
+            if (profile && profile.displayName) {
+              currentLineUserName = profile.displayName;
+              const nameElem = document.getElementById("currentOfficerName");
+              if (nameElem) nameElem.innerText = profile.displayName;
+              const avatarElem = document.getElementById("userAvatarElem");
+              if (avatarElem) avatarElem.innerText = profile.displayName.charAt(0);
+            }
+          } catch(pe) {}
+        } else if (liff.isInClient && !liff.isInClient()) {
           liff.login();
         }
       } catch (err) {
@@ -1955,6 +2079,7 @@
         allTechnicians.push(name);
         try { localStorage.setItem("fs_techs", JSON.stringify(allTechnicians)); } catch(e) {}
         updateTechDropdowns();
+        renderTechFilterChips();
       }
       closeAddTechModal();
     }
