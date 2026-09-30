@@ -2716,6 +2716,11 @@
       try {
         await liff.ready;
 
+        if (!liff.isLoggedIn()) {
+          showStatusModal("success", "บันทึกข้อมูลเรียบร้อยแล้ว!", "บันทึกข้อมูลลง Google Sheet สำเร็จ (การส่งการ์ดเข้ากลุ่ม LINE แนะนำเปิดผ่านแอป LINE บนมือถือ)");
+          return;
+        }
+
         if (!liff.isApiAvailable("shareTargetPicker")) {
           showStatusModal("error", "ฟังก์ชันแชร์ไม่พร้อมใช้งาน", "กรุณาตรวจสอบว่าเปิด ShareTargetPicker ใน LINE Developers Console แล้ว");
           return;
@@ -2757,8 +2762,6 @@
               if (avatarElem) avatarElem.innerText = profile.displayName.charAt(0);
             }
           } catch(pe) {}
-        } else if (liff.isInClient && !liff.isInClient()) {
-          liff.login();
         }
       } catch (err) {
         console.warn("LIFF Init error:", err);
