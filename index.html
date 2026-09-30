@@ -50,9 +50,15 @@
           <div class="text-[10px] text-slate-400">ระบบงานช่างภาคสนาม & บันทึกเวลาหน้างาน</div>
         </div>
       </div>
-      <div id="gpsStatusBadge" class="text-[10px] px-2 py-1 rounded-md font-medium bg-slate-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5">
-        <span id="gpsDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-        <span id="gpsStatusText">GPS พร้อม</span>
+      <div class="flex items-center space-x-1.5">
+        <button id="gasSyncBtn" type="button" onclick="syncWithGoogleSheet()" class="text-[10px] px-2 py-1 rounded-md font-medium bg-slate-800 border border-slate-700 text-slate-300 flex items-center space-x-1 hover:bg-slate-700 active:scale-95 transition-all" title="กดเพื่อซิงค์ข้อมูลกับ Google Sheet">
+          <span id="gasDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span id="gasStatusText">Sheet</span>
+        </button>
+        <div id="gpsStatusBadge" class="text-[10px] px-2 py-1 rounded-md font-medium bg-slate-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5">
+          <span id="gpsDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span id="gpsStatusText">GPS พร้อม</span>
+        </div>
       </div>
     </div>
   </header>
@@ -680,6 +686,7 @@
   <!-- ========================================================================= -->
   <script>
     const MY_LIFF_ID = "2011782806-0If1jko9";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwW3sYzsOBG848qgTl_KCF2IW9CfkPqlyT6Q5Acr8efP_ZmZtsFR5Q_ILSz4Ts25q8Q/exec";
     const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
 
     // Foresee CCTV Standard Quick Jobs
@@ -761,24 +768,135 @@
       }
     ];
 
-    let activeTasks = [
-      { id: "CHK-01", techs: ["สายฟ้า", "สมชาย"], task: "📹 ติดตั้งกล้องชุดใหม่ (บ้านคุณสมชาย ซอยลาซาล 32)", time: "09:30" }
-    ];
+    let activeTasks = [];
     let selectedActiveItem = null;
+    let dailyLogs = [];
 
-    let dailyLogs = [
-      {
-        id: "CHK-01",
-        task: "📹 ติดตั้งกล้องชุดใหม่ (บ้านคุณสมชาย ซอยลาซาล 32)",
-        techs: ["สายฟ้า", "สมชาย"],
-        checkinTime: "09:30",
-        checkoutTime: null,
-        status: "กำลังทำ",
-        outcome: null,
-        closedBy: null,
-        date: "2026-09-30"
+    function saveTechnicians() {
+      try {
+        localStorage.setItem("fs_techs", JSON.stringify(allTechnicians));
+      } catch(e) {}
+    }
+
+    let isSyncingGas = false;
+
+    function formatGasTime(val) {
+      if (!val) return "";
+      const s = String(val);
+      if (s.includes("T")) {
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          const h = String((d.getUTCHours() + 7) % 24).padStart(2, "0");
+          const m = String(d.getUTCMinutes()).padStart(2, "0");
+          return `${h}:${m}`;
+        }
       }
-    ];
+      return s.slice(0, 5);
+    }
+
+    function formatGasDate(val) {
+      if (!val) return "";
+      const s = String(val);
+      if (s.includes("T")) {
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          const utc7 = new Date(d.getTime() + 7 * 3600 * 1000);
+          const day = String(utc7.getUTCDate()).padStart(2, "0");
+          const month = String(utc7.getUTCMonth() + 1).padStart(2, "0");
+          const year = utc7.getUTCFullYear();
+          return `${day}/${month}/${year}`;
+        }
+      }
+      return s;
+    }
+
+    function updateSyncStatusUI(status) {
+      const dot = document.getElementById("gasDot");
+      const text = document.getElementById("gasStatusText");
+      if (!dot || !text) return;
+      if (status === "loading") {
+        dot.className = "w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse";
+        text.innerText = "ซิงค์...";
+      } else if (status === "online") {
+        dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
+        text.innerText = "Sheet ซิงค์แล้ว";
+      } else {
+        dot.className = "w-1.5 h-1.5 rounded-full bg-slate-400";
+        text.innerText = "ออฟไลน์";
+      }
+    }
+
+    async function syncWithGoogleSheet() {
+      if (isSyncingGas) return;
+      isSyncingGas = true;
+      updateSyncStatusUI("loading");
+
+      try {
+        const resp = await fetch(GAS_API_URL, {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+        if (!resp.ok) throw new Error("HTTP error " + resp.status);
+        const data = await resp.json();
+
+        // 1. Sync Technicians
+        if (data.technicians && Array.isArray(data.technicians) && data.technicians.length > 0) {
+          allTechnicians = Array.from(new Set([...data.technicians, ...allTechnicians]));
+          saveTechnicians();
+          renderCheckinTechChips();
+          renderTechFilterChips();
+        }
+
+        // 2. Sync Active Checkins
+        if (data.activeCheckins && Array.isArray(data.activeCheckins)) {
+          const sheetActives = data.activeCheckins.map(item => ({
+            id: item.id,
+            techs: [item.tech],
+            task: item.task,
+            time: formatGasTime(item.time),
+            date: formatGasDate(item.date)
+          }));
+
+          // Merge: sheet items + local pending items
+          const combined = [...sheetActives];
+          activeTasks.forEach(loc => {
+            if (!combined.some(s => s.id === loc.id)) {
+              combined.push(loc);
+            }
+          });
+          activeTasks = combined;
+          saveActiveTasks();
+          renderActiveCheckoutList(activeTasks);
+
+          // Populate daily activity logs
+          sheetActives.forEach(item => {
+            const exists = dailyLogs.find(l => l.id === item.id);
+            if (!exists) {
+              dailyLogs.push({
+                id: item.id,
+                task: item.task,
+                techs: item.techs,
+                checkinTime: item.time,
+                checkoutTime: null,
+                status: "กำลังทำ",
+                outcome: null,
+                closedBy: null,
+                date: item.date || new Date().toLocaleDateString("th-TH")
+              });
+            }
+          });
+          saveDailyLogs();
+          renderTodayLogs();
+        }
+
+        updateSyncStatusUI("online");
+      } catch (err) {
+        console.warn("syncWithGoogleSheet error:", err);
+        updateSyncStatusUI("offline");
+      } finally {
+        isSyncingGas = false;
+      }
+    }
 
     function saveDailyLogs() {
       try {
@@ -1010,6 +1128,7 @@
 
       initLiff();
       requestLocation();
+      syncWithGoogleSheet();
     });
 
     function setModalScrollLock(lock) {
@@ -1169,9 +1288,39 @@
       const mapUrl = `https://maps.google.com/?q=${lat},${lng}`;
       const techDisplayStr = checkinSelectedTechs.join(", ");
 
+      // Post to Google Sheet Database
+      const taskFullName = `${jobTitle} (${loc})` + (note ? ` - ${note}` : "");
+      let assignedId = `CHK-${Math.floor(100 + Math.random() * 900)}`;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const gasResp = await fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "saveCheckin",
+            technician: techDisplayStr,
+            taskName: taskFullName,
+            lat: lat,
+            lng: lng
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (gasResp.ok) {
+          const gasData = await gasResp.json();
+          if (gasData && gasData.success && gasData.id) {
+            assignedId = gasData.id;
+          }
+        }
+      } catch (e) {
+        console.warn("GAS saveCheckin call fallback:", e);
+      }
+
       // Add to active check-ins list for checkout
       const newActive = {
-        id: `CHK-${Math.floor(100 + Math.random() * 900)}`,
+        id: assignedId,
         techs: [...checkinSelectedTechs],
         task: `${jobTitle} (${loc})`,
         time: timeStr
@@ -1508,6 +1657,27 @@
 
       const closingItem = selectedActiveItem;
       const closingId = closingItem.id;
+
+      // Update Google Sheet Database
+      try {
+        fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "saveCheckout",
+            id: closingId,
+            outcome: selectedCheckoutOutcome,
+            note: note
+          })
+        }).then(r => r.json()).then(res => {
+          console.log("Check-out saved to Google Sheet:", res);
+        }).catch(err => {
+          console.warn("GAS saveCheckout error:", err);
+        });
+      } catch (err) {
+        console.warn("GAS saveCheckout call error:", err);
+      }
+
       activeTasks = activeTasks.filter(item => item.id !== closingId);
       selectedActiveItem = null;
       saveActiveTasks();
@@ -2786,11 +2956,20 @@
         return;
       }
       allTechnicians.push(name);
-      try { localStorage.setItem("fs_techs", JSON.stringify(allTechnicians)); } catch(e) {}
+      saveTechnicians();
       if (input) input.value = "";
       renderManageTechList();
       renderCheckinTechChips();
       renderTechFilterChips();
+
+      // Sync to Google Sheet Users tab
+      try {
+        fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "addNewTechnician", name: name })
+        }).catch(e => console.warn("addNewTechnician GAS sync error:", e));
+      } catch(e) {}
     }
 
     function showStatusModal(type, title, message) {
