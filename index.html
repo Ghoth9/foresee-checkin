@@ -3,10 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
+  <script>
+    // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
+    const FORESEE_APP_VERSION = "2026.09.30.v6";
+    (function enforceLatestVersion() {
+      try {
+        const url = new URL(window.location.href);
+        const v = url.searchParams.get("v");
+        if (v !== FORESEE_APP_VERSION) {
+          url.searchParams.set("v", FORESEE_APP_VERSION);
+          window.location.replace(url.toString());
+        }
+      } catch (e) {}
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,6 +68,9 @@
         </div>
       </div>
       <div class="flex items-center space-x-1.5">
+        <button type="button" onclick="hardRefreshApp()" class="text-[10px] px-1.5 py-1 rounded-md font-medium bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 flex items-center space-x-0.5 active:scale-95 transition-all" title="รีเฟรชรับอัปเดตใหม่">
+          <span>🔄</span>
+        </button>
         <button id="gasSyncBtn" type="button" onclick="syncWithGoogleSheet()" class="text-[10px] px-2 py-1 rounded-md font-medium bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 flex items-center space-x-1 active:scale-95 transition-all" title="กดเพื่อซิงค์ข้อมูลกับ Google Sheet">
           <span id="gasDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           <span id="gasStatusText">Sheet</span>
@@ -177,8 +194,37 @@
             <span id="todayLogsChevron" class="text-xs text-slate-400 font-bold transition-transform">▼</span>
           </div>
         </button>
-        <div id="todayLogsCollapseBody" class="hidden p-3 pt-0 border-t border-slate-100">
-          <div id="todayLogsContainer" class="space-y-2 max-h-64 overflow-y-auto pr-0.5 pt-2">
+        <div id="todayLogsCollapseBody" class="hidden p-3 pt-0 border-t border-slate-100 space-y-2">
+          <!-- Action Toolbar for Deletion -->
+          <div class="pt-2 flex items-center justify-between text-[11px] border-b border-slate-100 pb-2">
+            <div id="logNormalToolbar" class="flex items-center space-x-1.5 w-full justify-between">
+              <span class="text-[10px] text-slate-400">จัดการข้อมูล:</span>
+              <div class="flex items-center space-x-1.5">
+                <button type="button" onclick="toggleLogSelectMode()" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors text-[10px] flex items-center space-x-1 border border-slate-200">
+                  <span>☑️ เลือกลบหลายรายการ</span>
+                </button>
+                <button type="button" onclick="clearAllTodayLogs()" class="px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium transition-colors text-[10px] flex items-center space-x-1 border border-rose-200">
+                  <span>🗑️ ล้างทั้งหมด</span>
+                </button>
+              </div>
+            </div>
+            <div id="logSelectToolbar" class="hidden flex items-center space-x-1.5 w-full justify-between bg-amber-50 p-1.5 rounded-lg border border-amber-200">
+              <label class="flex items-center space-x-1.5 cursor-pointer text-[10px] font-bold text-amber-900 select-none">
+                <input type="checkbox" id="selectAllLogsCheckbox" onchange="toggleSelectAllLogs(this.checked)" class="rounded text-blue-600 focus:ring-0">
+                <span>เลือกทั้งหมด</span>
+              </label>
+              <div class="flex items-center space-x-1">
+                <button type="button" onclick="deleteSelectedLogs()" id="btnDeleteSelectedLogs" disabled class="px-2.5 py-1 rounded bg-slate-300 text-slate-500 font-bold transition-colors text-[10px] flex items-center space-x-1 cursor-not-allowed">
+                  <span>🗑️ ลบที่เลือก (<span id="selectedLogsCount">0</span>)</span>
+                </button>
+                <button type="button" onclick="toggleLogSelectMode(false)" class="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-600 font-medium transition-colors text-[10px] border border-slate-200">
+                  <span>ยกเลิก</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="todayLogsContainer" class="space-y-2 max-h-64 overflow-y-auto pr-0.5 pt-1">
             <!-- Rendered dynamically -->
           </div>
         </div>
@@ -818,6 +864,16 @@
       return s;
     }
 
+    function hardRefreshApp() {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("v", "v" + Date.now());
+        window.location.href = url.toString();
+      } catch (e) {
+        window.location.reload(true);
+      }
+    }
+
     function updateSyncStatusUI(status) {
       const dot = document.getElementById("gasDot");
       const text = document.getElementById("gasStatusText");
@@ -940,17 +996,32 @@
       dailyLogs.forEach(log => {
         const isDone = log.status === "เสร็จสิ้น" || log.status === "ปิดงานแล้ว";
         const techs = Array.isArray(log.techs) ? log.techs.join(", ") : (log.techs || "-");
+        const isSelected = selectedLogIds.has(log.id);
+
         const item = document.createElement("div");
-        item.className = "p-3 rounded-xl border border-slate-200 bg-slate-50/80 space-y-1.5 transition-all text-xs";
+        item.className = `p-2.5 rounded-xl border transition-all text-xs ${
+          isSelected ? "border-amber-400 bg-amber-50/70" : "border-slate-200 bg-slate-50/80"
+        } space-y-1.5`;
+
         item.innerHTML = `
           <div class="flex items-start justify-between">
-            <div class="flex items-center space-x-1.5 min-w-0 pr-2">
+            <div class="flex items-center space-x-2 min-w-0 pr-1 flex-1">
+              ${isLogSelectMode ? `
+                <input type="checkbox" ${isSelected ? "checked" : ""} onchange="toggleSelectLog('${log.id}', this.checked)" class="rounded text-blue-600 focus:ring-0 cursor-pointer flex-shrink-0">
+              ` : ''}
               <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded ${isDone ? 'bg-emerald-100 text-emerald-800 font-bold' : 'bg-amber-100 text-amber-800 font-bold'}">${log.id}</span>
               <span class="text-xs font-bold text-slate-900 truncate">${log.task}</span>
             </div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white animate-pulse'}">
-              ${isDone ? '✓ ปิดงานแล้ว' : '📍 กำลังทำ'}
-            </span>
+            <div class="flex items-center space-x-1.5 flex-shrink-0">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white animate-pulse'}">
+                ${isDone ? '✓ ปิดงานแล้ว' : '📍 กำลังทำ'}
+              </span>
+              ${!isLogSelectMode ? `
+                <button type="button" onclick="deleteSingleLog('${log.id}', event)" title="ลบรายการนี้" class="text-rose-500 hover:text-rose-700 hover:bg-rose-100 p-1 rounded transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              ` : ''}
+            </div>
           </div>
           <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5 border-t border-slate-200/60">
             <span>ช่าง: <strong class="text-slate-700">${techs}</strong></span>
@@ -974,6 +1045,156 @@
     }
 
     let isTodayLogsOpen = false;
+    let isLogSelectMode = false;
+    let selectedLogIds = new Set();
+
+    function toggleLogSelectMode(forceState) {
+      if (typeof forceState === "boolean") {
+        isLogSelectMode = forceState;
+      } else {
+        isLogSelectMode = !isLogSelectMode;
+      }
+      if (!isLogSelectMode) {
+        selectedLogIds.clear();
+      }
+      updateLogToolbarUI();
+      renderTodayLogs();
+    }
+
+    function toggleSelectLog(id, isChecked) {
+      if (isChecked) {
+        selectedLogIds.add(id);
+      } else {
+        selectedLogIds.delete(id);
+      }
+      updateLogToolbarUI();
+    }
+
+    function toggleSelectAllLogs(isChecked) {
+      if (isChecked) {
+        dailyLogs.forEach(l => selectedLogIds.add(l.id));
+      } else {
+        selectedLogIds.clear();
+      }
+      updateLogToolbarUI();
+      renderTodayLogs();
+    }
+
+    function updateLogToolbarUI() {
+      const normalBar = document.getElementById("logNormalToolbar");
+      const selectBar = document.getElementById("logSelectToolbar");
+      const countLabel = document.getElementById("selectedLogsCount");
+      const btnDelete = document.getElementById("btnDeleteSelectedLogs");
+      const checkAll = document.getElementById("selectAllLogsCheckbox");
+
+      if (normalBar && selectBar) {
+        if (isLogSelectMode) {
+          normalBar.classList.add("hidden");
+          selectBar.classList.remove("hidden");
+        } else {
+          normalBar.classList.remove("hidden");
+          selectBar.classList.add("hidden");
+        }
+      }
+
+      if (countLabel) countLabel.innerText = selectedLogIds.size;
+      if (btnDelete) {
+        if (selectedLogIds.size > 0) {
+          btnDelete.disabled = false;
+          btnDelete.className = "px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold transition-all text-[10px] flex items-center space-x-1 shadow-xs cursor-pointer";
+        } else {
+          btnDelete.disabled = true;
+          btnDelete.className = "px-2.5 py-1 rounded bg-slate-200 text-slate-400 font-bold transition-colors text-[10px] flex items-center space-x-1 cursor-not-allowed";
+        }
+      }
+
+      if (checkAll) {
+        checkAll.checked = dailyLogs.length > 0 && selectedLogIds.size === dailyLogs.length;
+      }
+    }
+
+    async function deleteSingleLog(id, event) {
+      if (event) event.stopPropagation();
+      if (!confirm(`คุณต้องการลบรายการ ${id} หรือไม่?`)) return;
+
+      dailyLogs = dailyLogs.filter(l => l.id !== id);
+      activeTasks = activeTasks.filter(t => t.id !== id);
+      if (selectedActiveItem && selectedActiveItem.id === id) {
+        selectedActiveItem = null;
+      }
+      saveDailyLogs();
+      saveActiveTasks();
+      renderTodayLogs();
+      renderActiveCheckoutList(activeTasks);
+
+      // Background delete on Google Sheet
+      try {
+        fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "deleteCheckin", id: id })
+        }).catch(e => console.warn("deleteCheckin GAS error:", e));
+      } catch(e) {}
+    }
+
+    async function deleteSelectedLogs() {
+      if (selectedLogIds.size === 0) return;
+      const count = selectedLogIds.size;
+      if (!confirm(`คุณต้องการลบรายการที่เลือกจำนวน ${count} รายการหรือไม่?`)) return;
+
+      const idsToDelete = Array.from(selectedLogIds);
+      dailyLogs = dailyLogs.filter(l => !selectedLogIds.has(l.id));
+      activeTasks = activeTasks.filter(t => !selectedLogIds.has(t.id));
+      if (selectedActiveItem && selectedLogIds.has(selectedActiveItem.id)) {
+        selectedActiveItem = null;
+      }
+      selectedLogIds.clear();
+      isLogSelectMode = false;
+
+      saveDailyLogs();
+      saveActiveTasks();
+      updateLogToolbarUI();
+      renderTodayLogs();
+      renderActiveCheckoutList(activeTasks);
+
+      // Background delete on Google Sheet
+      try {
+        fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "deleteMultipleCheckins", ids: idsToDelete })
+        }).catch(e => console.warn("deleteMultipleCheckins GAS error:", e));
+      } catch(e) {}
+    }
+
+    async function clearAllTodayLogs() {
+      if (dailyLogs.length === 0 && activeTasks.length === 0) {
+        alert("ไม่มีรายการประวัติให้ลบ");
+        return;
+      }
+      if (!confirm("คุณต้องการล้างประวัติการปฏิบัติงานและรายการค้างทั้งหมดหรือไม่? (ข้อมูลที่บันทึกไว้จะถูกลบทั้งหมด)")) return;
+
+      dailyLogs = [];
+      activeTasks = [];
+      selectedActiveItem = null;
+      selectedLogIds.clear();
+      isLogSelectMode = false;
+
+      saveDailyLogs();
+      saveActiveTasks();
+      updateLogToolbarUI();
+      renderTodayLogs();
+      renderActiveCheckoutList(activeTasks);
+
+      // Background clear on Google Sheet
+      try {
+        fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "clearAllCheckins" })
+        }).catch(e => console.warn("clearAllCheckins GAS error:", e));
+      } catch(e) {}
+    }
 
     function toggleTodayLogs() {
       isTodayLogsOpen = !isTodayLogsOpen;
@@ -1488,7 +1709,7 @@
                 type: "button",
                 style: "primary",
                 height: "sm",
-                color: "#0284C7",
+                color: "#2563EB",
                 action: {
                   type: "uri",
                   label: "🗺️ เปิดดูพิกัดบน Google Maps",
