@@ -154,6 +154,22 @@
         </div>
 
       </div>
+
+      <!-- Today's Activity Log Card (View where team worked today) -->
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <div class="flex items-center space-x-1.5">
+            <span class="text-sm">📋</span>
+            <h3 class="text-xs font-bold text-slate-900">ประวัติการปฏิบัติงานวันนี้</h3>
+            <span id="todayLogsBadge" class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full font-medium">0 งาน</span>
+          </div>
+          <span class="text-[10px] text-slate-400 font-medium" id="todayDateLabel">วันนี้</span>
+        </div>
+        <div id="todayLogsContainer" class="space-y-2 max-h-72 overflow-y-auto pr-0.5">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
     </section>
 
     <!-- ========================================================================= -->
@@ -750,6 +766,95 @@
     ];
     let selectedActiveItem = null;
 
+    let dailyLogs = [
+      {
+        id: "CHK-01",
+        task: "📹 ติดตั้งกล้องชุดใหม่ (บ้านคุณสมชาย ซอยลาซาล 32)",
+        techs: ["สายฟ้า", "สมชาย"],
+        checkinTime: "09:30",
+        checkoutTime: null,
+        status: "กำลังทำ",
+        outcome: null,
+        closedBy: null,
+        date: "2026-09-30"
+      }
+    ];
+
+    function saveDailyLogs() {
+      try {
+        localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
+      } catch(e) {}
+    }
+
+    function renderTodayLogs() {
+      const container = document.getElementById("todayLogsContainer");
+      const badge = document.getElementById("todayLogsBadge");
+      const dateLabel = document.getElementById("todayDateLabel");
+      if (!container) return;
+
+      if (dateLabel) {
+        const now = new Date();
+        dateLabel.innerText = now.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+      }
+
+      if (badge) {
+        badge.innerText = `${dailyLogs.length} งาน`;
+      }
+
+      if (!dailyLogs || dailyLogs.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5 text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            ยังไม่มีประวัติการเช็กอินเข้าหน้างานในวันนี้
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = "";
+      dailyLogs.forEach(log => {
+        const isDone = log.status === "เสร็จสิ้น" || log.status === "ปิดงานแล้ว";
+        const techs = Array.isArray(log.techs) ? log.techs.join(", ") : (log.techs || "-");
+        const item = document.createElement("div");
+        item.className = "p-3 rounded-xl border border-slate-200 bg-slate-50/80 space-y-1.5 transition-all text-xs";
+        item.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-1.5 min-w-0 pr-2">
+              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded ${isDone ? 'bg-emerald-100 text-emerald-800 font-bold' : 'bg-amber-100 text-amber-800 font-bold'}">${log.id}</span>
+              <span class="text-xs font-bold text-slate-900 truncate">${log.task}</span>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white animate-pulse'}">
+              ${isDone ? '✓ ปิดงานแล้ว' : '📍 กำลังทำ'}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5 border-t border-slate-200/60">
+            <span>ช่าง: <strong class="text-slate-700">${techs}</strong></span>
+            <span>เวลา: ${log.checkinTime} น.${log.checkoutTime ? ` - ${log.checkoutTime} น.` : ''}</span>
+          </div>
+          ${log.outcome ? `
+            <div class="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 flex items-center justify-between">
+              <span>ผลงาน: ${log.outcome}</span>
+              ${log.closedBy ? `<span class="text-slate-500">โดย: ${log.closedBy}</span>` : ''}
+            </div>
+          ` : (!isDone ? `
+            <div class="pt-0.5 flex justify-end">
+              <button type="button" onclick="quickCloseFromLog('${log.id}')" class="text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors flex items-center space-x-1">
+                <span>🏁 กดบันทึกปิดงาน</span>
+              </button>
+            </div>
+          ` : '')}
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function quickCloseFromLog(logId) {
+      const item = activeTasks.find(t => t.id === logId) || dailyLogs.find(l => l.id === logId);
+      if (item) {
+        selectedActiveItem = item;
+        switchTab("checkout");
+      }
+    }
+
     function saveActiveTasks() {
       try {
         localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
@@ -838,6 +943,11 @@
         if (savedActive) {
           activeTasks = JSON.parse(savedActive);
         }
+
+        const savedDailyLogs = localStorage.getItem("fs_daily_logs");
+        if (savedDailyLogs) {
+          dailyLogs = JSON.parse(savedDailyLogs);
+        }
       } catch(e) {}
 
       // Check if opened directly from a LINE Flex Card "🏁 ปิดงานนี้" button
@@ -878,6 +988,7 @@
       renderTechFilterChips();
       renderTasksList();
       renderActiveCheckoutList(activeTasks);
+      renderTodayLogs();
       updateCheckoutBadge();
 
       // Determine initial tab (prioritize direct checkout link)
@@ -1069,6 +1180,21 @@
       selectedActiveItem = newActive; // Pre-select immediately so Close Job form is ready
       saveActiveTasks();
       renderActiveCheckoutList(activeTasks);
+
+      // Record to Daily Activity Logs
+      dailyLogs.unshift({
+        id: newActive.id,
+        task: newActive.task,
+        techs: [...newActive.techs],
+        checkinTime: newActive.time,
+        checkoutTime: null,
+        status: "กำลังทำ",
+        outcome: null,
+        closedBy: null,
+        date: dateStr
+      });
+      saveDailyLogs();
+      renderTodayLogs();
 
       // Reset field inputs
       document.getElementById("fieldLocationInput").value = "";
@@ -1380,11 +1506,36 @@
         }
       };
 
-      const closingId = selectedActiveItem.id;
+      const closingItem = selectedActiveItem;
+      const closingId = closingItem.id;
       activeTasks = activeTasks.filter(item => item.id !== closingId);
       selectedActiveItem = null;
       saveActiveTasks();
       renderActiveCheckoutList(activeTasks);
+
+      // Update Daily Activity Logs
+      const existingLog = dailyLogs.find(l => l.id === closingId);
+      if (existingLog) {
+        existingLog.checkoutTime = outTimeStr;
+        existingLog.status = "ปิดงานแล้ว";
+        existingLog.outcome = selectedCheckoutOutcome;
+        existingLog.closedBy = currentLineUserName || "ช่างหน้างาน";
+      } else {
+        dailyLogs.unshift({
+          id: closingItem.id,
+          task: closingItem.task,
+          techs: closingItem.techs,
+          checkinTime: closingItem.time,
+          checkoutTime: outTimeStr,
+          status: "ปิดงานแล้ว",
+          outcome: selectedCheckoutOutcome,
+          closedBy: currentLineUserName || "ช่างหน้างาน",
+          date: new Date().toLocaleDateString("th-TH")
+        });
+      }
+      saveDailyLogs();
+      renderTodayLogs();
+
       await triggerLiffShare(flexCard, "บันทึกปิดงานและส่งสรุปเข้ากลุ่ม LINE สำเร็จ");
     }
 
@@ -2445,11 +2596,46 @@
     }
 
     let gpsWatchId = null;
+    let lastRecordedLat = null;
+    let lastRecordedLng = null;
+    let lastRecordedAcc = null;
+
+    // Haversine formula to compute physical distance between two GPS coordinates in meters
+    function getGpsDistanceMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
 
     function applyGpsSuccess(pos) {
-      currentLat = pos.coords.latitude.toFixed(6);
-      currentLng = pos.coords.longitude.toFixed(6);
-      const acc = Math.round(pos.coords.accuracy);
+      const newLat = pos.coords.latitude;
+      const newLng = pos.coords.longitude;
+      const newAcc = Math.round(pos.coords.accuracy);
+
+      // Deadzone Jitter Filter: If stationary (< 12 meters drift) and accuracy is similar, ignore jitter
+      if (lastRecordedLat !== null && lastRecordedLng !== null) {
+        const driftDistance = getGpsDistanceMeters(lastRecordedLat, lastRecordedLng, newLat, newLng);
+        const accuracyJump = (lastRecordedAcc - newAcc) > 8; // Only accept if accuracy is significantly better
+        if (driftDistance < 12 && !accuracyJump) {
+          return; // Suppress coordinate twitching/jittering while stationary!
+        }
+      }
+
+      lastRecordedLat = newLat;
+      lastRecordedLng = newLng;
+      lastRecordedAcc = newAcc;
+
+      // 5 decimals (~1.1 meter precision) eliminates micro-fractional flicker of 6 decimals
+      currentLat = newLat.toFixed(5);
+      currentLng = newLng.toFixed(5);
 
       const dot = document.getElementById("gpsDot");
       const text = document.getElementById("gpsStatusText");
@@ -2459,10 +2645,23 @@
       if (text) text.innerText = "GPS พร้อม";
       if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400";
       if (title) title.innerText = "ระบุตำแหน่งสำเร็จ";
-      if (coords) coords.innerText = `${currentLat}, ${currentLng} (~${acc} ม.)`;
+      if (coords) coords.innerText = `${currentLat}, ${currentLng} (±${newAcc} ม.)`;
+
+      // When accuracy is good (<= 15m), lock position to stabilize display and save battery
+      if (newAcc <= 15 && gpsWatchId !== null) {
+        try {
+          navigator.geolocation.clearWatch(gpsWatchId);
+          gpsWatchId = null;
+        } catch(e) {}
+      }
     }
 
     function requestLocation() {
+      // Reset filter so explicit refresh always acquires fresh fix
+      lastRecordedLat = null;
+      lastRecordedLng = null;
+      lastRecordedAcc = null;
+
       const dot = document.getElementById("gpsDot");
       const text = document.getElementById("gpsStatusText");
       const title = document.getElementById("gpsLocationTitle");
@@ -2480,7 +2679,6 @@
       }
 
       // Phase 1: Fast Immediate Cache / Network Lookup (maximumAge 5 mins, timeout 4s)
-      // This returns in < 300ms on mobile devices so user immediately gets "GPS พร้อม"!
       let hasPosition = !!currentLat;
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -2493,7 +2691,7 @@
         { enableHighAccuracy: false, timeout: 4000, maximumAge: 300000 }
       );
 
-      // Phase 2: Start continuous watchPosition to refine precision and keep GPS active
+      // Phase 2: Refine precision with watchPosition
       if (gpsWatchId !== null) {
         try { navigator.geolocation.clearWatch(gpsWatchId); } catch(e) {}
       }
