@@ -67,6 +67,7 @@
       </button>
       <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
         <span>🏁 ปิดงานหน้างาน</span>
+        <span id="activeCheckinBadge" class="hidden ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white leading-none">0</span>
       </button>
       <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
         <span>📋 มอบหมายงาน</span>
@@ -112,7 +113,9 @@
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="text-xs font-semibold text-slate-700">1. ทีมช่างที่เข้าหน้างานวันนี้ <span class="text-rose-500">*</span></label>
-            <button type="button" onclick="openAddTechModal()" class="text-[11px] text-blue-600 font-medium hover:underline">+ เพิ่มช่าง</button>
+            <button type="button" onclick="openManageTechModal()" class="text-[11px] text-blue-600 font-semibold hover:underline flex items-center space-x-0.5">
+              <span>⚙️ จัดการช่าง (+/-)</span>
+            </button>
           </div>
           <div class="flex flex-wrap gap-1.5" id="checkinTechChipsContainer">
             <!-- Rendered dynamically -->
@@ -157,6 +160,15 @@
     <!-- TAB 2: ปิดงาน (CCTV TECHNICIAN FIELD CHECK-OUT - FAST 1-TAP CLOSE) -->
     <!-- ========================================================================= -->
     <section id="checkoutSection" class="hidden space-y-3">
+      <!-- Direct Checkout Banner when opened from LINE chat card -->
+      <div id="directCheckoutBanner" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-2.5 shadow-sm">
+        <span class="text-base flex-shrink-0">📲</span>
+        <div class="min-w-0">
+          <div class="font-bold text-emerald-900">เปิดบันทึกปิดงานจากการ์ดในแชท LINE</div>
+          <div id="directBannerJobTitle" class="text-[11px] text-emerald-700 font-medium mt-0.5 truncate"></div>
+        </div>
+      </div>
+
       <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3.5">
         
         <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
@@ -241,7 +253,10 @@
 
         <!-- Filter by Technician Row -->
         <div class="pt-2 border-t border-slate-100">
-          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">กรองดูตามผู้รับผิดชอบ:</div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">กรองดูตามผู้รับผิดชอบ:</span>
+            <button type="button" onclick="openManageTechModal()" class="text-[10px] text-blue-600 font-semibold hover:underline">⚙️ จัดการช่าง (+/-)</button>
+          </div>
           <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-0.5" id="techFilterContainer">
             <!-- Filter chips injected dynamically -->
           </div>
@@ -579,23 +594,54 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL: ADD TECHNICIAN -->
+  <!-- MODAL: MANAGE TECHNICIANS (ADD / REMOVE) -->
   <!-- ========================================================================= -->
-  <div id="addTechModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 modal-scroll-container">
-    <div class="bg-white rounded-xl p-5 max-w-xs w-full shadow-xl border border-slate-100 my-auto">
-      <h3 class="text-xs font-bold text-slate-900 mb-1">เพิ่มรายชื่อช่างใหม่</h3>
-      <p class="text-[11px] text-slate-500 mb-3">รายชื่อจะปรากฏในตัวเลือกทันที</p>
+  <div id="manageTechModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 modal-scroll-container">
+    <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl border border-slate-100 my-auto space-y-3.5">
       
-      <input type="text" id="newTechNameInput" placeholder="ระบุชื่อ-นามสกุลช่าง" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800 mb-3">
-      
-      <div class="flex space-x-2">
-        <button type="button" onclick="closeAddTechModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg text-xs">
-          ยกเลิก
-        </button>
-        <button type="button" onclick="confirmAddTech()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-lg text-xs">
-          บันทึก
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm">
+            👥
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-slate-900">จัดการรายชื่อทีมช่าง</h3>
+            <p class="text-[10px] text-slate-500">เพิ่มหรือลบรายชื่อช่างในระบบ</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeManageTechModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
+
+      <!-- Input to Add New Technician -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">เพิ่มช่างคนใหม่</label>
+        <div class="flex space-x-1.5">
+          <input type="text" id="newTechNameInput" onkeydown="if(event.key==='Enter') confirmAddTech()" placeholder="เช่น ช่างกนก, ช่างสมชาย" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
+          <button type="button" onclick="confirmAddTech()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg text-xs transition-colors flex items-center space-x-1 flex-shrink-0">
+            <span>+ เพิ่ม</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Current Technicians List with Delete Button -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-xs font-semibold text-slate-700">รายชื่อช่างในระบบ</label>
+          <span class="text-[10px] text-slate-400" id="techCountLabel">0 คน</span>
+        </div>
+        <div id="manageTechListContainer" class="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100">
+        <button type="button" onclick="closeManageTechModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded-lg text-xs transition-colors">
+          เรียบร้อย
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -642,11 +688,11 @@
     let currentLat = null;
     let currentLng = null;
     let currentLineUserName = "หัวหน้างาน";
-    let allTechnicians = ["สายฟ้า", "สมชาย", "กนกศักดิ์", "ชุติมา", "มณเฑียร", "วิชัย"];
+    let allTechnicians = ["ช่างสายฟ้า", "ช่างมณเฑียร", "ช่างกนก", "ช่างสมชาย"];
     let selectedTechFilter = "ทั้งหมด";
     
     // Check-in State (Field Operations)
-    let checkinSelectedTechs = ["สายฟ้า"];
+    let checkinSelectedTechs = ["ช่างสายฟ้า"];
     let checkinSelectedQuickJob = CCTV_PRESET_JOBS[0];
 
     // Checkout State (Field Operations)
@@ -704,6 +750,26 @@
     ];
     let selectedActiveItem = null;
 
+    function saveActiveTasks() {
+      try {
+        localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+      } catch (e) {
+        console.error("Failed to save active tasks:", e);
+      }
+      updateCheckoutBadge();
+    }
+
+    function updateCheckoutBadge() {
+      const badge = document.getElementById("activeCheckinBadge");
+      if (!badge) return;
+      if (activeTasks && activeTasks.length > 0) {
+        badge.innerText = activeTasks.length;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
     // Operation Context
     let currentUpdatingTaskId = null;
     let currentUpdatingStatus = "กำลังทำ";
@@ -723,6 +789,35 @@
     let calSelectedDate = "2026-09-29";
     let calOnSelectCallback = null;
 
+    // Helper to extract all params handling standard query, liff.state encoding, and URL hash
+    function getLiffUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+
+      // LINE LIFF often encodes query parameters into liff.state (e.g. ?liff.state=%3Ftab%3Dcheckout%26id%3DCHK-123)
+      if (params.has("liff.state")) {
+        try {
+          const rawState = decodeURIComponent(params.get("liff.state"));
+          const stateParams = new URLSearchParams(rawState.startsWith("?") ? rawState.slice(1) : rawState);
+          stateParams.forEach((val, key) => {
+            params.set(key, val);
+          });
+        } catch (e) {}
+      }
+
+      // Check URL hash if tab still not found (e.g. #checkout)
+      if (window.location.hash) {
+        const hash = window.location.hash.replace("#", "");
+        if (hash.includes("=")) {
+          const hashParams = new URLSearchParams(hash);
+          hashParams.forEach((val, key) => params.set(key, val));
+        } else if (["tasks", "checkin", "checkout", "assign"].includes(hash)) {
+          if (!params.has("tab")) params.set("tab", hash);
+        }
+      }
+
+      return params;
+    }
+
     // Initialize Application
     document.addEventListener("DOMContentLoaded", () => {
       try {
@@ -738,7 +833,44 @@
         }
         const savedMyTechs = localStorage.getItem("fs_my_checkin_techs");
         if (savedMyTechs) checkinSelectedTechs = JSON.parse(savedMyTechs);
+
+        const savedActive = localStorage.getItem("fs_active_tasks");
+        if (savedActive) {
+          activeTasks = JSON.parse(savedActive);
+        }
       } catch(e) {}
+
+      // Check if opened directly from a LINE Flex Card "🏁 ปิดงานนี้" button
+      const allParams = getLiffUrlParams();
+      const directId = allParams.get("id");
+      const directTask = allParams.get("task");
+      const directTechs = allParams.get("techs") ? allParams.get("techs").split(",") : [];
+      const directTime = allParams.get("time");
+
+      if (directId && directTask) {
+        const directItem = {
+          id: directId,
+          task: directTask,
+          techs: directTechs.length > 0 ? directTechs : ["ช่างหน้างาน"],
+          time: directTime || "09:00"
+        };
+        const existingIdx = activeTasks.findIndex(i => i.id === directId);
+        if (existingIdx !== -1) {
+          activeTasks[existingIdx] = directItem;
+        } else {
+          activeTasks.unshift(directItem);
+        }
+        selectedActiveItem = directItem;
+        saveActiveTasks();
+
+        // Show banner in checkout section
+        const banner = document.getElementById("directCheckoutBanner");
+        const bannerText = document.getElementById("directBannerJobTitle");
+        if (banner && bannerText) {
+          bannerText.innerText = `${directItem.id} - ${directItem.task}`;
+          banner.classList.remove("hidden");
+        }
+      }
 
       renderCheckinTechChips();
       renderCctvQuickChips();
@@ -746,10 +878,14 @@
       renderTechFilterChips();
       renderTasksList();
       renderActiveCheckoutList(activeTasks);
+      updateCheckoutBadge();
 
-      // Default to Checkin tab unless specified otherwise
-      const urlParams = new URLSearchParams(window.location.search);
-      const tabParam = urlParams.get("tab");
+      // Determine initial tab (prioritize direct checkout link)
+      let tabParam = allParams.get("tab") || allParams.get("action");
+      if (directId && directTask) {
+        tabParam = "checkout";
+      }
+
       if (tabParam && ["tasks", "checkin", "checkout", "assign"].includes(tabParam)) {
         if (tabParam === "assign") {
           switchTab("tasks");
@@ -813,6 +949,10 @@
           btn.className = "py-2 rounded-lg transition-all hover:text-slate-900 font-medium text-slate-600 flex items-center justify-center space-x-1";
         }
       });
+
+      if (tab === "checkout") {
+        renderActiveCheckoutList(activeTasks);
+      }
     }
 
     // =========================================================================
@@ -926,6 +1066,8 @@
         time: timeStr
       };
       activeTasks.unshift(newActive);
+      selectedActiveItem = newActive; // Pre-select immediately so Close Job form is ready
+      saveActiveTasks();
       renderActiveCheckoutList(activeTasks);
 
       // Reset field inputs
@@ -977,27 +1119,28 @@
         altText: `[เช็กอิน CCTV] ${techDisplayStr} ถึงหน้างาน ${loc} (${timeStr} น.)`,
         contents: {
           type: "bubble",
-          size: "kilo",
+          size: "mega",
           header: {
             type: "box",
             layout: "vertical",
             backgroundColor: "#0F172A",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box",
                 layout: "horizontal",
                 contents: [
-                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#94A3B8", size: "xxs" },
-                  { type: "text", text: `${timeStr} น.`, color: "#F8FAFC", size: "xs", align: "end", weight: "bold" }
+                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#94A3B8", size: "xxs", flex: 6 },
+                  { type: "text", text: `${timeStr} น.`, color: "#F8FAFC", size: "xs", align: "end", weight: "bold", flex: 4 }
                 ]
               },
               {
                 type: "text",
-                text: "📍 เช็กอินถึงหน้างานแล้ว",
+                text: "📍 เช็กอินถึงหน้างาน",
                 weight: "bold",
                 color: "#FFFFFF",
-                size: "md",
+                size: "lg",
+                wrap: true,
                 margin: "sm"
               }
             ]
@@ -1006,23 +1149,35 @@
             type: "box",
             layout: "vertical",
             spacing: "sm",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: bodyContents
           },
           footer: {
             type: "box",
             layout: "vertical",
-            paddingAll: "12px",
+            paddingAll: "14px",
             paddingTop: "0px",
+            spacing: "sm",
             contents: [
+              {
+                type: "button",
+                style: "primary",
+                height: "sm",
+                color: "#15803D",
+                action: {
+                  type: "uri",
+                  label: "🏁 กดปิดงานนี้ (เมื่อทำเสร็จ)",
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&id=${encodeURIComponent(newActive.id)}&task=${encodeURIComponent(newActive.task)}&techs=${encodeURIComponent(newActive.techs.join(','))}&time=${encodeURIComponent(newActive.time)}`
+                }
+              },
               {
                 type: "button",
                 style: "secondary",
                 height: "sm",
-                color: "#F1F5F9",
+                color: "#0F172A",
                 action: {
                   type: "uri",
-                  label: "เปิด Google Maps",
+                  label: "🗺️ เปิดดูพิกัดบน Google Maps",
                   uri: mapUrl
                 }
               }
@@ -1038,11 +1193,20 @@
     // FIELD CHECK-OUT LOGIC (FAST 1-TAP CLOSE FOR CCTV TECHNICIANS)
     // =========================================================================
     function renderActiveCheckoutList(items) {
+      updateCheckoutBadge();
       const container = document.getElementById("activeListContainer");
       if (!container) return;
 
       if (!items || items.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">ไม่มีงานที่เช็กอินค้างอยู่หน้างาน</div>';
+        selectedActiveItem = null;
+        container.innerHTML = `
+          <div class="text-center py-6 px-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
+            <p class="text-slate-400 text-xs">ไม่มีงานที่เช็กอินค้างอยู่หน้างานในขณะนี้</p>
+            <button type="button" onclick="switchTab('checkin')" class="text-xs text-blue-600 font-semibold hover:underline">
+              📍 ไปที่หน้าเช็กอินเข้าหน้างาน
+            </button>
+          </div>
+        `;
         const outcomeSec = document.getElementById("checkoutOutcomeSection");
         if (outcomeSec) outcomeSec.classList.add("hidden");
         const btn = document.getElementById("btnCheckoutSubmit");
@@ -1052,6 +1216,11 @@
           btn.innerHTML = "<span>ไม่มีงานค้าง</span>";
         }
         return;
+      }
+
+      // Auto-select the first (most recent) active task if nothing is currently selected
+      if (!selectedActiveItem || !items.find(i => i.id === selectedActiveItem.id)) {
+        selectedActiveItem = items[0];
       }
 
       container.innerHTML = "";
@@ -1070,7 +1239,7 @@
         card.innerHTML = `
           <div>
             <div class="flex items-center space-x-1.5">
-              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">${item.id}</span>
+              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded ${isSelected ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-slate-200 text-slate-700'}">${item.id}</span>
               <span class="text-xs font-bold text-slate-900">${item.task}</span>
             </div>
             <p class="text-[11px] text-slate-500 mt-0.5">ช่าง: ${techs.join(', ')} • เข้างาน: ${item.time} น.</p>
@@ -1083,19 +1252,24 @@
         `;
         container.appendChild(card);
       });
+
+      // Always display outcome options and enable the submit button for the selected active item
+      if (selectedActiveItem) {
+        const outcomeSec = document.getElementById("checkoutOutcomeSection");
+        if (outcomeSec) outcomeSec.classList.remove("hidden");
+
+        const btn = document.getElementById("btnCheckoutSubmit");
+        if (btn) {
+          btn.disabled = false;
+          btn.className = "w-full bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center space-x-2";
+          btn.innerHTML = `<span>🏁 บันทึกปิดงาน (${selectedActiveItem.id}) & ส่งสรุปเข้ากลุ่ม LINE</span>`;
+        }
+      }
     }
 
     function selectCheckoutItem(item) {
       selectedActiveItem = item;
       renderActiveCheckoutList(activeTasks);
-
-      const outcomeSec = document.getElementById("checkoutOutcomeSection");
-      if (outcomeSec) outcomeSec.classList.remove("hidden");
-
-      const btn = document.getElementById("btnCheckoutSubmit");
-      btn.disabled = false;
-      btn.className = "w-full bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center space-x-2";
-      btn.innerHTML = `<span>🏁 บันทึกปิดงาน (${item.id}) & ส่งสรุปเข้ากลุ่ม LINE</span>`;
     }
 
     function renderCheckoutOutcomes() {
@@ -1138,27 +1312,28 @@
         altText: `[ปิดงาน CCTV] ${techDisplayStr} ปิดงานแล้ว (${outTimeStr} น.)`,
         contents: {
           type: "bubble",
-          size: "kilo",
+          size: "mega",
           header: {
             type: "box",
             layout: "vertical",
             backgroundColor: "#14532D",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box",
                 layout: "horizontal",
                 contents: [
-                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#86EFAC", size: "xxs" },
-                  { type: "text", text: `${outTimeStr} น.`, color: "#DCFCE7", size: "xs", align: "end", weight: "bold" }
+                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#86EFAC", size: "xxs", flex: 6 },
+                  { type: "text", text: `${outTimeStr} น.`, color: "#DCFCE7", size: "xs", align: "end", weight: "bold", flex: 4 }
                 ]
               },
               {
                 type: "text",
-                text: "🏁 เช็กเอาต์ปิดงานเรียบร้อย",
+                text: "🏁 ปิดงานและส่งสรุปผลงาน",
                 weight: "bold",
                 color: "#FFFFFF",
-                size: "md",
+                size: "lg",
+                wrap: true,
                 margin: "sm"
               }
             ]
@@ -1167,12 +1342,18 @@
             type: "box",
             layout: "vertical",
             spacing: "sm",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box", layout: "horizontal", contents: [
                   { type: "text", text: "ทีมช่าง", size: "xs", color: "#64748B", flex: 4 },
                   { type: "text", text: techDisplayStr, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ผู้ส่งปิดงาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: currentLineUserName || "ช่างหน้างาน", size: "xs", weight: "bold", color: "#15803D", wrap: true, flex: 6 }
                 ]
               },
               {
@@ -1202,8 +1383,8 @@
       const closingId = selectedActiveItem.id;
       activeTasks = activeTasks.filter(item => item.id !== closingId);
       selectedActiveItem = null;
+      saveActiveTasks();
       renderActiveCheckoutList(activeTasks);
-
       await triggerLiffShare(flexCard, "บันทึกปิดงานและส่งสรุปเข้ากลุ่ม LINE สำเร็จ");
     }
 
@@ -1633,27 +1814,28 @@
         altText: `[มอบหมายงาน] ${first.title} (ถึง ${techDisplayStr})`,
         contents: {
           type: "bubble",
-          size: "kilo",
+          size: "mega",
           header: {
             type: "box",
             layout: "vertical",
             backgroundColor: isUrgent ? "#991B1B" : "#1E3A8A",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box",
                 layout: "horizontal",
                 contents: [
-                  { type: "text", text: "FORESEE WORKPLACE", weight: "bold", color: "#93C5FD", size: "xxs" },
-                  { type: "text", text: selectedAssignStatus, color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
+                  { type: "text", text: "FORESEE WORKPLACE", weight: "bold", color: "#93C5FD", size: "xxs", flex: 6 },
+                  { type: "text", text: selectedAssignStatus, color: "#FFFFFF", size: "xs", align: "end", weight: "bold", flex: 4 }
                 ]
               },
               {
                 type: "text",
-                text: "📋 มอบหมายงาน (ที่ทำงาน)",
+                text: "📋 มอบหมายงานใหม่",
                 weight: "bold",
                 color: "#FFFFFF",
-                size: "md",
+                size: "lg",
+                wrap: true,
                 margin: "sm"
               }
             ]
@@ -1662,7 +1844,7 @@
             type: "box",
             layout: "vertical",
             spacing: "sm",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box", layout: "horizontal", contents: [
@@ -1786,27 +1968,28 @@
         altText: `[อัปเดตงาน CCTV] ${task.title} (${task.status} ${task.progress}%)`,
         contents: {
           type: "bubble",
-          size: "kilo",
+          size: "mega",
           header: {
             type: "box",
             layout: "vertical",
             backgroundColor: "#0F172A",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box",
                 layout: "horizontal",
                 contents: [
-                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#94A3B8", size: "xxs" },
-                  { type: "text", text: `${task.progress}%`, color: "#38BDF8", size: "xs", align: "end", weight: "bold" }
+                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#94A3B8", size: "xxs", flex: 6 },
+                  { type: "text", text: `${task.progress}%`, color: "#38BDF8", size: "xs", align: "end", weight: "bold", flex: 4 }
                 ]
               },
               {
                 type: "text",
-                text: "อัปเดตความคืบหน้างาน",
+                text: "📊 อัปเดตความคืบหน้างาน",
                 weight: "bold",
                 color: "#FFFFFF",
-                size: "md",
+                size: "lg",
+                wrap: true,
                 margin: "sm"
               }
             ]
@@ -1815,7 +1998,7 @@
             type: "box",
             layout: "vertical",
             spacing: "sm",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box", layout: "horizontal", contents: [
@@ -1927,27 +2110,28 @@
         altText: `[ขยายเวลา] ${task.title} (เลื่อนเป็น ${selectedExtendNewDeadline})`,
         contents: {
           type: "bubble",
-          size: "kilo",
+          size: "mega",
           header: {
             type: "box",
             layout: "vertical",
             backgroundColor: "#78350F",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box",
                 layout: "horizontal",
                 contents: [
-                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#FDE68A", size: "xxs" },
-                  { type: "text", text: "ขยายเวลา", color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
+                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#FDE68A", size: "xxs", flex: 6 },
+                  { type: "text", text: "ขยายเวลา", color: "#FFFFFF", size: "xs", align: "end", weight: "bold", flex: 4 }
                 ]
               },
               {
                 type: "text",
-                text: "แจ้งขยายระยะเวลางาน",
+                text: "⏳ แจ้งขยายระยะเวลางาน",
                 weight: "bold",
                 color: "#FFFFFF",
-                size: "md",
+                size: "lg",
+                wrap: true,
                 margin: "sm"
               }
             ]
@@ -1956,7 +2140,7 @@
             type: "box",
             layout: "vertical",
             spacing: "sm",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box", layout: "horizontal", contents: [
@@ -2120,27 +2304,28 @@
         altText: `[งาน CCTV] ${task.title} (${techs.join(", ")})`,
         contents: {
           type: "bubble",
-          size: "kilo",
+          size: "mega",
           header: {
             type: "box",
             layout: "vertical",
             backgroundColor: "#0F172A",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box",
                 layout: "horizontal",
                 contents: [
-                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#94A3B8", size: "xxs" },
-                  { type: "text", text: task.status, color: "#FFFFFF", size: "xs", align: "end", weight: "bold" }
+                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#94A3B8", size: "xxs", flex: 6 },
+                  { type: "text", text: task.status, color: "#FFFFFF", size: "xs", align: "end", weight: "bold", flex: 4 }
                 ]
               },
               {
                 type: "text",
-                text: "รายละเอียดงานปฏิบัติการ",
+                text: "📋 รายละเอียดงานมอบหมาย",
                 weight: "bold",
                 color: "#FFFFFF",
-                size: "md",
+                size: "lg",
+                wrap: true,
                 margin: "sm"
               }
             ]
@@ -2149,7 +2334,7 @@
             type: "box",
             layout: "vertical",
             spacing: "sm",
-            paddingAll: "16px",
+            paddingAll: "18px",
             contents: [
               {
                 type: "box", layout: "horizontal", contents: [
@@ -2331,27 +2516,83 @@
       );
     }
 
-    function openAddTechModal() {
-      document.getElementById("newTechNameInput").value = "";
-      document.getElementById("addTechModal").classList.remove("hidden");
+    function openManageTechModal() {
+      const input = document.getElementById("newTechNameInput");
+      if (input) input.value = "";
+      renderManageTechList();
+      document.getElementById("manageTechModal").classList.remove("hidden");
       setModalScrollLock(true);
     }
 
-    function closeAddTechModal() {
-      document.getElementById("addTechModal").classList.add("hidden");
+    function closeManageTechModal() {
+      document.getElementById("manageTechModal").classList.add("hidden");
       setModalScrollLock(false);
     }
 
-    function confirmAddTech() {
-      const name = document.getElementById("newTechNameInput").value.trim();
-      if (!name) return;
-      if (!allTechnicians.includes(name)) {
-        allTechnicians.push(name);
-        try { localStorage.setItem("fs_techs", JSON.stringify(allTechnicians)); } catch(e) {}
+    // Alias for backwards compatibility
+    const openAddTechModal = openManageTechModal;
+    const closeAddTechModal = closeManageTechModal;
+
+    function renderManageTechList() {
+      const container = document.getElementById("manageTechListContainer");
+      const countLabel = document.getElementById("techCountLabel");
+      if (countLabel) countLabel.innerText = `${allTechnicians.length} คน`;
+      if (!container) return;
+      container.innerHTML = "";
+
+      allTechnicians.forEach((name, idx) => {
+        const row = document.createElement("div");
+        row.className = "flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs";
+        row.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-[10px]">${idx + 1}</span>
+            <span class="font-semibold text-slate-800">${name}</span>
+          </div>
+          <button type="button" onclick="deleteTech('${name}')" title="ลบรายชื่อช่างนี้" class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded transition-colors flex items-center space-x-1 text-[11px] font-medium border border-rose-100">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span>ลบ</span>
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function deleteTech(name) {
+      if (allTechnicians.length <= 1) {
+        alert("ต้องมีรายชื่อช่างอย่างน้อย 1 คนในระบบ");
+        return;
+      }
+      if (confirm(`คุณต้องการลบ "${name}" ออกจากระบบช่างหรือไม่?`)) {
+        allTechnicians = allTechnicians.filter(t => t !== name);
+        checkinSelectedTechs = checkinSelectedTechs.filter(t => t !== name);
+        if (checkinSelectedTechs.length === 0 && allTechnicians.length > 0) {
+          checkinSelectedTechs = [allTechnicians[0]];
+        }
+        try {
+          localStorage.setItem("fs_techs", JSON.stringify(allTechnicians));
+          localStorage.setItem("fs_my_checkin_techs", JSON.stringify(checkinSelectedTechs));
+        } catch(e) {}
+        renderManageTechList();
         renderCheckinTechChips();
         renderTechFilterChips();
+        renderTasksList();
       }
-      closeAddTechModal();
+    }
+
+    function confirmAddTech() {
+      const input = document.getElementById("newTechNameInput");
+      const name = input ? input.value.trim() : "";
+      if (!name) return;
+      if (allTechnicians.includes(name)) {
+        alert(`มีชื่อ "${name}" อยู่ในระบบแล้ว`);
+        return;
+      }
+      allTechnicians.push(name);
+      try { localStorage.setItem("fs_techs", JSON.stringify(allTechnicians)); } catch(e) {}
+      if (input) input.value = "";
+      renderManageTechList();
+      renderCheckinTechChips();
+      renderTechFilterChips();
     }
 
     function showStatusModal(type, title, message) {
