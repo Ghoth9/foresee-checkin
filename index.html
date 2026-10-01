@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.01.v8";
+    const FORESEE_APP_VERSION = "2026.10.01.v9";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -243,6 +243,17 @@
           <div class="font-bold text-emerald-900">เปิดบันทึกปิดงานจากการ์ดในแชท LINE</div>
           <div id="directBannerJobTitle" class="text-[11px] text-emerald-700 font-medium mt-0.5 truncate"></div>
         </div>
+      </div>
+
+      <!-- Already Closed Notice Banner when opened from an old LINE card -->
+      <div id="alreadyClosedCheckoutNotice" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 p-3.5 rounded-xl text-xs space-y-1 shadow-sm">
+        <div class="font-bold flex items-center space-x-1.5 text-emerald-800">
+          <span class="text-base">✅</span>
+          <span>งานนี้ปิดและส่งสรุปผลงานเรียบร้อยแล้ว</span>
+        </div>
+        <p id="alreadyClosedNoticeDetail" class="text-[11px] text-emerald-700 leading-relaxed">
+          งานนี้ได้ทำการปิดงานและส่งผลงานเข้า LINE เรียบร้อยแล้ว ไม่จำเป็นต้องทำรายการซ้ำ
+        </p>
       </div>
 
       <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3.5">
@@ -736,6 +747,33 @@
   </div>
 
   <!-- ========================================================================= -->
+  <!-- MODAL: TASK ALREADY CLOSED (งานนี้ปิดเรียบร้อยแล้ว) -->
+  <!-- ========================================================================= -->
+  <div id="alreadyClosedModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 modal-scroll-container">
+    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto text-center space-y-3.5">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner font-bold">
+        ✓
+      </div>
+      <div>
+        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 mb-1">
+          ปิดงานสมบูรณ์แล้ว
+        </span>
+        <h3 class="text-sm font-bold text-slate-900">งานนี้ดำเนินการเสร็จเรียบร้อยแล้ว</h3>
+        <p id="alreadyClosedTaskTitle" class="text-xs text-slate-600 font-semibold mt-1 px-2"></p>
+        <div id="alreadyClosedDetails" class="text-[11px] text-slate-600 mt-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200 text-left"></div>
+      </div>
+      <div class="space-y-2 pt-1">
+        <button type="button" onclick="closeAlreadyClosedModal('logs')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-1.5">
+          <span>📋 ดูสรุปผลงานวันนี้</span>
+        </button>
+        <button type="button" onclick="closeAlreadyClosedModal('checkin')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl text-xs transition-colors border border-slate-200">
+          <span>📍 กลับหน้าหลัก / เช็กอินงานใหม่</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- JAVASCRIPT LOGIC -->
   <!-- ========================================================================= -->
   <script>
@@ -925,14 +963,14 @@
             date: formatGasDate(item.date)
           }));
 
-          // Merge: sheet items + local pending items
+          // Merge: sheet items + local pending items (excluding any closed items)
           const combined = [...sheetActives];
           activeTasks.forEach(loc => {
-            if (!combined.some(s => s.id === loc.id)) {
+            if (!combined.some(s => s.id === loc.id) && !isCheckinClosed(loc.id)) {
               combined.push(loc);
             }
           });
-          activeTasks = combined;
+          activeTasks = combined.filter(loc => !isCheckinClosed(loc.id));
           saveActiveTasks();
           renderActiveCheckoutList(activeTasks);
 
@@ -955,6 +993,50 @@
           });
           saveDailyLogs();
           renderTodayLogs();
+        }
+
+        // 2.1 Sync Closed Checkins from Google Sheet
+        if (data.closedCheckinIds && Array.isArray(data.closedCheckinIds)) {
+          data.closedCheckinIds.forEach(id => {
+            const closedTask = (data.closedCheckins && data.closedCheckins.find(c => c.id === id));
+            markCheckinAsClosed(
+              id, 
+              closedTask ? closedTask.task : "", 
+              closedTask ? closedTask.outTime : "", 
+              "ปิดงานแล้ว", 
+              closedTask ? closedTask.tech : ""
+            );
+            
+            // Also update dailyLogs if present
+            const logItem = dailyLogs.find(l => l.id === id);
+            if (logItem) {
+              logItem.status = "ปิดงานแล้ว";
+              if (closedTask && closedTask.outTime) logItem.checkoutTime = closedTask.outTime;
+            }
+          });
+          saveDailyLogs();
+          renderTodayLogs();
+
+          // Purge closed checkins from activeTasks
+          activeTasks = activeTasks.filter(item => !data.closedCheckinIds.includes(item.id));
+          saveActiveTasks();
+          renderActiveCheckoutList(activeTasks);
+
+          // If current directId from URL is found in closedCheckinIds, trigger alert modal
+          const directId = getLiffUrlParams().get("id");
+          const directTask = getLiffUrlParams().get("task");
+          if (directId && data.closedCheckinIds.includes(directId)) {
+            const closedBanner = document.getElementById("alreadyClosedCheckoutNotice");
+            const closedNoticeDetail = document.getElementById("alreadyClosedNoticeDetail");
+            if (closedBanner && closedNoticeDetail) {
+              closedNoticeDetail.innerText = `งานรหัส ${directId} (${directTask || 'งานที่เลือก'}) ปิดงานและส่งสรุปผลงานเรียบร้อยแล้ว`;
+              closedBanner.classList.remove("hidden");
+            }
+            const banner = document.getElementById("directCheckoutBanner");
+            if (banner) banner.classList.add("hidden");
+
+            openAlreadyClosedModal(directId, directTask);
+          }
         }
 
         // 3. Sync Tasks from Sheet
@@ -1357,27 +1439,50 @@
       const directTime = allParams.get("time");
 
       if (directId && directTask) {
-        const directItem = {
-          id: directId,
-          task: directTask,
-          techs: directTechs.length > 0 ? directTechs : ["ช่างหน้างาน"],
-          time: directTime || "09:00"
-        };
-        const existingIdx = activeTasks.findIndex(i => i.id === directId);
-        if (existingIdx !== -1) {
-          activeTasks[existingIdx] = directItem;
-        } else {
-          activeTasks.unshift(directItem);
-        }
-        selectedActiveItem = directItem;
-        saveActiveTasks();
+        const isClosed = isCheckinClosed(directId);
+        if (isClosed) {
+          // If already closed, remove it from activeTasks if it was there
+          activeTasks = activeTasks.filter(i => i.id !== directId);
+          selectedActiveItem = null;
+          saveActiveTasks();
 
-        // Show banner in checkout section
-        const banner = document.getElementById("directCheckoutBanner");
-        const bannerText = document.getElementById("directBannerJobTitle");
-        if (banner && bannerText) {
-          bannerText.innerText = `${directItem.id} - ${directItem.task}`;
-          banner.classList.remove("hidden");
+          // Show already-closed notice on checkout section
+          const closedBanner = document.getElementById("alreadyClosedCheckoutNotice");
+          const closedNoticeDetail = document.getElementById("alreadyClosedNoticeDetail");
+          if (closedBanner && closedNoticeDetail) {
+            closedNoticeDetail.innerText = `งานรหัส ${directId} (${directTask}) ปิดงานและส่งสรุปผลงานเรียบร้อยแล้ว`;
+            closedBanner.classList.remove("hidden");
+          }
+          const banner = document.getElementById("directCheckoutBanner");
+          if (banner) banner.classList.add("hidden");
+
+          // Open already-closed modal after slight delay
+          setTimeout(() => {
+            openAlreadyClosedModal(directId, directTask);
+          }, 350);
+        } else {
+          const directItem = {
+            id: directId,
+            task: directTask,
+            techs: directTechs.length > 0 ? directTechs : ["ช่างหน้างาน"],
+            time: directTime || "09:00"
+          };
+          const existingIdx = activeTasks.findIndex(i => i.id === directId);
+          if (existingIdx !== -1) {
+            activeTasks[existingIdx] = directItem;
+          } else {
+            activeTasks.unshift(directItem);
+          }
+          selectedActiveItem = directItem;
+          saveActiveTasks();
+
+          // Show banner in checkout section
+          const banner = document.getElementById("directCheckoutBanner");
+          const bannerText = document.getElementById("directBannerJobTitle");
+          if (banner && bannerText) {
+            bannerText.innerText = `${directItem.id} - ${directItem.task}`;
+            banner.classList.remove("hidden");
+          }
         }
       }
 
@@ -1767,6 +1872,115 @@
     // =========================================================================
     // FIELD CHECK-OUT LOGIC (FAST 1-TAP CLOSE FOR CCTV TECHNICIANS)
     // =========================================================================
+    function markCheckinAsClosed(id, taskName, outTime, outcome, closedBy) {
+      if (!id) return;
+      try {
+        let closedList = JSON.parse(localStorage.getItem("fs_closed_checkins") || "[]");
+        const idx = closedList.findIndex(c => c.id === id);
+        const record = {
+          id: id,
+          task: taskName || "ติดตั้งกล้องวงจรปิด",
+          outTime: outTime || "-",
+          outcome: outcome || "เสร็จสิ้นเรียบร้อย",
+          closedBy: closedBy || "ช่างหน้างาน",
+          closedAt: new Date().toISOString()
+        };
+        if (idx !== -1) {
+          closedList[idx] = { ...closedList[idx], ...record };
+        } else {
+          closedList.push(record);
+        }
+        localStorage.setItem("fs_closed_checkins", JSON.stringify(closedList));
+      } catch(e) {}
+    }
+
+    function isCheckinClosed(id) {
+      if (!id) return false;
+      try {
+        const closedList = JSON.parse(localStorage.getItem("fs_closed_checkins") || "[]");
+        if (closedList.some(c => c.id === id)) return true;
+      } catch(e) {}
+      if (typeof dailyLogs !== "undefined" && Array.isArray(dailyLogs)) {
+        if (dailyLogs.some(l => l.id === id && l.status === "ปิดงานแล้ว")) return true;
+      }
+      return false;
+    }
+
+    function getClosedCheckinRecord(id) {
+      if (!id) return null;
+      try {
+        const closedList = JSON.parse(localStorage.getItem("fs_closed_checkins") || "[]");
+        const found = closedList.find(c => c.id === id);
+        if (found) return found;
+      } catch(e) {}
+      if (typeof dailyLogs !== "undefined" && Array.isArray(dailyLogs)) {
+        const log = dailyLogs.find(l => l.id === id);
+        if (log) {
+          return {
+            id: log.id,
+            task: log.task,
+            outTime: log.checkoutTime,
+            outcome: log.outcome,
+            closedBy: log.closedBy
+          };
+        }
+      }
+      return null;
+    }
+
+    function openAlreadyClosedModal(id, title) {
+      const modal = document.getElementById("alreadyClosedModal");
+      if (!modal) return;
+
+      const titleElem = document.getElementById("alreadyClosedTaskTitle");
+      const detailsElem = document.getElementById("alreadyClosedDetails");
+      const record = getClosedCheckinRecord(id);
+
+      if (titleElem) {
+        titleElem.innerText = `${id || "งาน"} - ${title || (record ? record.task : "งานติดตั้ง")}`;
+      }
+
+      if (detailsElem) {
+        const timeClosed = (record && record.outTime) ? `${record.outTime} น.` : "ส่งสรุปผลงานแล้ว";
+        const closer = (record && record.closedBy) ? record.closedBy : (currentLineUserName || "ช่างหน้างาน");
+        const outcome = (record && record.outcome) ? record.outcome : "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง";
+
+        detailsElem.innerHTML = `
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between"><span class="text-slate-400">สถานะงาน:</span> <span class="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[10px]">✓ ปิดงานเรียบร้อยแล้ว</span></div>
+            <div class="flex items-center justify-between"><span class="text-slate-400">เวลาที่ปิดงาน:</span> <span class="font-medium text-slate-800">${timeClosed}</span></div>
+            <div class="flex items-center justify-between"><span class="text-slate-400">ผู้ส่งปิดงาน:</span> <span class="font-medium text-slate-800">${closer}</span></div>
+            <div class="pt-1.5 border-t border-slate-200 mt-1"><span class="text-slate-400 block text-[10px] mb-0.5">ผลการปฏิบัติงาน:</span> <span class="font-semibold text-emerald-800">${outcome}</span></div>
+          </div>
+        `;
+      }
+
+      modal.classList.remove("hidden");
+      setModalScrollLock(true);
+    }
+
+    function closeAlreadyClosedModal(target) {
+      const modal = document.getElementById("alreadyClosedModal");
+      if (modal) modal.classList.add("hidden");
+      setModalScrollLock(false);
+
+      if (target === "logs") {
+        switchTab("checkin");
+        const body = document.getElementById("todayLogsCollapseBody");
+        const chevron = document.getElementById("todayLogsChevron");
+        if (body) body.classList.remove("hidden");
+        if (chevron) chevron.innerText = "▲";
+        isTodayLogsOpen = true;
+        try { localStorage.setItem("fs_today_logs_open", "1"); } catch(e) {}
+        setTimeout(() => {
+          const logCard = document.getElementById("todayLogsCard");
+          if (logCard) logCard.scrollIntoView({ behavior: "smooth" });
+        }, 150);
+      } else if (target === "checkin") {
+        switchTab("checkin");
+      }
+    }
+
     function renderActiveCheckoutList(items) {
       updateCheckoutBadge();
       const container = document.getElementById("activeListContainer");
@@ -1982,6 +2196,9 @@
       selectedActiveItem = null;
       saveActiveTasks();
       renderActiveCheckoutList(activeTasks);
+
+      // Record closed checkin
+      markCheckinAsClosed(closingId, closingItem.task, outTimeStr, selectedCheckoutOutcome, currentLineUserName || "ช่างหน้างาน");
 
       // Update Daily Activity Logs
       const existingLog = dailyLogs.find(l => l.id === closingId);

@@ -155,12 +155,25 @@ function getInitialData() {
       }
 
       const checkinSheet = ss.getSheetByName("Checkins");
+      let closedCheckinIds = [];
+      let closedCheckins = [];
       if (checkinSheet && checkinSheet.getLastRow() > 1) {
         const numCols = Math.min(checkinSheet.getLastColumn(), 10);
         const data = checkinSheet.getRange(2, 1, checkinSheet.getLastRow() - 1, numCols).getValues();
-        activeCheckins = data.map((r, idx) => ({
-          rowId: idx + 2, id: r[0], date: r[1], time: r[2], tech: r[3], task: r[4], status: r[r.length - 1]
-        })).filter(r => r.status === "กำลังปฏิบัติงาน");
+        const allRows = data.map((r, idx) => ({
+          rowId: idx + 2, 
+          id: String(r[0] || "").trim(), 
+          date: r[1], 
+          time: r[2], 
+          tech: r[3], 
+          task: r[4], 
+          outTime: r[7] || "", 
+          duration: r[8] || "", 
+          status: String(r[r.length - 1] || "").trim()
+        }));
+        activeCheckins = allRows.filter(r => r.status === "กำลังปฏิบัติงาน");
+        closedCheckins = allRows.filter(r => r.status === "ปิดงานแล้ว");
+        closedCheckinIds = closedCheckins.map(c => c.id);
       }
     }
   } catch (err) {
@@ -170,7 +183,9 @@ function getInitialData() {
   return {
     technicians: technicians,
     tasks: tasks,
-    activeCheckins: activeCheckins
+    activeCheckins: activeCheckins,
+    closedCheckinIds: closedCheckinIds,
+    closedCheckins: closedCheckins
   };
 }
 
