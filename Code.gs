@@ -124,6 +124,8 @@ function getInitialData() {
   let technicians = ["ช่างกนก", "ช่างมณเฑียร", "ช่างสายฟ้า"];
   let tasks = [];
   let activeCheckins = [];
+  let closedCheckinIds = [];
+  let closedCheckins = [];
 
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -155,8 +157,6 @@ function getInitialData() {
       }
 
       const checkinSheet = ss.getSheetByName("Checkins");
-      let closedCheckinIds = [];
-      let closedCheckins = [];
       if (checkinSheet && checkinSheet.getLastRow() > 1) {
         const numCols = Math.min(checkinSheet.getLastColumn(), 10);
         const data = checkinSheet.getRange(2, 1, checkinSheet.getLastRow() - 1, numCols).getValues();
