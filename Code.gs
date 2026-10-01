@@ -41,7 +41,7 @@ function setupDatabase() {
   const sampleUsers = [
     ["EMP-01", "กนกศักดิ์ กว้างจิตต์อารีย์", "ช่างกนก", "081-xxx-xxxx", "พร้อมรับงาน"],
     ["EMP-02", "มณเฑียร แซ่ตั้ง", "ช่างมณเฑียร", "089-xxx-xxxx", "พร้อมรับงาน"],
-    ["EMP-03", "สายฟ้า ดวงเจริญ", "ช่างสายฟ้า", "095-xxx-xxxx", "พร้อมรับงาน"]
+    ["EMP-03", "สายฟ้า วิชิตเดชา", "ช่างสายฟ้า", "086-xxx-xxxx", "พร้อมรับงาน"]
   ];
   userSheet.getRange(2, 1, sampleUsers.length, userHeaders.length).setValues(sampleUsers);
   formatDataRows(userSheet, 2, sampleUsers.length, userHeaders.length);
@@ -51,40 +51,28 @@ function setupDatabase() {
   if (!taskSheet) taskSheet = ss.insertSheet("Tasks");
   else taskSheet.clear();
 
-  const taskHeaders = ["รหัสงาน", "ชื่องาน / รายละเอียด", "สถานที่ / ลูกค้า", "ช่างผู้รับผิดชอบ", "กำหนดส่ง", "ความสำคัญ", "วันที่สั่ง", "สถานะ"];
-  taskSheet.getRange(1, 1, 1, taskHeaders.length).setValues([taskHeaders]);
-  formatHeaderRow(taskSheet, taskHeaders.length, "#1D4ED8", "#FFFFFF");
+  ensureTaskSheetHeaders(taskSheet);
 
   const sampleTasks = [
-    ["TASK-101", "ติดตั้งกล้อง 4 ตัว บ้านคุณสมชาย", "ซอยลาซาล 32 บางนา กทม.", "ช่างกนก", "29/09/2026 17:00", "ด่วน", "29/09/2026", "กำลังทำ"],
-    ["TASK-102", "ตรวจเช็คระบบ NVR บริษัท เอ็นทีพี จำกัด", "สาทร กทม.", "ช่างมณเฑียร", "30/09/2026 18:00", "ปกติ", "29/09/2026", "รอดำเนินการ"]
+    ["TASK-101", "ติดตั้งกล้อง 4 ตัว บ้านคุณสมชาย (บางนา)", "ซอยลาซาล 32 บางนา กทม.", "ช่างกนก", "28/09/2026 17:00", "เสร็จสิ้น", "28/09/2026 17:00", "-", "-"],
+    ["TASK-102", "ตรวจเช็คระบบ NVR บริษัท เอ็นทีพี จำกัด", "สาทร กทม.", "ช่างมณเฑียร", "28/09/2026 18:00", "กำลังทำ", "28/09/2026 18:00", "-", "-"],
+    ["TASK-103", "เดินสายสัญญาณกล้องไซต์พระราม 2", "พระราม 2 ซอย 50", "ช่างสายฟ้า", "29/09/2026 15:00", "รอดำเนินการ", "29/09/2026 15:00", "-", "-"]
   ];
-  taskSheet.getRange(2, 1, sampleTasks.length, taskHeaders.length).setValues(sampleTasks);
-  formatDataRows(taskSheet, 2, sampleTasks.length, taskHeaders.length);
+  taskSheet.getRange(2, 1, sampleTasks.length, sampleTasks[0].length).setValues(sampleTasks);
+  formatDataRows(taskSheet, 2, sampleTasks.length, sampleTasks[0].length);
 
-  SpreadsheetApp.flush();
-  return "Setup สำเร็จเรียบร้อยแล้ว!";
+  return "ตั้งค่าฐานข้อมูล 3 Sheets เรียบร้อยแล้ว!";
 }
 
-function formatHeaderRow(sheet, numColumns, bgColor, fontColor) {
-  const range = sheet.getRange(1, 1, 1, numColumns);
-  range.setBackground(bgColor).setFontColor(fontColor).setFontFamily("Sarabun").setFontWeight("bold").setFontSize(10).setHorizontalAlignment("center").setVerticalAlignment("middle");
-  sheet.setRowHeight(1, 40);
-  sheet.setFrozenRows(1);
+function ensureTaskSheetHeaders(taskSheet) {
+  const taskHeaders = [
+    "รหัสงาน", "ชื่องาน / ลูกค้า", "สถานที่ / พิกัด", 
+    "ช่างผู้รับผิดชอบ", "กำหนดส่ง", "สถานะ", 
+    "กำหนดส่งเดิม", "เหตุผลการขยายเวลา / หมายเหตุ", "ผู้ขอขยายเวลา"
+  ];
+  taskSheet.getRange(1, 1, 1, taskHeaders.length).setValues([taskHeaders]);
+  formatHeaderRow(taskSheet, taskHeaders.length, "#1D4ED8", "#FFFFFF");
 }
-
-function formatDataRows(sheet, startRow, numRows, numColumns) {
-  const range = sheet.getRange(startRow, 1, numRows, numColumns);
-  range.setFontFamily("Sarabun").setFontSize(9).setVerticalAlignment("middle");
-  for (let r = 0; r < numRows; r++) {
-    sheet.setRowHeight(startRow + r, 32);
-    if (r % 2 === 1) sheet.getRange(startRow + r, 1, 1, numColumns).setBackground("#F8FAFC");
-  }
-}
-
-// ====================================================================
-// 2. REST API Handlers (CORS Support สำหรับเรียกจาก GitHub Pages / Vercel)
-// ====================================================================
 
 function doGet(e) {
   const initialData = getInitialData();
@@ -108,6 +96,10 @@ function doPost(e) {
       result = saveCheckout(payload);
     } else if (action === "saveTask") {
       result = saveTask(payload);
+    } else if (action === "extendTaskDeadline") {
+      result = extendTaskDeadline(payload);
+    } else if (action === "updateTaskProgress") {
+      result = updateTaskProgress(payload);
     } else if (action === "addNewTechnician") {
       result = addNewTechnician(payload.name);
     } else if (action === "deleteCheckin") {
@@ -145,11 +137,21 @@ function getInitialData() {
 
       const taskSheet = ss.getSheetByName("Tasks");
       if (taskSheet && taskSheet.getLastRow() > 1) {
-        const numCols = Math.min(taskSheet.getLastColumn() - 1, 7);
-        if (numCols >= 3) {
-          const data = taskSheet.getRange(2, 2, taskSheet.getLastRow() - 1, numCols).getValues();
-          tasks = data.filter(r => (r[numCols - 1] !== "เสร็จสิ้น")).map(r => ({ title: r[0], location: r[1], tech: r[2] }));
-        }
+        ensureTaskSheetHeaders(taskSheet);
+        const lastRow = taskSheet.getLastRow();
+        const data = taskSheet.getRange(2, 1, lastRow - 1, 9).getValues();
+        tasks = data.map(r => ({
+          id: String(r[0] || "").trim(),
+          title: String(r[1] || "").trim(),
+          desc: String(r[2] || "-").trim(),
+          location: String(r[2] || "-").trim(),
+          techs: String(r[3] || "").split(",").map(s => s.trim()).filter(Boolean),
+          deadline: String(r[4] || "-").trim(),
+          status: String(r[5] || "รอดำเนินการ").trim(),
+          oldDeadline: String(r[6] || "-").trim(),
+          reason: String(r[7] || "-").trim(),
+          updateBy: String(r[8] || "-").trim()
+        }));
       }
 
       const checkinSheet = ss.getSheetByName("Checkins");
@@ -172,108 +174,171 @@ function getInitialData() {
   };
 }
 
-// เพิ่มช่างใหม่จากหน้าเว็บ
-function addNewTechnician(name) {
+// 2. ฟังก์ชันขยายเวลากำหนดส่งงาน (Real-time Google Sheet Update)
+function extendTaskDeadline(payload) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let userSheet = ss.getSheetByName("Users");
-    if (!userSheet) userSheet = ss.insertSheet("Users");
-    const newId = "EMP-" + ("00" + Math.max(1, userSheet.getLastRow())).slice(-2);
-    userSheet.appendRow([newId, name, name, "-", "พร้อมรับงาน"]);
-    return { success: true };
-  } catch(e) {
-    return { success: false, error: e.toString() };
-  }
-}
+    let taskSheet = ss.getSheetByName("Tasks");
+    if (!taskSheet) return { success: false, message: "Tasks sheet not found" };
+    ensureTaskSheetHeaders(taskSheet);
 
-// ลบรายการเช็กอินรายการเดียว
-function deleteCheckin(id) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const checkinSheet = ss.getSheetByName("Checkins");
-    if (!checkinSheet || checkinSheet.getLastRow() <= 1) return { success: true, deleted: 0 };
-    
-    const data = checkinSheet.getRange(2, 1, checkinSheet.getLastRow() - 1, 1).getValues();
-    for (let i = data.length - 1; i >= 0; i--) {
-      if (data[i][0] === id) {
-        checkinSheet.deleteRow(i + 2);
-        return { success: true, deleted: 1, id: id };
+    const taskId = String(payload.taskId || "").trim();
+    const newDeadline = payload.newDeadline || "-";
+    const oldDeadline = payload.oldDeadline || "-";
+    const reason = payload.reason || "-";
+    const updateBy = payload.updateBy || "ช่างหน้างาน";
+
+    const data = taskSheet.getDataRange().getValues();
+    let targetRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === taskId) {
+        targetRow = i + 1;
+        break;
       }
     }
-    return { success: false, message: "ID not found" };
-  } catch (err) {
-    return { success: false, error: err.toString() };
-  }
-}
 
-// ลบรายการเช็กอินหลายรายการพร้อมกัน
-function deleteMultipleCheckins(ids) {
-  try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const checkinSheet = ss.getSheetByName("Checkins");
-    if (!checkinSheet || checkinSheet.getLastRow() <= 1 || !Array.isArray(ids) || ids.length === 0) {
-      return { success: true, deleted: 0 };
-    }
-    
-    const idSet = new Set(ids);
-    const data = checkinSheet.getRange(2, 1, checkinSheet.getLastRow() - 1, 1).getValues();
-    let count = 0;
-    for (let i = data.length - 1; i >= 0; i--) {
-      if (idSet.has(data[i][0])) {
-        checkinSheet.deleteRow(i + 2);
-        count++;
+    if (targetRow === -1) {
+      const title = String(payload.taskTitle || "").trim();
+      if (title) {
+        for (let i = 1; i < data.length; i++) {
+          if (String(data[i][1]).trim() === title) {
+            targetRow = i + 1;
+            break;
+          }
+        }
       }
     }
-    return { success: true, deleted: count };
+
+    if (targetRow === -1) {
+      return { success: false, message: `Task ${taskId} not found` };
+    }
+
+    // Col E (5): New Deadline
+    taskSheet.getRange(targetRow, 5).setValue(newDeadline).setFontColor("#DC2626").setFontWeight("bold");
+
+    // Col G (7): Original Deadline (keep first recorded old deadline)
+    const existingOldDeadline = String(taskSheet.getRange(targetRow, 7).getValue()).trim();
+    if (!existingOldDeadline || existingOldDeadline === "-" || existingOldDeadline === "") {
+      taskSheet.getRange(targetRow, 7).setValue(oldDeadline || data[targetRow - 1][4]);
+    }
+
+    // Col H (8): Reason / Remarks (บันทึกเหตุผลพร้อมระบุเวลา)
+    const nowStr = Utilities.formatDate(new Date(), "GMT+7", "dd/MM HH:mm");
+    const existingNotes = String(taskSheet.getRange(targetRow, 8).getValue()).trim();
+    const entry = `[เลื่อนเป็น ${newDeadline}] ${reason} (โดย ${updateBy} เมื่อ ${nowStr})`;
+    const fullNotes = (existingNotes && existingNotes !== "-") ? `${existingNotes}\n${entry}` : entry;
+    taskSheet.getRange(targetRow, 8).setValue(fullNotes).setWrap(true);
+
+    // Col I (9): ผู้ขอขยายเวลา
+    taskSheet.getRange(targetRow, 9).setValue(updateBy);
+
+    formatDataRows(taskSheet, targetRow, 1, 9);
+    return { success: true, taskId: taskId, newDeadline: newDeadline };
   } catch (err) {
     return { success: false, error: err.toString() };
   }
 }
 
-// ล้างประวัติเช็กอินทั้งหมด (ลบทุกแถวข้อมูล ยกเว้นหัวตาราง)
-function clearAllCheckins() {
+// 3. ฟังก์ชันอัปเดตความคืบหน้างาน (Real-time Google Sheet Update)
+function updateTaskProgress(payload) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const checkinSheet = ss.getSheetByName("Checkins");
-    if (!checkinSheet || checkinSheet.getLastRow() <= 1) return { success: true, count: 0 };
-    
-    const lastRow = checkinSheet.getLastRow();
-    checkinSheet.deleteRows(2, lastRow - 1);
-    return { success: true, cleared: lastRow - 1 };
+    let taskSheet = ss.getSheetByName("Tasks");
+    if (!taskSheet) return { success: false, message: "Tasks sheet not found" };
+    ensureTaskSheetHeaders(taskSheet);
+
+    const taskId = String(payload.taskId || "").trim();
+    const status = payload.status || "กำลังทำ";
+    const progress = payload.progress || 0;
+    const note = payload.note || "";
+    const updateBy = payload.updateBy || "ช่างหน้างาน";
+
+    const data = taskSheet.getDataRange().getValues();
+    let targetRow = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim() === taskId) {
+        targetRow = i + 1;
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      const title = String(payload.taskTitle || "").trim();
+      if (title) {
+        for (let i = 1; i < data.length; i++) {
+          if (String(data[i][1]).trim() === title) {
+            targetRow = i + 1;
+            break;
+          }
+        }
+      }
+    }
+
+    if (targetRow === -1) {
+      return { success: false, message: `Task ${taskId} not found` };
+    }
+
+    // Col F (6): Status
+    const statusCell = taskSheet.getRange(targetRow, 6);
+    statusCell.setValue(status).setFontWeight("bold");
+    if (status === "เสร็จสิ้น") {
+      statusCell.setBackground("#BBF7D0").setFontColor("#166534");
+    } else if (status === "กำลังทำ") {
+      statusCell.setBackground("#DBEAFE").setFontColor("#1E40AF");
+    } else {
+      statusCell.setBackground("#FEF08A").setFontColor("#854D0E");
+    }
+
+    // Col H (8): Append progress note if present
+    if (note) {
+      const nowStr = Utilities.formatDate(new Date(), "GMT+7", "dd/MM HH:mm");
+      const existingNotes = String(taskSheet.getRange(targetRow, 8).getValue()).trim();
+      const entry = `[คืบหน้า ${progress}%: ${status}] ${note} (โดย ${updateBy} เมื่อ ${nowStr})`;
+      const fullNotes = (existingNotes && existingNotes !== "-") ? `${existingNotes}\n${entry}` : entry;
+      taskSheet.getRange(targetRow, 8).setValue(fullNotes).setWrap(true);
+    }
+
+    // Col I (9): Updated By
+    taskSheet.getRange(targetRow, 9).setValue(updateBy);
+
+    formatDataRows(taskSheet, targetRow, 1, 9);
+    return { success: true, taskId: taskId, status: status, progress: progress };
   } catch (err) {
     return { success: false, error: err.toString() };
   }
 }
 
-// 3. ฟังก์ชันบันทึกมอบหมายงานใหม่
+// 4. ฟังก์ชันบันทึกมอบหมายงานใหม่
 function saveTask(payload) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let taskSheet = ss.getSheetByName("Tasks");
-  if (!taskSheet) taskSheet = ss.insertSheet("Tasks");
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let taskSheet = ss.getSheetByName("Tasks");
+    if (!taskSheet) taskSheet = ss.insertSheet("Tasks");
+    ensureTaskSheetHeaders(taskSheet);
 
-  const now = new Date();
-  const dateStr = Utilities.formatDate(now, "GMT+7", "dd/MM/yyyy");
-  const taskId = "TASK-" + ("000" + Math.max(1, taskSheet.getLastRow())).slice(-3);
+    const taskId = payload.taskId || ("TASK-" + ("000" + Math.max(1, taskSheet.getLastRow())).slice(-3));
+    const taskTitle = payload.taskTitle || "งานติดตั้งทั่วไป";
+    const customerLoc = payload.customerLoc || "-";
+    const technician = payload.technician || "ไม่ระบุช่าง";
+    const deadline = payload.deadline || "-";
+    const status = payload.status || "รอดำเนินการ";
 
-  const taskTitle = payload.taskTitle || "งานติดตั้งทั่วไป";
-  const customerLoc = payload.customerLoc || "-";
-  const technician = payload.technician || "ไม่ระบุช่าง";
-  const deadline = payload.deadline || "-";
-  const priority = payload.priority || "ปกติ";
+    taskSheet.appendRow([taskId, taskTitle, customerLoc, technician, deadline, status, "-", "-", "-"]);
+    const lastRow = taskSheet.getLastRow();
+    formatDataRows(taskSheet, lastRow, 1, 9);
 
-  taskSheet.appendRow([taskId, taskTitle, customerLoc, technician, deadline, priority, dateStr, "รอดำเนินการ"]);
-  const lastRow = taskSheet.getLastRow();
-  formatDataRows(taskSheet, lastRow, 1, 8);
+    const flexCard = buildTaskFlexMessage({
+      taskId: taskId, taskTitle: taskTitle, customerLoc: customerLoc,
+      technician: technician, deadline: deadline, priority: status
+    });
 
-  const flexCard = buildTaskFlexMessage({
-    taskId: taskId, taskTitle: taskTitle, customerLoc: customerLoc,
-    technician: technician, deadline: deadline, priority: priority
-  });
-
-  return { success: true, taskId: taskId, flexCard: flexCard };
+    return { success: true, taskId: taskId, flexCard: flexCard };
+  } catch(err) {
+    return { success: false, error: err.toString() };
+  }
 }
 
-// 4. ฟังก์ชันบันทึกเช็กอินหน้างาน
+// 5. ฟังก์ชันบันทึกเช็กอินหน้างาน
 function saveCheckin(payload) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let checkinSheet = ss.getSheetByName("Checkins");
@@ -304,7 +369,7 @@ function saveCheckin(payload) {
   return { success: true, id: id, flexCard: flexCard };
 }
 
-// 5. ฟังก์ชันบันทึกเช็กเอาต์ปิดงาน
+// 6. ฟังก์ชันบันทึกเช็กเอาต์ปิดงาน
 function saveCheckout(payload) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const checkinSheet = ss.getSheetByName("Checkins");
@@ -357,9 +422,80 @@ function calculateDuration(start, end) {
   }
 }
 
-// 6. Flex Message Builders
+// 7. เพิ่มช่างใหม่จากหน้าเว็บ
+function addNewTechnician(name) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let userSheet = ss.getSheetByName("Users");
+    if (!userSheet) userSheet = ss.insertSheet("Users");
+    const newId = "EMP-" + ("00" + Math.max(1, userSheet.getLastRow())).slice(-2);
+    userSheet.appendRow([newId, name, name, "-", "พร้อมรับงาน"]);
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// 8. ฟังก์ชันลบรายการเช็กอิน
+function deleteCheckin(id) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const checkinSheet = ss.getSheetByName("Checkins");
+    if (!checkinSheet || checkinSheet.getLastRow() <= 1) return { success: true, deleted: 0 };
+    
+    const data = checkinSheet.getRange(2, 1, checkinSheet.getLastRow() - 1, 1).getValues();
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (data[i][0] === id) {
+        checkinSheet.deleteRow(i + 2);
+        return { success: true, deleted: 1, id: id };
+      }
+    }
+    return { success: false, message: "ID not found" };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function deleteMultipleCheckins(ids) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const checkinSheet = ss.getSheetByName("Checkins");
+    if (!checkinSheet || checkinSheet.getLastRow() <= 1 || !Array.isArray(ids) || ids.length === 0) {
+      return { success: true, deleted: 0 };
+    }
+    
+    const idSet = new Set(ids);
+    const data = checkinSheet.getRange(2, 1, checkinSheet.getLastRow() - 1, 1).getValues();
+    let count = 0;
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (idSet.has(data[i][0])) {
+        checkinSheet.deleteRow(i + 2);
+        count++;
+      }
+    }
+    return { success: true, deleted: count };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function clearAllCheckins() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const checkinSheet = ss.getSheetByName("Checkins");
+    if (!checkinSheet || checkinSheet.getLastRow() <= 1) return { success: true, count: 0 };
+    
+    const lastRow = checkinSheet.getLastRow();
+    checkinSheet.deleteRows(2, lastRow - 1);
+    return { success: true, cleared: lastRow - 1 };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+// 9. Flex Message Builders
 function buildTaskFlexMessage(info) {
-  const isUrgent = info.priority.includes("ด่วน");
+  const isUrgent = String(info.priority || "").includes("ด่วน");
   return {
     type: "flex",
     altText: `📋 มอบหมายงาน: ${info.taskTitle} (ถึง ${info.technician})`,
@@ -485,4 +621,27 @@ function buildCheckoutFlexMessage(info) {
       }
     }
   };
+}
+
+// Helper formatting functions
+function formatHeaderRow(sheet, numCols, bgHex, fontHex) {
+  const range = sheet.getRange(1, 1, 1, numCols);
+  range.setBackground(bgHex)
+       .setFontColor(fontHex)
+       .setFontWeight("bold")
+       .setHorizontalAlignment("center")
+       .setVerticalAlignment("middle");
+  sheet.setRowHeight(1, 38);
+  sheet.setFrozenRows(1);
+}
+
+function formatDataRows(sheet, startRow, numRows, numCols) {
+  if (numRows <= 0) return;
+  const range = sheet.getRange(startRow, 1, numRows, numCols);
+  range.setFontFamily("Sarabun")
+       .setFontSize(10)
+       .setVerticalAlignment("middle");
+  for (let r = startRow; r < startRow + numRows; r++) {
+    sheet.setRowHeight(r, 32);
+  }
 }
