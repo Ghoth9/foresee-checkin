@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.01.v13";
+    const FORESEE_APP_VERSION = "2026.10.01.v14";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -955,12 +955,6 @@
             <span>ขยายเวลา</span>
           </button>
         </div>
-
-        <!-- Button 3: เช็คอินเข้าทำงานนี้ -->
-        <button type="button" id="taskActionCheckinBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          <span>เช็คอินเข้าทำงานนี้</span>
-        </button>
 
         <div class="flex items-center space-x-2 pt-1">
           <!-- Button 4: แชร์เข้า LINE อีกครั้ง -->
@@ -2600,13 +2594,6 @@
           openExtendModal(task.id);
         };
       }
-      const chkBtn = document.getElementById("taskActionCheckinBtn");
-      if (chkBtn) {
-        chkBtn.onclick = () => {
-          closeTaskActionModal();
-          startCheckinWithTask(task);
-        };
-      }
       const shareBtn = document.getElementById("taskActionShareBtn");
       if (shareBtn) {
         shareBtn.onclick = () => {
@@ -2625,22 +2612,6 @@
       const modal = document.getElementById("taskActionModal");
       if (modal) modal.classList.add("hidden");
       setModalScrollLock(false);
-    }
-
-    function startCheckinWithTask(task) {
-      if (!task) return;
-      const taskInput = document.getElementById("checkinTaskName");
-      if (taskInput) {
-        taskInput.value = task.title + (task.desc && task.desc !== '-' ? ` (${task.desc})` : '');
-      }
-      const techs = getTaskTechs(task);
-      if (techs.length > 0 && allTechnicians.includes(techs[0])) {
-        checkinSelectedTechs = [techs[0]];
-        saveMyCheckinTechs();
-        renderCheckinTechChips();
-      }
-      switchTab("checkin");
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function renderActiveCheckoutList(items) {
