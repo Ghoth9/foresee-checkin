@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.01.v9";
+    const FORESEE_APP_VERSION = "2026.10.01.v10";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -763,13 +763,100 @@
         <div id="alreadyClosedDetails" class="text-[11px] text-slate-600 mt-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200 text-left"></div>
       </div>
       <div class="space-y-2 pt-1">
-        <button type="button" onclick="closeAlreadyClosedModal('logs')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-1.5">
-          <span>📋 ดูสรุปผลงานวันนี้</span>
+        <button type="button" onclick="openJobDetailModal(currentAlreadyClosedId)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-1.5">
+          <span>📋 ดูรายละเอียดสรุปผลงาน</span>
         </button>
         <button type="button" onclick="closeAlreadyClosedModal('checkin')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl text-xs transition-colors border border-slate-200">
           <span>📍 กลับหน้าหลัก / เช็กอินงานใหม่</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: JOB DETAIL MODAL (หน้ารายละเอียดสรุปผลงานฉบับเต็ม) -->
+  <!-- ========================================================================= -->
+  <div id="jobDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 modal-scroll-container">
+    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto space-y-4">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">📋</span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">สรุปรายละเอียดการปิดงาน</h3>
+            <p id="jobDetailIdBadge" class="text-[10px] font-semibold text-emerald-700"></p>
+          </div>
+        </div>
+        <button type="button" onclick="closeJobDetailModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="space-y-3 text-xs">
+        
+        <!-- Job Title Card -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">ชื่องาน / รายละเอียด</label>
+          <div id="jobDetailTitle" class="font-bold text-slate-900 leading-snug"></div>
+          <div id="jobDetailTechs" class="text-[11px] text-slate-500 mt-1 flex items-center space-x-1"></div>
+        </div>
+
+        <!-- Time & Status -->
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
+            <span class="text-[10px] text-slate-400 block font-medium">เวลาเริ่มงาน</span>
+            <span id="jobDetailCheckinTime" class="font-bold text-slate-800 text-xs">-</span>
+          </div>
+          <div class="p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-200/70">
+            <span class="text-[10px] text-emerald-700 block font-medium">เวลาปิดงาน</span>
+            <span id="jobDetailCheckoutTime" class="font-bold text-emerald-800 text-xs">-</span>
+          </div>
+        </div>
+
+        <!-- Duration & Closer -->
+        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 space-y-1.5 text-[11px]">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">ระยะเวลาปฏิบัติงาน:</span>
+            <span id="jobDetailDuration" class="font-bold text-blue-700">-</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">ผู้บันทึกปิดงาน:</span>
+            <span id="jobDetailCloser" class="font-bold text-slate-800">-</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">สถานะงาน:</span>
+            <span class="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">✓ ปิดงานสำเร็จแล้ว</span>
+          </div>
+        </div>
+
+        <!-- Outcome / Notes -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">ผลการดำเนินงาน</label>
+          <div id="jobDetailOutcome" class="font-bold text-emerald-800 text-xs leading-relaxed"></div>
+          <div id="jobDetailNote" class="text-[11px] text-slate-600 mt-1 italic hidden"></div>
+        </div>
+
+        <!-- Google Maps Link if available -->
+        <div id="jobDetailMapRow" class="hidden">
+          <a id="jobDetailMapBtn" href="#" target="_blank" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-semibold py-2 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors">
+            <span>🗺️ เปิดดูพิกัดบน Google Maps</span>
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-2 pt-1 border-t border-slate-100">
+        <button type="button" onclick="shareJobDetailToLine()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-1.5">
+          <span>📲 ส่งสรุปผลงานเข้า LINE อีกครั้ง</span>
+        </button>
+        <button type="button" onclick="closeJobDetailModal(); switchTab('checkin');" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl text-xs transition-colors border border-slate-200">
+          <span>📍 กลับหน้าหลัก / เช็กอินงานใหม่</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -996,6 +1083,9 @@
         }
 
         // 2.1 Sync Closed Checkins from Google Sheet
+        if (data.closedCheckins && Array.isArray(data.closedCheckins)) {
+          latestSheetClosedCheckins = data.closedCheckins;
+        }
         if (data.closedCheckinIds && Array.isArray(data.closedCheckinIds)) {
           data.closedCheckinIds.forEach(id => {
             const closedTask = (data.closedCheckins && data.closedCheckins.find(c => c.id === id));
@@ -1132,20 +1222,25 @@
           </div>
           <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5 border-t border-slate-200/60">
             <span>ช่าง: <strong class="text-slate-700">${techs}</strong></span>
-            <span>เวลา: ${log.checkinTime} น.${log.checkoutTime ? ` - ${log.checkoutTime} น.` : ''}</span>
+            <span>เวลา: ${formatDisplayTime(log.checkinTime)} น.${log.checkoutTime ? ` - ${formatDisplayTime(log.checkoutTime)} น.` : ''}</span>
           </div>
           ${log.outcome ? `
             <div class="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 flex items-center justify-between">
               <span>ผลงาน: ${log.outcome}</span>
               ${log.closedBy ? `<span class="text-slate-500">โดย: ${log.closedBy}</span>` : ''}
             </div>
-          ` : (!isDone ? `
-            <div class="pt-0.5 flex justify-end">
+          ` : ''}
+          <div class="pt-0.5 flex justify-end space-x-1.5">
+            ${isDone ? `
+              <button type="button" onclick="openJobDetailModal('${log.id}')" class="text-[10px] font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-0.5 rounded border border-blue-200 transition-colors flex items-center space-x-1">
+                <span>📋 ดูรายละเอียดสรุปผล</span>
+              </button>
+            ` : `
               <button type="button" onclick="quickCloseFromLog('${log.id}')" class="text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition-colors flex items-center space-x-1">
                 <span>🏁 กดบันทึกปิดงาน</span>
               </button>
-            </div>
-          ` : '')}
+            `}
+          </div>
         `;
         container.appendChild(item);
       });
@@ -1872,6 +1967,27 @@
     // =========================================================================
     // FIELD CHECK-OUT LOGIC (FAST 1-TAP CLOSE FOR CCTV TECHNICIANS)
     // =========================================================================
+    let currentAlreadyClosedId = "";
+    let currentDetailJobRecord = null;
+    let latestSheetClosedCheckins = [];
+
+    function formatDisplayTime(raw) {
+      if (!raw || raw === "-") return "-";
+      const s = String(raw).trim();
+      if (s.includes("T")) {
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          const h = String((d.getUTCHours() + 7) % 24).padStart(2, "0");
+          const m = String(d.getUTCMinutes()).padStart(2, "0");
+          return `${h}:${m}`;
+        }
+      }
+      if (s.length >= 5 && s.includes(":")) {
+        return s.slice(0, 5);
+      }
+      return s;
+    }
+
     function markCheckinAsClosed(id, taskName, outTime, outcome, closedBy) {
       if (!id) return;
       try {
@@ -1908,27 +2024,56 @@
 
     function getClosedCheckinRecord(id) {
       if (!id) return null;
+      let record = {
+        id: id,
+        task: "ติดตั้งกล้องวงจรปิด",
+        techs: ["ช่างหน้างาน"],
+        inTime: "-",
+        outTime: "-",
+        duration: "-",
+        outcome: "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง",
+        closedBy: "ช่างหน้างาน",
+        note: "",
+        mapUrl: ""
+      };
+
       try {
         const closedList = JSON.parse(localStorage.getItem("fs_closed_checkins") || "[]");
         const found = closedList.find(c => c.id === id);
-        if (found) return found;
+        if (found) record = { ...record, ...found };
       } catch(e) {}
+
       if (typeof dailyLogs !== "undefined" && Array.isArray(dailyLogs)) {
         const log = dailyLogs.find(l => l.id === id);
         if (log) {
-          return {
-            id: log.id,
-            task: log.task,
-            outTime: log.checkoutTime,
-            outcome: log.outcome,
-            closedBy: log.closedBy
-          };
+          if (log.task) record.task = log.task;
+          if (log.techs) record.techs = Array.isArray(log.techs) ? log.techs : [log.techs];
+          if (log.checkinTime) record.inTime = log.checkinTime;
+          if (log.checkoutTime) record.outTime = log.checkoutTime;
+          if (log.outcome) record.outcome = log.outcome;
+          if (log.closedBy) record.closedBy = log.closedBy;
+          if (log.note) record.note = log.note;
         }
       }
-      return null;
+
+      if (typeof latestSheetClosedCheckins !== "undefined" && Array.isArray(latestSheetClosedCheckins)) {
+        const sheetItem = latestSheetClosedCheckins.find(c => c.id === id);
+        if (sheetItem) {
+          if (sheetItem.task) record.task = sheetItem.task;
+          if (sheetItem.tech) record.techs = [sheetItem.tech];
+          if (sheetItem.time) record.inTime = formatDisplayTime(sheetItem.time);
+          if (sheetItem.outTime) record.outTime = formatDisplayTime(sheetItem.outTime);
+          if (sheetItem.duration) record.duration = sheetItem.duration;
+          if (sheetItem.mapUrl) record.mapUrl = sheetItem.mapUrl;
+          if (sheetItem.tech) record.closedBy = sheetItem.tech;
+        }
+      }
+
+      return record;
     }
 
     function openAlreadyClosedModal(id, title) {
+      currentAlreadyClosedId = id;
       const modal = document.getElementById("alreadyClosedModal");
       if (!modal) return;
 
@@ -1941,7 +2086,7 @@
       }
 
       if (detailsElem) {
-        const timeClosed = (record && record.outTime) ? `${record.outTime} น.` : "ส่งสรุปผลงานแล้ว";
+        const timeClosed = (record && record.outTime && record.outTime !== "-") ? `${formatDisplayTime(record.outTime)} น.` : "ส่งสรุปผลงานแล้ว";
         const closer = (record && record.closedBy) ? record.closedBy : (currentLineUserName || "ช่างหน้างาน");
         const outcome = (record && record.outcome) ? record.outcome : "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง";
 
@@ -1964,21 +2109,159 @@
       if (modal) modal.classList.add("hidden");
       setModalScrollLock(false);
 
-      if (target === "logs") {
-        switchTab("checkin");
-        const body = document.getElementById("todayLogsCollapseBody");
-        const chevron = document.getElementById("todayLogsChevron");
-        if (body) body.classList.remove("hidden");
-        if (chevron) chevron.innerText = "▲";
-        isTodayLogsOpen = true;
-        try { localStorage.setItem("fs_today_logs_open", "1"); } catch(e) {}
-        setTimeout(() => {
-          const logCard = document.getElementById("todayLogsCard");
-          if (logCard) logCard.scrollIntoView({ behavior: "smooth" });
-        }, 150);
-      } else if (target === "checkin") {
+      if (target === "checkin") {
         switchTab("checkin");
       }
+    }
+
+    function openJobDetailModal(id) {
+      const modal = document.getElementById("jobDetailModal");
+      if (!modal) return;
+
+      const record = getClosedCheckinRecord(id);
+      currentDetailJobRecord = record;
+
+      const badge = document.getElementById("jobDetailIdBadge");
+      const title = document.getElementById("jobDetailTitle");
+      const techs = document.getElementById("jobDetailTechs");
+      const inTime = document.getElementById("jobDetailCheckinTime");
+      const outTime = document.getElementById("jobDetailCheckoutTime");
+      const duration = document.getElementById("jobDetailDuration");
+      const closer = document.getElementById("jobDetailCloser");
+      const outcome = document.getElementById("jobDetailOutcome");
+      const note = document.getElementById("jobDetailNote");
+      const mapRow = document.getElementById("jobDetailMapRow");
+      const mapBtn = document.getElementById("jobDetailMapBtn");
+
+      if (badge) badge.innerText = `รหัสงาน: ${record.id}`;
+      if (title) title.innerText = record.task;
+      if (techs) {
+        const techList = Array.isArray(record.techs) ? record.techs.join(", ") : (record.techs || "ช่างทั่วไป");
+        techs.innerHTML = `<span>👷 ทีมช่าง:</span> <strong class="text-slate-700">${techList}</strong>`;
+      }
+
+      const formattedIn = formatDisplayTime(record.inTime);
+      const formattedOut = formatDisplayTime(record.outTime);
+
+      if (inTime) inTime.innerText = formattedIn !== "-" ? `${formattedIn} น.` : "-";
+      if (outTime) outTime.innerText = formattedOut !== "-" ? `${formattedOut} น.` : "ปิดงานแล้ว";
+      if (duration) duration.innerText = record.duration && record.duration !== "-" ? record.duration : "ตามเวลาปฏิบัติงาน";
+      if (closer) closer.innerText = record.closedBy || "ช่างหน้างาน";
+      if (outcome) outcome.innerText = record.outcome || "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง";
+
+      if (note) {
+        if (record.note) {
+          note.innerText = `หมายเหตุ: ${record.note}`;
+          note.classList.remove("hidden");
+        } else {
+          note.classList.add("hidden");
+        }
+      }
+
+      if (mapRow && mapBtn) {
+        if (record.mapUrl && record.mapUrl.startsWith("http")) {
+          mapBtn.href = record.mapUrl;
+          mapRow.classList.remove("hidden");
+        } else {
+          mapRow.classList.add("hidden");
+        }
+      }
+
+      // Close alreadyClosedModal if open
+      const acModal = document.getElementById("alreadyClosedModal");
+      if (acModal) acModal.classList.add("hidden");
+
+      modal.classList.remove("hidden");
+      setModalScrollLock(true);
+    }
+
+    function closeJobDetailModal() {
+      const modal = document.getElementById("jobDetailModal");
+      if (modal) modal.classList.add("hidden");
+      setModalScrollLock(false);
+    }
+
+    async function shareJobDetailToLine() {
+      if (!currentDetailJobRecord) return;
+      const rec = currentDetailJobRecord;
+      const techDisplayStr = Array.isArray(rec.techs) ? rec.techs.join(", ") : (rec.techs || "ทีมช่าง");
+      const outTimeStr = formatDisplayTime(rec.outTime);
+      const inTimeStr = formatDisplayTime(rec.inTime);
+
+      const flexCard = {
+        type: "flex",
+        altText: `[สรุปผลงาน CCTV] ${rec.task} (${techDisplayStr})`,
+        contents: {
+          type: "bubble",
+          size: "mega",
+          header: {
+            type: "box",
+            layout: "vertical",
+            backgroundColor: "#14532D",
+            paddingAll: "18px",
+            contents: [
+              {
+                type: "box",
+                layout: "horizontal",
+                contents: [
+                  { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#86EFAC", size: "xxs", flex: 6 },
+                  { type: "text", text: `${outTimeStr} น.`, color: "#DCFCE7", size: "xs", align: "end", weight: "bold", flex: 4 }
+                ]
+              },
+              {
+                type: "text",
+                text: "🏁 ปิดงานและส่งสรุปผลงาน",
+                weight: "bold",
+                color: "#FFFFFF",
+                size: "lg",
+                wrap: true,
+                margin: "sm"
+              }
+            ]
+          },
+          body: {
+            type: "box",
+            layout: "vertical",
+            spacing: "sm",
+            paddingAll: "18px",
+            contents: [
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ทีมช่าง", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: techDisplayStr, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "ผู้ส่งปิดงาน", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: rec.closedBy || "ช่างหน้างาน", size: "xs", weight: "bold", color: "#15803D", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "งานที่ทำ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: rec.task, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "horizontal", contents: [
+                  { type: "text", text: "เวลาเริ่ม - จบ", size: "xs", color: "#64748B", flex: 4 },
+                  { type: "text", text: `${inTimeStr} - ${outTimeStr} น.`, size: "xs", color: "#334155", flex: 6 }
+                ]
+              },
+              {
+                type: "box", layout: "vertical", margin: "md", contents: [
+                  { type: "text", text: "ผลการดำเนินงาน:", size: "xs", color: "#64748B", weight: "bold" },
+                  { type: "text", text: rec.outcome || "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง", size: "xs", color: "#166534", weight: "bold", wrap: true, margin: "xs" },
+                  ...(rec.note ? [{ type: "text", text: `หมายเหตุ: ${rec.note}`, size: "xs", color: "#475569", wrap: true, margin: "xs" }] : [])
+                ]
+              }
+            ]
+          }
+        }
+      };
+
+      await triggerLiffShare(flexCard, "ส่งสรุปผลงานเข้ากลุ่ม LINE สำเร็จ");
     }
 
     function renderActiveCheckoutList(items) {

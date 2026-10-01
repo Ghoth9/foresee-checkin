@@ -167,6 +167,8 @@ function getInitialData() {
           time: r[2], 
           tech: r[3], 
           task: r[4], 
+          coords: r[5] || "",
+          mapUrl: r[6] || "",
           outTime: r[7] || "", 
           duration: r[8] || "", 
           status: String(r[r.length - 1] || "").trim()
