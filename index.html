@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.09.30.v6";
+    const FORESEE_APP_VERSION = "2026.10.01.v7";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -1305,7 +1305,13 @@
           });
         }
         const savedMyTechs = localStorage.getItem("fs_my_checkin_techs");
-        if (savedMyTechs) checkinSelectedTechs = JSON.parse(savedMyTechs);
+        if (savedMyTechs) {
+          checkinSelectedTechs = JSON.parse(savedMyTechs);
+          checkinSelectedTechs = checkinSelectedTechs.filter(t => allTechnicians.includes(t));
+          if (checkinSelectedTechs.length === 0 && allTechnicians.length > 0) {
+            checkinSelectedTechs = [allTechnicians[0]];
+          }
+        }
 
         const savedActive = localStorage.getItem("fs_active_tasks");
         if (savedActive) {
@@ -1453,6 +1459,13 @@
       if (!container) return;
       container.innerHTML = "";
 
+      // Ensure only currently valid technicians are selected
+      checkinSelectedTechs = checkinSelectedTechs.filter(t => allTechnicians.includes(t));
+      if (checkinSelectedTechs.length === 0 && allTechnicians.length > 0) {
+        checkinSelectedTechs = [allTechnicians[0]];
+      }
+      try { localStorage.setItem("fs_my_checkin_techs", JSON.stringify(checkinSelectedTechs)); } catch(e) {}
+
       allTechnicians.forEach(name => {
         const isSelected = checkinSelectedTechs.includes(name);
         const btn = document.createElement("button");
@@ -1516,6 +1529,8 @@
     }
 
     async function submitCheckin() {
+      // Ensure only valid, registered technicians are used
+      checkinSelectedTechs = checkinSelectedTechs.filter(t => allTechnicians.includes(t));
       if (checkinSelectedTechs.length === 0) {
         alert("กรุณาเลือกช่างที่เข้าหน้างานอย่างน้อย 1 คน");
         return;
