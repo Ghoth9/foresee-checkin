@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.01.v10";
+    const FORESEE_APP_VERSION = "2026.10.01.v11";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -880,9 +880,9 @@
     ];
 
     const CCTV_OUTCOMES = [
-      "✅ ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง",
+      "✅ ปฏิบัติงานเสร็จเรียบร้อย",
       "⏳ เดินสายเสร็จแล้ว นัดเข้าติดกล้องวันถัดไป",
-      "⚠️ รออะไหล่ / ติดปัญหาสายสัญญาณขาด",
+      "⚠️ รออะไหล่ / ติดปัญหาหน้างาน",
       "🤝 ส่งมอบงานและสอนลูกค้าดูออนไลน์แล้ว"
     ];
 
@@ -890,7 +890,7 @@
     let currentLat = null;
     let currentLng = null;
     let currentLineUserName = "หัวหน้างาน";
-    let allTechnicians = ["ช่างสายฟ้า", "ช่างมณเฑียร", "ช่างกนก", "ช่างสมชาย"];
+    let allTechnicians = ["ช่างสายฟ้า", "ช่างมณเฑียร", "ช่างกนก"];
     let selectedTechFilter = "ทั้งหมด";
     
     // Check-in State (Field Operations)
@@ -910,7 +910,7 @@
         id: "TSK-01",
         title: "ทำใบเสนอราคาและจัดสเปกกล้อง บจก.ไทยรุ่งเรือง",
         desc: "จัดเตรียมเอกสารสเปก Hikvision 8 จุด และใบเสนอราคาส่งฝ่ายจัดซื้อ",
-        techs: ["สายฟ้า", "สมชาย"],
+        techs: ["ช่างสายฟ้า"],
         startDate: "2026-09-29",
         deadline: "2026-10-06",
         status: "กำลังทำ",
@@ -2031,7 +2031,7 @@
         inTime: "-",
         outTime: "-",
         duration: "-",
-        outcome: "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง",
+        outcome: "ปฏิบัติงานเสร็จเรียบร้อย",
         closedBy: "ช่างหน้างาน",
         note: "",
         mapUrl: ""
@@ -2088,7 +2088,7 @@
       if (detailsElem) {
         const timeClosed = (record && record.outTime && record.outTime !== "-") ? `${formatDisplayTime(record.outTime)} น.` : "ส่งสรุปผลงานแล้ว";
         const closer = (record && record.closedBy) ? record.closedBy : (currentLineUserName || "ช่างหน้างาน");
-        const outcome = (record && record.outcome) ? record.outcome : "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง";
+        const outcome = (record && record.outcome) ? record.outcome : "ปฏิบัติงานเสร็จเรียบร้อย";
 
         detailsElem.innerHTML = `
           <div class="space-y-1.5">
@@ -2147,7 +2147,7 @@
       if (outTime) outTime.innerText = formattedOut !== "-" ? `${formattedOut} น.` : "ปิดงานแล้ว";
       if (duration) duration.innerText = record.duration && record.duration !== "-" ? record.duration : "ตามเวลาปฏิบัติงาน";
       if (closer) closer.innerText = record.closedBy || "ช่างหน้างาน";
-      if (outcome) outcome.innerText = record.outcome || "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง";
+      if (outcome) outcome.innerText = record.outcome || "ปฏิบัติงานเสร็จเรียบร้อย";
 
       if (note) {
         if (record.note) {
@@ -2252,7 +2252,7 @@
               {
                 type: "box", layout: "vertical", margin: "md", contents: [
                   { type: "text", text: "ผลการดำเนินงาน:", size: "xs", color: "#64748B", weight: "bold" },
-                  { type: "text", text: rec.outcome || "ติดตั้งเสร็จเรียบร้อย ภาพขึ้นครบทุกกล้อง", size: "xs", color: "#166534", weight: "bold", wrap: true, margin: "xs" },
+                  { type: "text", text: rec.outcome || "ปฏิบัติงานเสร็จเรียบร้อย", size: "xs", color: "#166534", weight: "bold", wrap: true, margin: "xs" },
                   ...(rec.note ? [{ type: "text", text: `หมายเหตุ: ${rec.note}`, size: "xs", color: "#475569", wrap: true, margin: "xs" }] : [])
                 ]
               }
@@ -2777,7 +2777,7 @@
           desc: "",
           startDate: getTodayYMD(),
           deadline: getSevenDaysLaterYMD(),
-          techs: ["สายฟ้า", "สมชาย"]
+          techs: []
         }
       ];
       renderAssignRows();
@@ -2816,7 +2816,7 @@
         desc: "",
         startDate: getTodayYMD(),
         deadline: getSevenDaysLaterYMD(),
-        techs: ["สายฟ้า"]
+        techs: []
       });
       renderAssignRows();
     }
@@ -2899,11 +2899,10 @@
     }
 
     function toggleRowTech(rowIdx, tName) {
-      let cur = assignRows[rowIdx].techs;
+      let cur = assignRows[rowIdx].techs || [];
+      cur = cur.filter(t => allTechnicians.includes(t));
       if (cur.includes(tName)) {
-        if (cur.length > 1) {
-          cur = cur.filter(t => t !== tName);
-        }
+        cur = cur.filter(t => t !== tName);
       } else {
         cur.push(tName);
       }
@@ -2918,19 +2917,27 @@
         return;
       }
 
+      for (let i = 0; i < validRows.length; i++) {
+        validRows[i].techs = (validRows[i].techs || []).filter(t => allTechnicians.includes(t));
+        if (validRows[i].techs.length === 0) {
+          alert(`กรุณาเลือกช่างผู้รับผิดชอบสำหรับงาน "${validRows[i].title}"`);
+          return;
+        }
+      }
+
       closeAssignModal();
 
       const newItems = validRows.map(r => ({
-        id: `TSK-${Math.floor(10 + Math.random() * 90)}`,
+        id: `TASK-${Math.floor(100 + Math.random() * 900)}`,
         title: r.title,
-        desc: r.desc,
+        desc: r.desc || "-",
         techs: [...r.techs],
         startDate: r.startDate,
         deadline: r.deadline,
         status: selectedAssignStatus,
         progress: 0,
         latestUpdate: `มอบหมายงานเริ่มต้น: ${selectedAssignStatus}`,
-        updateBy: currentLineUserName,
+        updateBy: currentLineUserName || "หัวหน้างาน",
         updateTime: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
       }));
 
@@ -2946,6 +2953,12 @@
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
               action: "saveTask",
+              taskId: item.id,
+              taskTitle: item.title,
+              customerLoc: item.desc || "-",
+              technician: item.techs.join(", "),
+              deadline: item.deadline,
+              status: item.status,
               payload: {
                 taskId: item.id,
                 taskTitle: item.title,
@@ -3478,11 +3491,30 @@
     }
 
     function deleteCurrentTask() {
-      if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการงานนี้?")) return;
-      tasksList = tasksList.filter(t => t.id !== currentEditingTaskId);
+      const targetId = currentEditingTaskId;
+      const task = tasksList.find(t => t.id === targetId);
+      const title = task ? task.title : targetId;
+      if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบรายการงาน:\n"${title}"\nออกจากระบบและ Google Sheets?`)) return;
+
+      tasksList = tasksList.filter(t => t.id !== targetId);
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
       renderTasksList();
       closeEditTaskModal();
+
+      // Realtime delete from Google Sheet (Tasks)
+      if (GAS_API_URL) {
+        fetch(GAS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "deleteTask",
+            taskId: targetId,
+            payload: { taskId: targetId }
+          })
+        }).then(r => r.json()).then(res => {
+          console.log("Deleted from Google Sheet:", res);
+        }).catch(e => console.warn(e));
+      }
     }
 
     async function shareExistingTask(taskId) {

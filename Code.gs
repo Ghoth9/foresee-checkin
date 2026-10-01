@@ -83,12 +83,13 @@ function doGet(e) {
 function doPost(e) {
   let result = { success: false, message: "No action" };
   try {
-    let payload = {};
+    let raw = {};
     if (e && e.postData && e.postData.contents) {
-      payload = JSON.parse(e.postData.contents);
+      raw = JSON.parse(e.postData.contents);
     }
 
-    const action = payload.action;
+    const action = raw.action;
+    const payload = (raw.payload && typeof raw.payload === "object") ? Object.assign({}, raw, raw.payload) : raw;
 
     if (action === "saveCheckin") {
       result = saveCheckin(payload);
@@ -108,6 +109,8 @@ function doPost(e) {
       result = deleteMultipleCheckins(payload.ids);
     } else if (action === "clearAllCheckins") {
       result = clearAllCheckins();
+    } else if (action === "deleteTask") {
+      result = deleteTask(payload.taskId || payload.id);
     } else if (action === "getInitialData") {
       result = getInitialData();
     }
@@ -326,17 +329,18 @@ function updateTaskProgress(payload) {
 }
 
 // 4. ฟังก์ชันบันทึกมอบหมายงานใหม่
-function saveTask(payload) {
+function saveTask(p) {
   try {
+    const payload = (p && p.payload && typeof p.payload === "object") ? Object.assign({}, p, p.payload) : (p || {});
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let taskSheet = ss.getSheetByName("Tasks");
     if (!taskSheet) taskSheet = ss.insertSheet("Tasks");
     ensureTaskSheetHeaders(taskSheet);
 
-    const taskId = payload.taskId || ("TASK-" + ("000" + Math.max(1, taskSheet.getLastRow())).slice(-3));
-    const taskTitle = payload.taskTitle || "งานติดตั้งทั่วไป";
-    const customerLoc = payload.customerLoc || "-";
-    const technician = payload.technician || "ไม่ระบุช่าง";
+    const taskId = payload.taskId || payload.id || ("TASK-" + ("000" + Math.max(1, taskSheet.getLastRow())).slice(-3));
+    const taskTitle = payload.taskTitle || payload.title || "งานติดตั้งทั่วไป";
+    const customerLoc = payload.customerLoc || payload.desc || payload.location || "-";
+    const technician = payload.technician || (Array.isArray(payload.techs) ? payload.techs.join(", ") : payload.techs) || "ไม่ระบุช่าง";
     const deadline = payload.deadline || "-";
     const status = payload.status || "รอดำเนินการ";
 
@@ -468,6 +472,26 @@ function deleteCheckin(id) {
       }
     }
     return { success: false, message: "ID not found" };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+// ฟังก์ชันลบงานในแท็บ Tasks
+function deleteTask(taskId) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const taskSheet = ss.getSheetByName("Tasks");
+    if (!taskSheet || taskSheet.getLastRow() <= 1) return { success: true, deleted: 0 };
+    
+    const data = taskSheet.getRange(2, 1, taskSheet.getLastRow() - 1, 1).getValues();
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (String(data[i][0]).trim() === String(taskId).trim()) {
+        taskSheet.deleteRow(i + 2);
+        return { success: true, deleted: 1, id: taskId };
+      }
+    }
+    return { success: false, message: "Task ID not found: " + taskId };
   } catch (err) {
     return { success: false, error: err.toString() };
   }
