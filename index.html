@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.01.v14";
+    const FORESEE_APP_VERSION = "2026.10.01.v15";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -4211,6 +4211,15 @@
         renderCheckinTechChips();
         renderTechFilterChips();
         renderTasksList();
+
+        // Real-time delete from Google Sheet Users tab
+        try {
+          fetch(GAS_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "deleteTechnician", name: name })
+          }).then(r => r.json()).then(res => console.log("Technician deleted from Sheet:", res)).catch(e => console.warn("deleteTechnician GAS sync error:", e));
+        } catch(e) {}
       }
     }
 
