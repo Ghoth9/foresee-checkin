@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.01.v12";
+    const FORESEE_APP_VERSION = "2026.10.01.v13";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -862,6 +862,122 @@
   </div>
 
   <!-- ========================================================================= -->
+  <!-- MODAL: TASK ACTION MODAL (เด้งป๊อปอัปเมื่อกดเปิดดูงานจาก LINE) -->
+  <!-- ========================================================================= -->
+  <div id="taskActionModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3.5 z-50 overflow-y-auto modal-scroll-container">
+    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto space-y-3.5">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+          <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">📋</span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">รายละเอียดงานมอบหมาย</h3>
+            <span id="taskActionIdBadge" class="text-[10px] font-semibold text-blue-600"></span>
+          </div>
+        </div>
+        <button type="button" onclick="closeTaskActionModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Main Info Card -->
+      <div class="space-y-2.5 text-xs">
+        
+        <!-- Title & Status -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ชื่องาน</span>
+            <span id="taskActionStatusBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full border"></span>
+          </div>
+          <h4 id="taskActionTitle" class="text-sm font-bold text-slate-900 leading-snug"></h4>
+          <div id="taskActionDescRow" class="text-xs text-slate-600 flex items-start space-x-1 pt-0.5">
+            <span class="text-slate-400">📍</span>
+            <span id="taskActionDesc" class="leading-relaxed"></span>
+          </div>
+        </div>
+
+        <!-- Techs & Dates -->
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
+            <span class="text-[10px] text-slate-400 block font-medium mb-1">ช่างผู้รับผิดชอบ</span>
+            <div id="taskActionTechs" class="flex flex-wrap gap-1"></div>
+          </div>
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
+            <span class="text-[10px] text-slate-400 block font-medium mb-0.5">กำหนดส่งมอบ</span>
+            <div id="taskActionDeadline" class="font-bold text-slate-800 text-xs"></div>
+            <div id="taskActionCountdown" class="mt-1"></div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="p-2.5 bg-blue-50/60 rounded-xl border border-blue-100 text-[11px] space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-blue-900 font-semibold">ความคืบหน้ารวม:</span>
+            <span id="taskActionProgressPercent" class="font-bold text-blue-700 text-xs">0%</span>
+          </div>
+          <div class="w-full bg-blue-200/60 rounded-full h-2 overflow-hidden">
+            <div id="taskActionProgressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Latest Update / Note -->
+        <div class="p-2.5 bg-slate-100/70 rounded-xl border border-slate-200/60 space-y-1 text-xs">
+          <div class="text-[10px] text-slate-500 font-semibold flex items-center space-x-1">
+            <span>💬 อัปเดตล่าสุด:</span>
+          </div>
+          <div id="taskActionLatestUpdate" class="text-slate-800 font-medium leading-snug">ยังไม่มีการบันทึกอัปเดต</div>
+          <div id="taskActionUpdateBy" class="text-[10px] text-slate-400 pt-0.5"></div>
+        </div>
+
+        <!-- Extend Note if any -->
+        <div id="taskActionExtendRow" class="hidden p-2.5 bg-amber-50 rounded-xl border border-amber-200/70 text-xs text-amber-900 space-y-0.5">
+          <div class="text-[10px] font-bold text-amber-800 flex items-center space-x-1">
+            <span>⏰ บันทึกการขยายเวลา:</span>
+          </div>
+          <div id="taskActionExtendReason" class="text-[11px] text-amber-800 whitespace-pre-line leading-relaxed"></div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons Grid -->
+      <div class="space-y-2 pt-2 border-t border-slate-100">
+        <div class="grid grid-cols-2 gap-2">
+          <!-- Button 1: อัปเดตงาน -->
+          <button type="button" id="taskActionUpdateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            <span>อัปเดตงาน</span>
+          </button>
+
+          <!-- Button 2: ขยายเวลา -->
+          <button type="button" id="taskActionExtendBtn" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span>ขยายเวลา</span>
+          </button>
+        </div>
+
+        <!-- Button 3: เช็คอินเข้าทำงานนี้ -->
+        <button type="button" id="taskActionCheckinBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs transition-colors shadow-sm flex items-center justify-center space-x-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>เช็คอินเข้าทำงานนี้</span>
+        </button>
+
+        <div class="flex items-center space-x-2 pt-1">
+          <!-- Button 4: แชร์เข้า LINE อีกครั้ง -->
+          <button type="button" id="taskActionShareBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-xl text-xs transition-colors border border-slate-200 flex items-center justify-center space-x-1">
+            <span>📲 แชร์เข้า LINE</span>
+          </button>
+          <!-- Button 5: ปิดป๊อปอัป -->
+          <button type="button" onclick="closeTaskActionModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2 px-3 rounded-xl text-xs transition-colors border border-slate-200">
+            <span>ปิด</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- JAVASCRIPT LOGIC -->
   <!-- ========================================================================= -->
   <script>
@@ -1246,6 +1362,13 @@
           tasksList = sheetTasks;
           try { localStorage.setItem("fs_tasks", JSON.stringify(tasksList)); } catch(e) {}
           renderTasksList();
+          if (window.pendingOpenTaskId) {
+            const found = tasksList.find(t => t.id === window.pendingOpenTaskId || t.title === window.pendingOpenTaskId);
+            if (found) {
+              openTaskActionModal(found.id);
+              window.pendingOpenTaskId = null;
+            }
+          }
         }
 
         updateSyncStatusUI("online");
@@ -1698,13 +1821,26 @@
       } catch(e) {}
       updateCheckoutBadge();
 
-      // Determine initial tab (prioritize direct checkout link)
+      // Determine initial tab (prioritize direct checkout link or direct task popup link)
       let tabParam = allParams.get("tab") || allParams.get("action");
       if (directId && directTask) {
         tabParam = "checkout";
       }
 
-      if (tabParam && ["tasks", "checkin", "checkout", "assign"].includes(tabParam)) {
+      // Check if opened directly from a LINE Flex Card task link
+      const directTaskId = allParams.get("taskId") || allParams.get("openTask") || allParams.get("task_id");
+      if (directTaskId) {
+        tabParam = "tasks";
+        switchTab("tasks");
+        const found = tasksList.find(t => t.id === directTaskId || t.title === directTaskId);
+        if (found) {
+          setTimeout(() => {
+            openTaskActionModal(found.id);
+          }, 350);
+        } else {
+          window.pendingOpenTaskId = directTaskId;
+        }
+      } else if (tabParam && ["tasks", "checkin", "checkout", "assign"].includes(tabParam)) {
         if (tabParam === "assign") {
           switchTab("tasks");
           openAssignModal();
@@ -2362,6 +2498,151 @@
       await triggerLiffShare(flexCard, "ส่งสรุปผลงานเข้ากลุ่ม LINE สำเร็จ");
     }
 
+    // =========================================================================
+    // TASK ACTION MODAL (เด้งป๊อปอัปเมื่อคลิกดูงานจาก LINE หรือในระบบ)
+    // =========================================================================
+    let currentActionTaskId = null;
+
+    function openTaskActionModal(taskId) {
+      if (!taskId) return;
+      const task = tasksList.find(t => t.id === taskId || t.title === taskId);
+      if (!task) {
+        console.warn("Task not found for modal:", taskId);
+        return;
+      }
+      currentActionTaskId = task.id;
+
+      const isDone = task.status === "เสร็จสิ้น";
+      const today = getTodayYMD();
+      const isOver = !isDone && task.deadline < today;
+      let badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
+      if (isDone) badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200";
+      else if (isOver) badgeBg = "bg-rose-50 text-rose-700 border-rose-200";
+
+      const idBadge = document.getElementById("taskActionIdBadge");
+      if (idBadge) idBadge.innerText = `รหัส: ${task.id}`;
+
+      const statusBadge = document.getElementById("taskActionStatusBadge");
+      if (statusBadge) {
+        statusBadge.innerText = task.status;
+        statusBadge.className = `text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg}`;
+      }
+
+      const titleElem = document.getElementById("taskActionTitle");
+      if (titleElem) titleElem.innerText = task.title;
+
+      const descElem = document.getElementById("taskActionDesc");
+      if (descElem) descElem.innerText = task.desc || task.location || "-";
+
+      // Techs
+      const techs = getTaskTechs(task);
+      const techContainer = document.getElementById("taskActionTechs");
+      if (techContainer) {
+        techContainer.innerHTML = techs.map(t => `<span class="bg-white text-slate-800 font-semibold px-2 py-0.5 rounded border border-slate-200 text-[10px]">${t}</span>`).join('');
+      }
+
+      // Deadline & Countdown
+      let dlHtml = task.deadline;
+      if (task.oldDeadline && task.oldDeadline !== '-' && task.oldDeadline !== task.deadline) {
+        dlHtml += ` <span class="text-[10px] text-amber-600 line-through font-normal">(เดิม ${task.oldDeadline})</span>`;
+      }
+      const dlElem = document.getElementById("taskActionDeadline");
+      if (dlElem) dlElem.innerHTML = dlHtml;
+
+      const cdElem = document.getElementById("taskActionCountdown");
+      if (cdElem) cdElem.innerHTML = getDeadlineCountdownBadge(task.deadline, isDone);
+
+      // Progress
+      const prog = typeof task.progress === "number" ? task.progress : 0;
+      const progElem = document.getElementById("taskActionProgressPercent");
+      if (progElem) progElem.innerText = `${prog}%`;
+      const barElem = document.getElementById("taskActionProgressBar");
+      if (barElem) barElem.style.width = `${Math.min(100, Math.max(0, prog))}%`;
+
+      // Latest Update
+      const upElem = document.getElementById("taskActionLatestUpdate");
+      if (upElem) upElem.innerText = task.latestUpdate || 'ยังไม่มีการบันทึกอัปเดต';
+
+      const upByElem = document.getElementById("taskActionUpdateBy");
+      if (upByElem) {
+        if (task.updateBy && task.updateBy !== '-') {
+          upByElem.innerText = `โดย ${task.updateBy}${task.updateTime && task.updateTime !== 'undefined' ? ` (${task.updateTime})` : ''}`;
+          upByElem.classList.remove("hidden");
+        } else {
+          upByElem.classList.add("hidden");
+        }
+      }
+
+      // Extend note
+      const extRow = document.getElementById("taskActionExtendRow");
+      const extReason = document.getElementById("taskActionExtendReason");
+      if (extRow && extReason) {
+        if (task.reason && task.reason !== '-') {
+          extReason.innerText = task.reason;
+          extRow.classList.remove("hidden");
+        } else {
+          extRow.classList.add("hidden");
+        }
+      }
+
+      // Bind Buttons
+      const updBtn = document.getElementById("taskActionUpdateBtn");
+      if (updBtn) {
+        updBtn.onclick = () => {
+          closeTaskActionModal();
+          openUpdateProgressModal(task.id);
+        };
+      }
+      const extBtn = document.getElementById("taskActionExtendBtn");
+      if (extBtn) {
+        extBtn.onclick = () => {
+          closeTaskActionModal();
+          openExtendModal(task.id);
+        };
+      }
+      const chkBtn = document.getElementById("taskActionCheckinBtn");
+      if (chkBtn) {
+        chkBtn.onclick = () => {
+          closeTaskActionModal();
+          startCheckinWithTask(task);
+        };
+      }
+      const shareBtn = document.getElementById("taskActionShareBtn");
+      if (shareBtn) {
+        shareBtn.onclick = () => {
+          shareExistingTask(task.id);
+        };
+      }
+
+      const modal = document.getElementById("taskActionModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        setModalScrollLock(true);
+      }
+    }
+
+    function closeTaskActionModal() {
+      const modal = document.getElementById("taskActionModal");
+      if (modal) modal.classList.add("hidden");
+      setModalScrollLock(false);
+    }
+
+    function startCheckinWithTask(task) {
+      if (!task) return;
+      const taskInput = document.getElementById("checkinTaskName");
+      if (taskInput) {
+        taskInput.value = task.title + (task.desc && task.desc !== '-' ? ` (${task.desc})` : '');
+      }
+      const techs = getTaskTechs(task);
+      if (techs.length > 0 && allTechnicians.includes(techs[0])) {
+        checkinSelectedTechs = [techs[0]];
+        saveMyCheckinTechs();
+        renderCheckinTechChips();
+      }
+      switchTab("checkin");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
     function renderActiveCheckoutList(items) {
       updateCheckoutBadge();
       const container = document.getElementById("activeListContainer");
@@ -2707,8 +2988,14 @@
             <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg} flex-shrink-0">${task.status}</span>
           </div>
 
-          <div>
-            <h4 class="text-sm font-bold text-slate-900 leading-snug">${task.title}</h4>
+          <div class="cursor-pointer group" onclick="openTaskActionModal('${task.id}')">
+            <h4 class="text-sm font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition-colors flex items-center justify-between">
+              <span>${task.title}</span>
+              <span class="text-[10px] text-blue-600 font-semibold group-hover:underline flex items-center space-x-0.5 flex-shrink-0 ml-2">
+                <span>เปิดดู</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </h4>
             ${task.desc ? `<p class="text-xs text-slate-500 mt-0.5 leading-relaxed">${task.desc}</p>` : ''}
           </div>
 
@@ -2742,6 +3029,10 @@
           </div>
 
           <div class="flex flex-wrap items-center justify-end gap-1.5 pt-1 border-t border-slate-100">
+            <button type="button" onclick="openTaskActionModal('${task.id}')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <span>ดูงาน</span>
+            </button>
             <button type="button" onclick="openUpdateProgressModal('${task.id}')" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
               <span>อัปเดต</span>
@@ -3146,7 +3437,7 @@
                 action: {
                   type: "uri",
                   label: "เปิดดูงานในระบบ",
-                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks`
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks&taskId=${encodeURIComponent(first.id)}`
                 }
               }
             ]
@@ -3323,7 +3614,7 @@
                 action: {
                   type: "uri",
                   label: "เปิดดูงานในระบบ",
-                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks`
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks&taskId=${encodeURIComponent(task.id)}`
                 }
               }
             ]
@@ -3486,7 +3777,7 @@
                 action: {
                   type: "uri",
                   label: "เปิดดูงานในระบบ",
-                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks`
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks&taskId=${encodeURIComponent(task.id)}`
                 }
               }
             ]
@@ -3693,7 +3984,7 @@
                 action: {
                   type: "uri",
                   label: "เปิดดูงานในระบบ",
-                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks`
+                  uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks&taskId=${encodeURIComponent(task.id)}`
                 }
               }
             ]
