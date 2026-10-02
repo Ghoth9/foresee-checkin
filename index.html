@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.02.v19";
+    const FORESEE_APP_VERSION = "2026.10.02.v20";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -65,15 +65,13 @@
       
       <!-- Brand Logo & Name -->
       <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-lg bg-slate-950 text-white flex items-center justify-center shadow-xs flex-shrink-0">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-        </div>
-        <div>
+        <img src="foresee-logo.png" alt="FORESEE TECHNOLOGY CO., LTD" class="h-9 md:h-11 w-auto object-contain drop-shadow-2xs select-none">
+        <div class="hidden sm:block border-l border-slate-200 pl-3">
           <div class="flex items-center space-x-2">
-            <span class="text-sm font-bold tracking-tight text-slate-900 uppercase">FORESEE CCTV</span>
-            <span class="hidden md:inline-flex text-[11px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">Operations Hub</span>
+            <span class="text-xs font-bold tracking-tight text-slate-900 uppercase">Operations Hub</span>
+            <span class="text-[10px] font-semibold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">CCTV System</span>
           </div>
-          <div class="text-[11px] text-slate-500 hidden md:block">ระบบจัดการงานช่างและติดตามการปฏิบัติงาน</div>
+          <div class="text-[11px] text-slate-500">ระบบจัดการงานช่างและติดตามการปฏิบัติงาน</div>
         </div>
       </div>
 
@@ -140,18 +138,36 @@
     <!-- TAB 1: เช็กอินหน้างาน (CCTV TECHNICIAN FIELD CHECK-IN - ZERO FRICTION!) -->
     <!-- ========================================================================= -->
     <section id="checkinSection" class="space-y-4">
-      <div class="space-y-3 md:space-y-0 md:grid md:grid-cols-12 md:gap-6 md:items-start">
+      <div class="max-w-2xl mx-auto space-y-4">
       
-      <!-- Left Column on Desktop (Col 1-7): Check-in Form -->
-      <div class="space-y-3 md:col-span-7">
-        <div class="bg-white rounded-xl p-4 md:p-5 border border-slate-200 shadow-sm space-y-4">
-          
-          <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
-            <div>
-              <h2 class="text-sm md:text-base font-bold text-slate-900">เช็กอินถึงหน้างาน</h2>
-              <p class="text-[11px] md:text-xs text-slate-500">สำหรับช่างปฏิบัติงานจริงหน้างาน เลือกทีมช่างและประเภทงาน</p>
+        <!-- GPS Status Card (Clean & Compact Top Banner) -->
+        <div class="bg-white rounded-xl p-3 md:p-3.5 border border-slate-200 shadow-2xs flex items-center justify-between">
+          <div class="flex items-center space-x-2.5 min-w-0">
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
             </div>
-            <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">พิกัดจริง</span>
+            <div class="min-w-0">
+              <div id="gpsLocationTitle" class="text-xs md:text-sm font-semibold text-slate-800 truncate">กำลังระบุตำแหน่ง GPS หน้างาน...</div>
+              <div id="gpsCoordsText" class="text-[10px] md:text-xs text-slate-500 truncate">เปิด GPS บนอุปกรณ์เพื่อบันทึกพิกัดที่แท้จริง</div>
+            </div>
+          </div>
+          <button type="button" onclick="requestLocation()" class="flex-shrink-0 text-xs text-slate-600 hover:text-slate-900 font-medium px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 transition-colors">
+            รีเฟรช GPS
+          </button>
+        </div>
+
+        <!-- Main Check-in Form Card -->
+        <div class="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm space-y-4 md:space-y-5">
+          
+          <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-base md:text-lg font-bold text-slate-900">เช็กอินถึงหน้างาน</h2>
+              <p class="text-xs text-slate-500 mt-0.5">สำหรับช่างปฏิบัติงานจริงหน้างาน เลือกทีมช่างและประเภทงาน</p>
+            </div>
+            <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">📍 พิกัดสด</span>
           </div>
 
           <!-- 1. ทีมช่างที่เข้าหน้างานวันนี้ (Multi-select Team Chips) -->
@@ -170,7 +186,7 @@
           <!-- 2. ประเภทงานหน้างาน (Quick 1-Tap Chips + Custom Input) -->
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">2. ประเภทงานหน้างาน <span class="text-rose-500">*</span></label>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-1.5" id="cctvQuickChipsContainer">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5" id="cctvQuickChipsContainer">
               <!-- Preset chips rendered dynamically -->
             </div>
             <!-- Custom Job Input (Hidden by default, shown when "✏️ พิมพ์ระบุเอง" is selected) -->
@@ -182,13 +198,13 @@
           <!-- 3. สถานที่ / ไซต์งาน / ลูกค้า -->
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">3. สถานที่ / ไซต์งาน / ชื่อลูกค้า <span class="text-rose-500">*</span></label>
-            <input type="text" id="fieldLocationInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32 หรือ บจก. นิวเคลียร์" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+            <input type="text" id="fieldLocationInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32 หรือ บจก. นิวเคลียร์" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs md:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
           </div>
 
           <!-- 4. รายละเอียดหน้างาน / อาการ -->
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">4. รายละเอียดหน้างาน / อาการ</label>
-            <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+            <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs md:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
           </div>
 
           <!-- Big Touch-Friendly Action Button -->
@@ -199,32 +215,9 @@
           </div>
 
         </div>
-      </div>
 
-      <!-- Right Column on Desktop (Col 8-12): GPS Status Card & Today's Logs -->
-      <div class="space-y-3 md:col-span-5">
-        
-        <!-- GPS Status Card -->
-        <div class="bg-white rounded-xl p-3 md:p-4 border border-slate-200 shadow-sm flex items-center justify-between">
-          <div class="flex items-start space-x-2.5">
-            <div class="mt-0.5 text-blue-600">
-              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-            </div>
-            <div>
-              <div id="gpsLocationTitle" class="text-xs md:text-sm font-semibold text-slate-800">กำลังระบุตำแหน่ง GPS หน้างาน...</div>
-              <div id="gpsCoordsText" class="text-[10px] md:text-xs text-slate-500">เปิด GPS บนอุปกรณ์เพื่อบันทึกพิกัดที่แท้จริง</div>
-            </div>
-          </div>
-          <button type="button" onclick="requestLocation()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 transition-colors">
-            รีเฟรช
-          </button>
-        </div>
-
-        <!-- Today's Activity Log Card (Collapsible) -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+        <!-- Today's Activity Log Card (Collapsible, cleanly below the form) -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden transition-all">
           <button type="button" onclick="toggleTodayLogs()" class="w-full p-3 md:p-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left select-none">
             <div class="flex items-center space-x-2">
               <span class="text-sm md:text-base">📋</span>
@@ -273,73 +266,74 @@
         </div>
 
       </div>
-      <!-- End of grid wrapper -->
-      </div>
     </section>
 
     <!-- ========================================================================= -->
     <!-- TAB 2: ปิดงาน (CCTV TECHNICIAN FIELD CHECK-OUT - FAST 1-TAP CLOSE) -->
     <!-- ========================================================================= -->
-    <section id="checkoutSection" class="hidden space-y-3">
-      <!-- Direct Checkout Banner when opened from LINE chat card -->
-      <div id="directCheckoutBanner" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 px-3.5 py-2.5 rounded-xl text-xs flex items-center space-x-2.5 shadow-sm">
-        <span class="text-base flex-shrink-0">📲</span>
-        <div class="min-w-0">
-          <div class="font-bold text-emerald-900">เปิดบันทึกปิดงานจากการ์ดในแชท LINE</div>
-          <div id="directBannerJobTitle" class="text-[11px] text-emerald-700 font-medium mt-0.5 truncate"></div>
-        </div>
-      </div>
+    <section id="checkoutSection" class="hidden space-y-4">
+      <div class="max-w-2xl mx-auto space-y-4">
 
-      <!-- Already Closed Notice Banner when opened from an old LINE card -->
-      <div id="alreadyClosedCheckoutNotice" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 p-3.5 rounded-xl text-xs space-y-1 shadow-sm">
-        <div class="font-bold flex items-center space-x-1.5 text-emerald-800">
-          <span class="text-base">✅</span>
-          <span>งานนี้ปิดและส่งสรุปผลงานเรียบร้อยแล้ว</span>
-        </div>
-        <p id="alreadyClosedNoticeDetail" class="text-[11px] text-emerald-700 leading-relaxed">
-          งานนี้ได้ทำการปิดงานและส่งผลงานเข้า LINE เรียบร้อยแล้ว ไม่จำเป็นต้องทำรายการซ้ำ
-        </p>
-      </div>
-
-      <div class="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm space-y-4">
-        
-        <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
-          <div>
-            <h2 class="text-sm md:text-base font-bold text-slate-900">ปิดงานหน้างานและบันทึกเวลาจบ</h2>
-            <p class="text-[11px] md:text-xs text-slate-500">เลือกงานหน้างานที่ต้องการปิดและสรุปผลงาน</p>
+        <!-- Direct Checkout Banner when opened from LINE chat card -->
+        <div id="directCheckoutBanner" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded-xl text-xs flex items-center space-x-2.5 shadow-xs">
+          <span class="text-base flex-shrink-0">📲</span>
+          <div class="min-w-0">
+            <div class="font-bold text-emerald-900">เปิดบันทึกปิดงานจากการ์ดในแชท LINE</div>
+            <div id="directBannerJobTitle" class="text-[11px] text-emerald-700 font-medium mt-0.5 truncate"></div>
           </div>
-          <button type="button" onclick="renderActiveCheckoutList(activeTasks)" class="text-[11px] text-slate-600 font-medium bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors">
-            รีเฟรช
-          </button>
         </div>
 
-        <div class="md:grid md:grid-cols-2 md:gap-6 space-y-3.5 md:space-y-0">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-2">1. เลือกงานหน้างานที่กำลังทำอยู่ <span class="text-rose-500">*</span></label>
-            <div id="activeListContainer" class="space-y-2 max-h-56 md:max-h-96 overflow-y-auto pr-0.5">
+        <!-- Already Closed Notice Banner when opened from an old LINE card -->
+        <div id="alreadyClosedCheckoutNotice" class="hidden bg-emerald-50 border border-emerald-300 text-emerald-900 p-4 rounded-xl text-xs space-y-1 shadow-xs">
+          <div class="font-bold flex items-center space-x-1.5 text-emerald-800">
+            <span class="text-base">✅</span>
+            <span>งานนี้ปิดและส่งสรุปผลงานเรียบร้อยแล้ว</span>
+          </div>
+          <p id="alreadyClosedNoticeDetail" class="text-[11px] text-emerald-700 leading-relaxed">
+            งานนี้ได้ทำการปิดงานและส่งผลงานเข้า LINE เรียบร้อยแล้ว ไม่จำเป็นต้องทำรายการซ้ำ
+          </p>
+        </div>
+
+        <!-- Main Checkout Card (Flows straight down sequentially) -->
+        <div class="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm space-y-4 md:space-y-5">
+          
+          <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div>
+              <h2 class="text-base md:text-lg font-bold text-slate-900">ปิดงานหน้างานและบันทึกเวลาจบ</h2>
+              <p class="text-xs text-slate-500 mt-0.5">เลือกงานหน้างานที่ต้องการปิดและสรุปผลการปฏิบัติงาน</p>
+            </div>
+            <button type="button" onclick="renderActiveCheckoutList(activeTasks)" class="text-xs text-slate-600 hover:text-slate-900 font-medium bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-200 transition-colors">
+              รีเฟรช
+            </button>
+          </div>
+
+          <!-- 1. เลือกงานหน้างานที่กำลังทำอยู่ -->
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold text-slate-800">1. เลือกงานหน้างานที่กำลังทำอยู่ <span class="text-rose-500">*</span></label>
+            <div id="activeListContainer" class="space-y-2 max-h-60 md:max-h-80 overflow-y-auto pr-0.5">
               <!-- Active tasks rendered here -->
             </div>
           </div>
 
-          <div class="space-y-3.5">
-            <!-- Outcome Selection Section -->
-            <div id="checkoutOutcomeSection" class="hidden space-y-2.5">
-              <label class="block text-xs font-semibold text-slate-700">2. สรุปผลการปฏิบัติงานหน้างาน <span class="text-rose-500">*</span></label>
-              <div class="space-y-1.5 text-xs" id="checkoutOutcomesContainer">
-                <!-- Rendered dynamically -->
-              </div>
-              <div>
-                <label class="block text-[11px] text-slate-500 mb-1">หมายเหตุเพิ่มเติม:</label>
-                <input type="text" id="checkoutNoteInput" placeholder="เช่น ลูกค้ารับมอบเรียบร้อย, เซ็ตดูผ่านแอป Hik-Connect ให้แล้ว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-              </div>
+          <!-- 2. สรุปผลการปฏิบัติงานหน้างาน -->
+          <div id="checkoutOutcomeSection" class="hidden space-y-3 pt-3 border-t border-slate-100">
+            <label class="block text-xs font-semibold text-slate-800">2. สรุปผลการปฏิบัติงานหน้างาน <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" id="checkoutOutcomesContainer">
+              <!-- Rendered dynamically -->
             </div>
-
             <div class="pt-1">
-              <button type="button" onclick="submitCheckout()" id="btnCheckoutSubmit" disabled class="w-full bg-slate-300 text-slate-500 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center space-x-2 cursor-not-allowed">
-                <span>เลือกงานด้านบนเพื่อปิดงาน</span>
-              </button>
+              <label class="block text-xs text-slate-600 mb-1">หมายเหตุเพิ่มเติม:</label>
+              <input type="text" id="checkoutNoteInput" placeholder="เช่น ลูกค้ารับมอบเรียบร้อย, เซ็ตดูผ่านแอป Hik-Connect ให้แล้ว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
             </div>
           </div>
+
+          <!-- 3. Action Submit Button -->
+          <div class="pt-2 border-t border-slate-100">
+            <button type="button" onclick="submitCheckout()" id="btnCheckoutSubmit" disabled class="w-full bg-slate-300 text-slate-500 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center space-x-2 cursor-not-allowed">
+              <span>เลือกงานด้านบนเพื่อปิดงาน</span>
+            </button>
+          </div>
+
         </div>
 
       </div>
