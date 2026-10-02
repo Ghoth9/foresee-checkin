@@ -253,7 +253,8 @@ export async function submitProgressOnly({
     status: updateStatus,
     note: noteText.trim() || "อัปเดตความคืบหน้าระหว่างปฏิบัติงาน",
     updateBy: closerName || "ช่างหน้างาน",
-    updateTime: timeStr
+    updateTime: timeStr,
+    photoCount: checkoutPhotos.length
   });
 
   // 2. Sync to GAS

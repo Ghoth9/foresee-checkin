@@ -238,7 +238,7 @@ export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, p
   };
 }
 
-export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress, status, note, updateBy, updateTime }) {
+export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress, status, note, updateBy, updateTime, photoCount = 0 }) {
   const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
   const cardId = id || taskId || '';
   const updateDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=update&id=${encodeURIComponent(cardId)}&taskId=${encodeURIComponent(taskId || '')}&task=${encodeURIComponent(taskTitle)}&techs=${encodeURIComponent(techList)}`;
@@ -298,6 +298,12 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
               { type: "text", text: `${status} (${progress}%)`, size: "xs", weight: "bold", color: "#2563EB", flex: 6 }
             ]
           },
+          ...(photoCount > 0 ? [{
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ภาพหน้างาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: `📸 แนบรูปความคืบหน้า ${photoCount} ภาพ`, size: "xs", weight: "bold", color: "#2563EB", flex: 6 }
+            ]
+          }] : []),
           {
             type: "box", layout: "vertical", margin: "md", contents: [
               { type: "text", text: "รายละเอียดความคืบหน้า:", size: "xs", color: "#64748B", weight: "bold" },

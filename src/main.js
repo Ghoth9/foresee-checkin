@@ -464,6 +464,15 @@ export function clearAllActiveCheckins() {
 
 export function selectActiveTaskForCheckout(id) {
   selectedActiveCheckoutId = id;
+  const item = activeTasks.find(a => a.id === id);
+  if (item) {
+    const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+    if (linkedTask && linkedTask.progress !== undefined) {
+      setUpdatePercent(linkedTask.progress);
+    } else if (item.progress !== undefined) {
+      setUpdatePercent(item.progress);
+    }
+  }
   renderActiveCheckoutList();
   updateCheckoutSubmitButtonsState();
 }
@@ -611,7 +620,23 @@ async function bootstrapApp() {
       localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
     }
     if (gasData.tasks && Array.isArray(gasData.tasks)) {
-      tasksList = gasData.tasks;
+      tasksList = gasData.tasks.map(gt => {
+        const localCached = tasksList.find(lt => lt.id === gt.id);
+        let prog = localCached && localCached.progress !== undefined ? localCached.progress : 0;
+        if (gt.status === "เสร็จสิ้น") {
+          prog = 100;
+        } else if (gt.reason) {
+          const match = String(gt.reason).match(/คืบหน้า\s*(\d+)%/);
+          if (match) {
+            prog = parseInt(match[1], 10);
+          }
+        }
+        return {
+          ...gt,
+          progress: prog,
+          latestUpdate: gt.reason && gt.reason !== '-' ? gt.reason : (localCached ? localCached.latestUpdate : '')
+        };
+      });
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
     }
     if (gasData.activeCheckins && Array.isArray(gasData.activeCheckins)) {
@@ -623,6 +648,20 @@ async function bootstrapApp() {
         time: formatGasTime(a.time) || "09:00",
         date: formatGasDate(a.date)
       }));
+      // Merge in-progress tasks from tasksList into activeTasks so they are ready for updating
+      tasksList.forEach(t => {
+        if (t.status === "กำลังทำ" && !activeTasks.some(a => a.taskId === t.id || a.id === t.id || a.task === t.title)) {
+          activeTasks.push({
+            id: t.id,
+            taskId: t.id,
+            task: t.title,
+            techs: Array.isArray(t.techs) ? t.techs : (t.assignee ? t.assignee.split(", ") : ["ช่างประจำทีม"]),
+            time: "09:00",
+            date: "วันนี้",
+            progress: t.progress || 0
+          });
+        }
+      });
       localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
     }
   }
@@ -720,12 +759,30 @@ window.submitOngoingUpdate = () => {
       const act = activeTasks.find(a => a.id === updatedInfo.id);
       if (act) {
         act.status = updatedInfo.status;
+        act.progress = updatedInfo.progress;
       }
       const log = dailyLogs.find(l => l.id === updatedInfo.id);
       if (log) {
         log.status = updatedInfo.status;
         log.latestUpdate = updatedInfo.latestUpdate;
       }
+
+      // Link and update the assigned task in tasksList
+      if (activeItem) {
+        const linkedTask = tasksList.find(t => 
+          (activeItem.taskId && t.id === activeItem.taskId) || 
+          t.id === activeItem.id || 
+          t.title === activeItem.task
+        );
+        if (linkedTask) {
+          linkedTask.progress = updatedInfo.progress;
+          linkedTask.status = updatedInfo.status;
+          linkedTask.latestUpdate = updatedInfo.latestUpdate;
+          localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+          renderTasksList(tasksList);
+        }
+      }
+
       localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
       localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
       renderTodayLogs();
@@ -733,7 +790,7 @@ window.submitOngoingUpdate = () => {
       showAppAlert({
         type: "success",
         title: "อัปเดตสำเร็จ!",
-        message: "อัปเดตความคืบหน้างานเข้า LINE เรียบร้อยแล้ว"
+        message: `อัปเดตความคืบหน้าเป็น ${updatedInfo.progress}% และส่งเข้า LINE เรียบร้อยแล้ว`
       });
     }
   });
