@@ -6,7 +6,7 @@
 import './style.css';
 import { initLiff, isLineLoggedIn, getLineUserName, loginLine, logoutLine } from './liff/line.js';
 import { requestLocation, getCurrentCoords } from './utils/gps.js';
-import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheckinApi, deleteTaskApi } from './api/gas.js';
+import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheckinApi, deleteTaskApi, postToGas } from './api/gas.js';
 import {
   renderAssignedTasksBanner,
   selectAssignedTask,
@@ -334,7 +334,16 @@ let selectedCheckoutOutcome = "ติดตั้งเสร็จเรีย�
 export function renderActiveCheckoutList() {
   const container = document.getElementById("activeListContainer");
   const outcomeSection = document.getElementById("checkoutOutcomeSection");
+  const clearBtn = document.getElementById("clearAllCheckinsBtn");
   if (!container) return;
+
+  if (clearBtn) {
+    if (activeTasks.length > 1) {
+      clearBtn.classList.remove("hidden");
+    } else {
+      clearBtn.classList.add("hidden");
+    }
+  }
 
   if (activeTasks.length === 0) {
     container.innerHTML = `
@@ -357,8 +366,14 @@ export function renderActiveCheckoutList() {
           : 'bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs'
       }">
         <div class="flex items-center justify-between mb-1.5">
-          <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
-          <span class="text-xs text-emerald-800 font-bold font-mono">⏰ เข้างาน: ${formatGasTime(item.time)} น.</span>
+          <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+            <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
+            <span class="text-xs text-emerald-800 font-bold font-mono">⏰ เข้างาน: ${formatGasTime(item.time)} น.</span>
+          </div>
+          <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="ลบรายการเช็กอินนี้">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span>ลบรายการ</span>
+          </button>
         </div>
         <div class="font-bold text-sm text-slate-950">${item.task}</div>
         <div class="text-slate-600 mt-1.5 flex items-center justify-between font-medium">
@@ -378,6 +393,73 @@ export function renderActiveCheckoutList() {
       outcomeSection.classList.remove("animate-fade-in");
     }
   }
+}
+
+export function deleteActiveCheckin(id) {
+  const item = activeTasks.find(a => a.id === id);
+  if (!item) return;
+
+  showAppConfirm({
+    title: "ยืนยันการลบรายการเช็กอิน",
+    message: `คุณต้องการลบรายการเช็กอิน "${item.id}" (${item.task}) ออกจากระบบหรือไม่?`,
+    confirmText: "ลบรายการนี้",
+    cancelText: "ยกเลิก",
+    isDanger: true,
+    onConfirm: () => {
+      activeTasks = activeTasks.filter(a => a.id !== id);
+      if (selectedActiveCheckoutId === id) {
+        selectedActiveCheckoutId = null;
+      }
+      localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+
+      dailyLogs = dailyLogs.filter(l => l.id !== id);
+      localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
+
+      renderActiveCheckoutList();
+      renderTodayLogs();
+
+      // Sync deletion with Google Sheets
+      deleteCheckinApi(id);
+
+      showAppAlert({
+        type: "success",
+        title: "ลบรายการสำเร็จ",
+        message: `ลบรายการเช็กอิน ${id} ออกจากระบบเรียบร้อยแล้ว`
+      });
+    }
+  });
+}
+
+export function clearAllActiveCheckins() {
+  if (activeTasks.length === 0) return;
+
+  showAppConfirm({
+    title: "ยืนยันการล้างรายการเช็กอิน",
+    message: `คุณต้องการล้างรายการเช็กอินที่ค้างอยู่ทั้งหมด (${activeTasks.length} รายการ) ออกจากระบบหรือไม่?`,
+    confirmText: "ล้างทั้งหมด",
+    cancelText: "ยกเลิก",
+    isDanger: true,
+    onConfirm: () => {
+      const idsToDelete = activeTasks.map(a => a.id);
+      activeTasks = [];
+      selectedActiveCheckoutId = null;
+      localStorage.setItem("fs_active_tasks", JSON.stringify([]));
+
+      dailyLogs = dailyLogs.filter(l => !idsToDelete.includes(l.id) || l.status === "เสร็จสิ้น");
+      localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
+
+      renderActiveCheckoutList();
+      renderTodayLogs();
+
+      postToGas("clearAllCheckins");
+
+      showAppAlert({
+        type: "success",
+        title: "ล้างรายการสำเร็จ",
+        message: "ล้างรายการเช็กอินทั้งหมดเรียบร้อยแล้ว"
+      });
+    }
+  });
 }
 
 export function selectActiveTaskForCheckout(id) {
@@ -762,9 +844,24 @@ window.updateDetailPhoneLink = updateDetailPhoneLink;
 window.saveTaskDetailChanges = () => saveTaskDetailChanges(tasksList, () => {
   renderTasksList(tasksList);
 });
-window.deleteCurrentDetailTask = () => deleteCurrentDetailTask(tasksList, () => {
+window.deleteCurrentDetailTask = () => deleteCurrentDetailTask(tasksList, (deletedTask) => {
+  if (deletedTask && deletedTask.id) {
+    const linkedActives = activeTasks.filter(a => a.taskId === deletedTask.id || a.id === deletedTask.id);
+    linkedActives.forEach(a => {
+      deleteCheckinApi(a.id);
+    });
+    activeTasks = activeTasks.filter(a => a.taskId !== deletedTask.id && a.id !== deletedTask.id);
+    if (selectedActiveCheckoutId && (selectedActiveCheckoutId === deletedTask.id || linkedActives.some(m => m.id === selectedActiveCheckoutId))) {
+      selectedActiveCheckoutId = null;
+    }
+    localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+    renderActiveCheckoutList();
+  }
   renderTasksList(tasksList);
 });
+
+window.deleteActiveCheckin = deleteActiveCheckin;
+window.clearAllActiveCheckins = clearAllActiveCheckins;
 
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;
