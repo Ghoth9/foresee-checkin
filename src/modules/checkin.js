@@ -11,6 +11,7 @@ import { getCurrentCoords, getMapUrl } from '../utils/gps.js';
 import { compressMultipleFiles } from '../utils/compressor.js';
 import { createCheckinFlexCard, triggerLiffShare } from '../liff/line.js';
 import { saveCheckinApi } from '../api/gas.js';
+import { formatThaiDateDisplay } from '../utils/date.js';
 
 let checkinPhotos = [];
 let selectedAssignedTaskId = null;
@@ -59,13 +60,18 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
                 ? 'bg-blue-50 border-2 border-blue-600 shadow-sm ring-2 ring-blue-200' 
                 : 'bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs'
             }">
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-900 text-white font-mono">${task.id}</span>
-                <span class="text-xs font-bold text-blue-700">กำหนดส่ง: ${task.deadline || '-'}</span>
+              <div class="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-slate-100">
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-950 text-white font-mono flex-shrink-0 shadow-2xs">${task.id}</span>
+                <span class="text-xs font-medium text-slate-600 truncate text-right">
+                  กำหนดส่ง: <strong class="font-bold text-blue-700">${formatThaiDateDisplay(task.deadline)}</strong>
+                </span>
               </div>
-              <div class="font-bold text-sm text-slate-950 line-clamp-1">${task.title}</div>
-              ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-600 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
-              <div class="text-xs text-slate-600 mt-1.5 font-medium">👷 ช่าง: <strong class="text-slate-800">${techList}</strong></div>
+              <div class="font-bold text-sm text-slate-950 line-clamp-1 leading-snug">${task.title}</div>
+              ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
+              <div class="text-xs text-slate-600 mt-2 font-medium flex items-center space-x-1">
+                <span>👷 ช่าง:</span>
+                <strong class="text-slate-800 truncate">${techList}</strong>
+              </div>
             </div>
           `;
         }).join('')}

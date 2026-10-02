@@ -26,8 +26,13 @@ export function parseDeadlineDate(dStr) {
     return new Date(year, month, day, 23, 59, 59);
   }
   
-  const parsed = new Date(dStr);
+  // Strip parenthesized timezone descriptions like (เวลาอินโดจีน)
+  const cleanStr = dStr.replace(/\s*\([^)]*\)/g, "").trim();
+  const parsed = new Date(cleanStr);
   if (!isNaN(parsed.getTime())) return parsed;
+
+  const rawParsed = new Date(dStr);
+  if (!isNaN(rawParsed.getTime())) return rawParsed;
   return null;
 }
 
