@@ -13,35 +13,35 @@
   <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body class="bg-[#F8FAFC] text-slate-800 min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+<body class="technical-bg text-slate-900 min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white">
 
   <!-- ==================== DESKTOP & MOBILE HEADER ==================== -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-300/90 shadow-xs">
     <div class="max-w-[1600px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
       
       <!-- Brand & Logo -->
-      <div class="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer select-none" onclick="switchTab('checkin')">
+      <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="switchTab('checkin')">
         <img src="/foresee-logo.png" alt="Foresee Technology" class="h-9 md:h-10 w-auto object-contain select-none flex-shrink-0">
-        <div class="flex flex-col sm:border-l sm:border-slate-200 sm:pl-3 min-w-0">
+        <div class="flex flex-col sm:border-l sm:border-slate-300 sm:pl-3 min-w-0">
           <div class="flex items-center space-x-1.5">
-            <span class="font-extrabold text-sm md:text-base tracking-tight text-slate-900">FORESEE</span>
-            <span class="text-[10px] bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded border border-slate-200">FIELD 2.0</span>
+            <span class="font-black text-sm md:text-base tracking-tight text-slate-950">FORESEE</span>
+            <span class="text-[10px] bg-slate-900 text-white font-extrabold px-1.5 py-0.5 rounded shadow-2xs">FIELD 2.0</span>
           </div>
-          <div class="text-[10px] md:text-[11px] text-slate-500 font-medium">ระบบปฏิบัติการทีมช่าง CCTV</div>
+          <div class="text-[10px] md:text-[11px] text-slate-600 font-semibold">ระบบปฏิบัติการทีมช่าง CCTV</div>
         </div>
       </div>
 
       <!-- Desktop Nav Tabs -->
-      <nav class="hidden md:flex items-center space-x-1 bg-slate-100/80 p-1 rounded-lg border border-slate-200/60">
-        <button id="deskTabBtnCheckin" type="button" onclick="switchTab('checkin')" class="px-3.5 py-1.5 rounded-md text-xs font-semibold text-slate-900 bg-white shadow-2xs transition-all flex items-center space-x-1.5">
+      <nav class="hidden md:flex items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300">
+        <button id="deskTabBtnCheckin" type="button" onclick="switchTab('checkin')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5">
           <span>📍</span>
           <span>เช็กอินหน้างาน</span>
         </button>
-        <button id="deskTabBtnCheckout" type="button" onclick="switchTab('checkout')" class="px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center space-x-1.5">
+        <button id="deskTabBtnCheckout" type="button" onclick="switchTab('checkout')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5">
           <span>📊</span>
           <span>อัปเดต & ปิดงาน</span>
         </button>
-        <button id="deskTabBtnTasks" type="button" onclick="switchTab('tasks')" class="px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center space-x-1.5">
+        <button id="deskTabBtnTasks" type="button" onclick="switchTab('tasks')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5">
           <span>📋</span>
           <span>มอบหมายงาน</span>
         </button>
@@ -49,15 +49,15 @@
 
       <!-- Right Actions: LINE Login, GPS Status, New Task -->
       <div class="flex items-center space-x-2">
-        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="hidden sm:flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-lg font-medium border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs transition-colors">
-          <span id="lineLoginDot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="hidden sm:flex items-center space-x-1.5 text-xs px-3 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-colors">
+          <span id="lineLoginDot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
           <span id="lineLoginText">เข้าสู่ระบบ LINE</span>
         </button>
-        <div id="gpsStatusBadge" class="text-xs px-2.5 py-1.5 rounded-lg font-medium bg-slate-50 border border-slate-200 text-slate-700 flex items-center space-x-1.5">
-          <span id="gpsDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          <span id="gpsStatusText" class="hidden md:inline text-xs text-slate-600">GPS</span>
+        <div id="gpsStatusBadge" class="text-xs px-3 py-1.5 rounded-xl font-bold bg-white border border-slate-300 text-slate-800 shadow-2xs flex items-center space-x-1.5">
+          <span id="gpsDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <span id="gpsStatusText" class="hidden md:inline text-xs text-slate-700">GPS</span>
         </div>
-        <button type="button" onclick="openAssignModal()" class="hidden md:flex items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs active:scale-95 transition-all">
+        <button type="button" onclick="openAssignModal()" class="hidden md:flex items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-sm active:scale-95 transition-all">
           <span>+ มอบหมายงาน</span>
         </button>
       </div>
@@ -68,14 +68,14 @@
   <main class="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-4 md:py-6 flex-1 space-y-4 md:space-y-6">
 
     <!-- ==================== MOBILE SEGMENTED TABS ==================== -->
-    <div class="block md:hidden bg-slate-200/90 p-1 rounded-xl grid grid-cols-3 gap-1 text-xs font-medium text-slate-600 shadow-inner">
-      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold flex items-center justify-center space-x-1">
+    <div class="block md:hidden bg-slate-300 p-1 rounded-xl grid grid-cols-3 gap-1 text-xs font-bold text-slate-700 shadow-inner">
+      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1">
         <span>📍 เช็กอิน</span>
       </button>
-      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
+      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1">
         <span>📊 อัปเดต & ปิดงาน</span>
       </button>
-      <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
+      <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1">
         <span>📋 มอบงาน</span>
       </button>
     </div>
@@ -87,17 +87,17 @@
       <div class="max-w-2xl mx-auto space-y-4">
         
         <!-- GPS Status Banner -->
-        <div class="bg-white rounded-xl p-3 md:p-3.5 border border-slate-200 shadow-2xs flex items-center justify-between">
-          <div class="flex items-center space-x-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <div class="bg-white rounded-2xl p-3.5 md:p-4 border border-slate-300 shadow-xs flex items-center justify-between">
+          <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 font-bold border border-blue-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </div>
             <div class="min-w-0">
-              <div id="gpsLocationTitle" class="text-xs md:text-sm font-semibold text-slate-800 truncate">กำลังระบุตำแหน่ง GPS หน้างาน...</div>
-              <div id="gpsCoordsText" class="text-[10px] md:text-xs text-slate-500 truncate">ระบบกำลังค้นหาตำแหน่งพิกัดดาวเทียม...</div>
+              <div id="gpsLocationTitle" class="text-xs md:text-sm font-bold text-slate-950 truncate">กำลังระบุตำแหน่ง GPS หน้างาน...</div>
+              <div id="gpsCoordsText" class="text-[11px] text-slate-600 truncate font-mono">ระบบกำลังค้นหาตำแหน่งพิกัดดาวเทียม...</div>
             </div>
           </div>
-          <button type="button" onclick="requestLocation()" class="flex-shrink-0 text-xs text-slate-600 hover:text-slate-900 font-medium px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 transition-colors">
+          <button type="button" onclick="requestLocation()" class="flex-shrink-0 text-xs text-slate-800 hover:text-slate-950 font-bold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-300 transition-colors shadow-2xs">
             รีเฟรช GPS
           </button>
         </div>
@@ -108,95 +108,95 @@
         </div>
 
         <!-- Main Check-in Form Card -->
-        <div class="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm space-y-4 md:space-y-5">
-          <div class="border-b border-slate-100 pb-3">
-            <h2 class="text-base md:text-lg font-bold text-slate-900">เช็กอินถึงหน้างาน</h2>
-            <p class="text-xs text-slate-500 mt-0.5">เลือกงานที่มอบหมายหรือระบุสถานที่ เพื่อส่งการ์ดเข้ากลุ่ม LINE</p>
+        <div class="bg-white rounded-2xl p-5 md:p-7 border border-slate-300 shadow-sm space-y-5 md:space-y-6">
+          <div class="border-b border-slate-200 pb-3.5">
+            <h2 class="text-lg md:text-xl font-black text-slate-950 tracking-tight">เช็กอินถึงหน้างาน</h2>
+            <p class="text-xs text-slate-600 font-medium mt-0.5">เลือกงานที่มอบหมายหรือระบุสถานที่ เพื่อส่งการ์ดเข้ากลุ่ม LINE</p>
           </div>
 
           <!-- 1. ทีมช่างที่เข้าหน้างานวันนี้ -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">1. ทีมช่างที่เข้าหน้างานวันนี้ <span class="text-rose-500">*</span></label>
-            <div class="flex flex-wrap gap-1.5" id="checkinTechChipsContainer">
+            <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">1. ทีมช่างที่เข้าหน้างานวันนี้ <span class="text-rose-500">*</span></label>
+            <div class="flex flex-wrap gap-2" id="checkinTechChipsContainer">
               <!-- Rendered dynamically -->
             </div>
           </div>
 
           <!-- 2. ประเภทงานหน้างาน -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">2. ประเภทงานหน้างาน <span class="text-rose-500">*</span></label>
-            <div class="grid grid-cols-2 gap-1.5">
-              <button type="button" id="jobTypeBtn-ติดตั้งกล้องวงจรปิด" onclick="selectJobType('ติดตั้งกล้องวงจรปิด')" class="py-2 px-2.5 rounded-lg border text-xs font-bold text-center transition-all bg-blue-50 border-blue-400 text-blue-800 shadow-2xs">
+            <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">2. ประเภทงานหน้างาน <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" id="jobTypeBtn-ติดตั้งกล้องวงจรปิด" onclick="selectJobType('ติดตั้งกล้องวงจรปิด')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-sm">
                 📹 ติดตั้งกล้องวงจรปิด
               </button>
-              <button type="button" id="jobTypeBtn-ตรวจเช็คซ่อม / ปรับมุมกล้อง" onclick="selectJobType('ตรวจเช็คซ่อม / ปรับมุมกล้อง')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+              <button type="button" id="jobTypeBtn-ตรวจเช็คซ่อม / ปรับมุมกล้อง" onclick="selectJobType('ตรวจเช็คซ่อม / ปรับมุมกล้อง')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
                 🔧 ซ่อม / ปรับมุมกล้อง
               </button>
-              <button type="button" id="jobTypeBtn-เปลี่ยนอุปกรณ์ / NVR / Switch" onclick="selectJobType('เปลี่ยนอุปกรณ์ / NVR / Switch')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+              <button type="button" id="jobTypeBtn-เปลี่ยนอุปกรณ์ / NVR / Switch" onclick="selectJobType('เปลี่ยนอุปกรณ์ / NVR / Switch')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
                 ⚡ เปลี่ยนอุปกรณ์ / NVR
               </button>
-              <button type="button" id="jobTypeBtn-custom" onclick="selectJobType('custom')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+              <button type="button" id="jobTypeBtn-custom" onclick="selectJobType('custom')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
                 ✏️ พิมพ์ระบุเอง
               </button>
             </div>
-            <div id="customJobTypeContainer" class="hidden mt-2">
-              <input type="text" id="customJobTypeInput" placeholder="พิมพ์ระบุประเภทงาน เช่น รื้อถอน, จัดตู้ Rack..." class="w-full bg-slate-50 border border-blue-400 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none">
+            <div id="customJobTypeContainer" class="hidden mt-2.5">
+              <input type="text" id="customJobTypeInput" placeholder="พิมพ์ระบุประเภทงาน เช่น รื้อถอน, จัดตู้ Rack..." class="w-full bg-white border-2 border-blue-500 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-semibold focus:outline-none">
             </div>
           </div>
 
           <!-- 3. สถานที่ / ไซต์งาน / ชื่อลูกค้า -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">3. สถานที่ / ไซต์งาน / ชื่อลูกค้า <span class="text-rose-500">*</span></label>
-            <input type="text" id="fieldLocationInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32 หรือ บจก. นิวเคลียร์" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs md:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+            <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5">3. สถานที่ / ไซต์งาน / ชื่อลูกค้า <span class="text-rose-500">*</span></label>
+            <input type="text" id="fieldLocationInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32 หรือ บจก. นิวเคลียร์" class="w-full bg-white border-2 border-slate-300 hover:border-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 rounded-xl px-4 py-3 text-xs md:text-sm text-slate-950 font-medium placeholder:text-slate-400 transition-all shadow-2xs">
           </div>
 
           <!-- 4. รายละเอียดหน้างาน / อาการ -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">4. รายละเอียดหน้างาน / อาการ</label>
-            <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs md:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+            <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5">4. รายละเอียดหน้างาน / อาการ</label>
+            <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-white border-2 border-slate-300 hover:border-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 rounded-xl px-4 py-3 text-xs md:text-sm text-slate-950 font-medium placeholder:text-slate-400 transition-all shadow-2xs">
           </div>
 
           <!-- 5. แนบรูปถ่ายหน้างาน สูงสุด 5 รูป (FEATURE 2) -->
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
+              <label class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-1.5">
                 <span>📸 แนบรูปถ่ายหน้างาน (สูงสุด 5 รูป)</span>
               </label>
-              <span id="checkinPhotoCountBadge" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">0/5 รูป</span>
+              <span id="checkinPhotoCountBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300">0/5 รูป</span>
             </div>
 
             <!-- Upload input and preview container -->
             <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
-              <label class="w-16 h-16 rounded-lg border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/50 flex flex-col items-center justify-center cursor-pointer transition-colors flex-shrink-0">
-                <span class="text-xl">📷</span>
-                <span class="text-[9px] font-bold text-slate-600 mt-0.5">เพิ่มรูป</span>
+              <label class="w-18 h-18 rounded-xl border-2 border-dashed border-slate-400 hover:border-blue-600 hover:bg-blue-50/50 flex flex-col items-center justify-center cursor-pointer transition-all flex-shrink-0 bg-slate-50">
+                <span class="text-2xl">📷</span>
+                <span class="text-[10px] font-bold text-slate-800 mt-0.5">เพิ่มรูป</span>
                 <input type="file" accept="image/*" multiple onchange="window.handlePhotoUpload(event)" class="hidden">
               </label>
               <div id="checkinPhotoPreviewsContainer" class="flex items-center space-x-2">
                 <!-- Previews injected here -->
               </div>
             </div>
-            <p class="text-[11px] text-slate-400">รูปภาพจะถูกย่อขนาดให้อัตโนมัติ (ไม่เกิน 250KB) เพื่อให้ส่งเข้า LINE ได้รวดเร็ว</p>
+            <p class="text-[11px] text-slate-500 font-medium">รูปภาพจะถูกย่อขนาดให้อัตโนมัติ (ไม่เกิน 250KB) เพื่อให้ส่งเข้า LINE ได้รวดเร็ว</p>
           </div>
 
           <!-- Submit Button -->
-          <div class="pt-2 border-t border-slate-100">
-            <button type="button" onclick="submitCheckin()" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all flex items-center justify-center space-x-2">
+          <div class="pt-2 border-t border-slate-200">
+            <button type="button" onclick="submitCheckin()" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-black py-4 px-5 rounded-xl text-sm md:text-base shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center space-x-2">
               <span>📍 เช็กอินถึงหน้างาน & แชร์เข้ากลุ่ม LINE</span>
             </button>
           </div>
         </div>
 
         <!-- Today's Activity Log Card -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-          <div class="p-3.5 border-b border-slate-100 flex items-center justify-between">
+        <div class="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
+          <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
             <div class="flex items-center space-x-2">
-              <span>📋</span>
-              <span class="text-xs md:text-sm font-bold text-slate-800">ประวัติการปฏิบัติงานวันนี้</span>
-              <span id="todayLogsBadge" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">0 งาน</span>
+              <span class="text-base">📋</span>
+              <span class="text-xs md:text-sm font-extrabold text-slate-950">ประวัติการปฏิบัติงานวันนี้</span>
+              <span id="todayLogsBadge" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">0 งาน</span>
             </div>
           </div>
-          <div id="todayLogsContainer" class="p-3 space-y-2 max-h-64 overflow-y-auto">
+          <div id="todayLogsContainer" class="p-3.5 space-y-2.5 max-h-64 overflow-y-auto">
             <!-- Rendered dynamically -->
           </div>
         </div>

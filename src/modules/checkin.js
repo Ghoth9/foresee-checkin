@@ -54,18 +54,18 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
           const isSelected = selectedAssignedTaskId === task.id;
           const techList = Array.isArray(task.techs) ? task.techs.join(", ") : (task.techs || "ช่างทั่วไป");
           return `
-            <div onclick="window.selectAssignedTaskForCheckin('${task.id}')" class="p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
+            <div onclick="window.selectAssignedTaskForCheckin('${task.id}')" class="p-3 rounded-xl border text-xs cursor-pointer transition-all ${
               isSelected 
-                ? 'bg-blue-50/90 border-blue-500 shadow-xs ring-1 ring-blue-400' 
-                : 'bg-white hover:bg-slate-50 border-slate-200'
+                ? 'bg-blue-50 border-2 border-blue-600 shadow-sm ring-2 ring-blue-200' 
+                : 'bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs'
             }">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-mono">${task.id}</span>
-                <span class="text-[10px] font-semibold text-blue-600">กำหนดส่ง: ${task.deadline || '-'}</span>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-900 text-white font-mono">${task.id}</span>
+                <span class="text-xs font-bold text-blue-700">กำหนดส่ง: ${task.deadline || '-'}</span>
               </div>
-              <div class="font-bold text-slate-900 line-clamp-1">${task.title}</div>
-              ${task.desc && task.desc !== '-' ? `<div class="text-[11px] text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
-              <div class="text-[10px] text-slate-400 mt-1">👷 ${techList}</div>
+              <div class="font-bold text-sm text-slate-950 line-clamp-1">${task.title}</div>
+              ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-600 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
+              <div class="text-xs text-slate-600 mt-1.5 font-medium">👷 ช่าง: <strong class="text-slate-800">${techList}</strong></div>
             </div>
           `;
         }).join('')}

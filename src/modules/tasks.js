@@ -148,22 +148,22 @@ export function renderTasksList(tasksList) {
 
   // 3. Render View Mode
   if (taskViewMode === "list" && window.innerWidth >= 768) {
-    // List Table View - 100% Fluid, zero horizontal scrollbar!
+    // List Table View - High Contrast & 100% Fluid
     let tableHtml = `
-      <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+      <div class="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
         <table class="w-full text-left text-sm border-collapse">
-          <thead class="bg-slate-50/90 text-xs font-bold text-slate-600 border-b border-slate-200">
+          <thead class="bg-slate-100 text-xs font-bold text-slate-800 border-b-2 border-slate-200">
             <tr>
-              <th class="py-3 px-3 w-10 text-center font-mono">#</th>
-              <th class="py-3 px-3 w-28 whitespace-nowrap">สถานะ</th>
-              <th class="py-3 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
-              <th class="py-3 px-3 w-36">ช่างผู้รับผิดชอบ</th>
-              <th class="py-3 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
-              <th class="py-3 px-3 w-28 whitespace-nowrap">ความคืบหน้า</th>
-              <th class="py-3 px-3 w-36 text-right pr-4 whitespace-nowrap">จัดการ</th>
+              <th class="py-3.5 px-3 w-10 text-center font-mono">#</th>
+              <th class="py-3.5 px-3 w-28 whitespace-nowrap">สถานะ</th>
+              <th class="py-3.5 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
+              <th class="py-3.5 px-3 w-36">ช่างผู้รับผิดชอบ</th>
+              <th class="py-3.5 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
+              <th class="py-3.5 px-3 w-28 whitespace-nowrap">ความคืบหน้า</th>
+              <th class="py-3.5 px-3 w-36 text-right pr-4 whitespace-nowrap">จัดการ</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody class="divide-y divide-slate-200">
     `;
 
     filteredTasks.forEach((task, index) => {
@@ -171,13 +171,14 @@ export function renderTasksList(tasksList) {
       const isOver = isTaskOverdue(task.deadline, isDone);
       const techs = getTaskTechs(task);
 
-      let badgeBg = "bg-amber-50 text-amber-800 border-amber-200";
-      if (isDone) badgeBg = "bg-emerald-50 text-emerald-800 border-emerald-200";
-      else if (isOver) badgeBg = "bg-rose-50 text-rose-800 border-rose-200";
+      let badgeBg = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
+      if (isDone) badgeBg = "bg-emerald-100 text-emerald-900 border-emerald-300 font-bold";
+      else if (isOver) badgeBg = "bg-rose-100 text-rose-900 border-rose-300 font-bold";
+      else if (task.status === "กำลังทำ") badgeBg = "bg-blue-100 text-blue-900 border-blue-300 font-bold";
 
       tableHtml += `
-        <tr class="hover:bg-slate-50/70 transition-colors group">
-          <td class="py-3 px-3 text-center font-mono text-xs text-slate-400 font-semibold">${index + 1}</td>
+        <tr class="hover:bg-slate-50 transition-colors group">
+          <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-500 font-semibold">${index + 1}</td>
           <td class="py-3 px-3 whitespace-nowrap">
             <span class="inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-full border ${badgeBg}">
               ${task.status}
