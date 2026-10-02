@@ -4,6 +4,7 @@
 
 import { formatThaiDateDisplay, getDeadlineCountdownBadge, isTaskOverdue, getTodayYMD, getSevenDaysLaterYMD } from '../utils/date.js';
 import { saveTaskApi, extendTaskDeadlineApi, deleteTaskApi } from '../api/gas.js';
+import { createExtendDeadlineFlexCard, triggerLiffShare } from '../liff/line.js';
 
 let taskViewMode = window.innerWidth >= 768 ? "list" : "grid";
 let currentStatusFilter = "ทั้งหมด";
@@ -295,18 +296,42 @@ export function renderTasksList(tasksList) {
 // -------------------------------------------------------------
 // ASSIGN TASK MODAL
 // -------------------------------------------------------------
+let selectedAssignPriority = "ปกติ";
+let selectedAssignCategory = "ติดตั้งงานใหม่";
+let selectedAssignTechs = [];
+
 export function openAssignModal(allTechnicians) {
-  selectedAssignStatus = "กำลังทำ";
-  selectAssignStatus("กำลังทำ");
-  assignRows = [{
-    id: 1,
-    title: "",
-    desc: "",
-    startDate: getTodayYMD(),
-    deadline: getSevenDaysLaterYMD(),
-    techs: []
-  }];
-  renderAssignRows(allTechnicians);
+  selectedAssignPriority = "ปกติ";
+  selectedAssignCategory = "ติดตั้งงานใหม่";
+  selectedAssignTechs = [];
+
+  selectAssignPriority("ปกติ");
+  selectAssignCategory("ติดตั้งงานใหม่");
+
+  const jobDetail = document.getElementById("assignJobDetailInput");
+  const locInput = document.getElementById("assignLocationInput");
+  const custName = document.getElementById("assignCustNameInput");
+  const custAddress = document.getElementById("assignCustAddressInput");
+  const custPhone = document.getElementById("assignCustPhoneInput");
+  const custEmail = document.getElementById("assignCustEmailInput");
+  const custLineId = document.getElementById("assignCustLineIdInput");
+  const catOther = document.getElementById("assignCategoryOtherInput");
+  const startInput = document.getElementById("assignStartDateInput");
+  const deadInput = document.getElementById("assignDeadlineInput");
+
+  if (jobDetail) jobDetail.value = "";
+  if (locInput) locInput.value = "";
+  if (custName) custName.value = "";
+  if (custAddress) custAddress.value = "";
+  if (custPhone) custPhone.value = "";
+  if (custEmail) custEmail.value = "";
+  if (custLineId) custLineId.value = "";
+  if (catOther) catOther.value = "";
+  if (startInput) startInput.value = getTodayYMD();
+  if (deadInput) deadInput.value = getSevenDaysLaterYMD();
+
+  renderAssignTechChips(allTechnicians);
+
   const modal = document.getElementById("assignModal");
   if (modal) modal.classList.remove("hidden");
 }
@@ -316,145 +341,178 @@ export function closeAssignModal() {
   if (modal) modal.classList.add("hidden");
 }
 
-export function selectAssignStatus(st) {
-  selectedAssignStatus = st;
-  const statuses = [
-    { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200" },
-    { key: "รอดำเนินการ", activeClass: "bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-200" },
-    { key: "ด่วน", activeClass: "bg-orange-600 text-white border-orange-600 shadow-xs ring-2 ring-orange-200" },
+export function selectAssignPriority(priority) {
+  selectedAssignPriority = priority;
+  const priorities = [
+    { key: "ปกติ", activeClass: "bg-slate-900 text-white border-slate-900 shadow-xs ring-2 ring-slate-300" },
+    { key: "ด่วน", activeClass: "bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-200" },
     { key: "ด่วนที่สุด", activeClass: "bg-rose-600 text-white border-rose-600 shadow-xs ring-2 ring-rose-200" }
   ];
-  statuses.forEach(s => {
-    const btn = document.getElementById(`assignStatusPill-${s.key}`);
+
+  priorities.forEach(p => {
+    const btn = document.getElementById(`assignPriorityBtn-${p.key}`);
     if (btn) {
-      if (s.key === st) {
-        btn.className = `assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-bold text-center transition-all ${s.activeClass}`;
+      if (p.key === priority) {
+        btn.className = `py-2 px-3 rounded-lg border text-xs font-bold text-center transition-all ${p.activeClass}`;
       } else {
-        btn.className = "assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200";
+        btn.className = "py-2 px-3 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
       }
     }
   });
 }
 
-export function renderAssignRows(allTechnicians) {
-  const container = document.getElementById("assignRowsContainer");
+export function selectAssignCategory(cat) {
+  selectedAssignCategory = cat;
+  const categories = [
+    "ติดตั้งงานใหม่",
+    "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)",
+    "งานเซอร์วิส (มีค่าใช้จ่าย)",
+    "งาน PM (Preventive Maintenance)",
+    "สำรวจประเมินหน้างาน",
+    "อื่นๆ"
+  ];
+
+  categories.forEach(c => {
+    const btn = document.getElementById(`assignCatBtn-${c}`);
+    if (btn) {
+      if (c === cat) {
+        btn.className = "py-2 px-3 rounded-lg border text-xs font-bold text-left transition-all bg-blue-50 border-blue-600 text-blue-900 shadow-2xs ring-1 ring-blue-500";
+      } else {
+        btn.className = "py-2 px-3 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
+      }
+    }
+  });
+
+  const otherWrapper = document.getElementById("assignCategoryOtherWrapper");
+  if (otherWrapper) {
+    if (cat === "อื่นๆ") {
+      otherWrapper.classList.remove("hidden");
+    } else {
+      otherWrapper.classList.add("hidden");
+    }
+  }
+}
+
+export function renderAssignTechChips(allTechnicians) {
+  const container = document.getElementById("assignTechChipsContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  assignRows.forEach((row, idx) => {
-    const card = document.createElement("div");
-    card.className = "bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2.5";
-    card.innerHTML = `
-      <div class="flex items-center justify-between text-xs text-slate-500 font-medium">
-        <span>งานที่ ${idx + 1}</span>
-        ${assignRows.length > 1 ? `<button type="button" onclick="window.removeAssignRow(${idx})" class="text-rose-500 hover:text-rose-700">ลบแถวนี้</button>` : ''}
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <input type="text" value="${row.title}" oninput="window.updateAssignRowField(${idx}, 'title', this.value)" placeholder="ชื่องาน CCTV เช่น ติดตั้ง 4 ตัว ไซต์บางนา..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none">
-        <input type="text" value="${row.desc}" oninput="window.updateAssignRowField(${idx}, 'desc', this.value)" placeholder="สถานที่ / รายละเอียดเพิ่มเติม..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none">
-      </div>
-      <div class="grid grid-cols-2 gap-2 text-xs">
-        <div>
-          <span class="block text-[11px] text-slate-600 mb-1">เริ่มงาน</span>
-          <input type="date" value="${row.startDate}" onchange="window.updateAssignRowField(${idx}, 'startDate', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs">
-        </div>
-        <div>
-          <span class="block text-[11px] text-slate-600 mb-1">กำหนดส่ง</span>
-          <input type="date" value="${row.deadline}" onchange="window.updateAssignRowField(${idx}, 'deadline', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs">
-        </div>
-      </div>
-      <div>
-        <span class="block text-[11px] text-slate-600 mb-1">ทีมช่างที่มอบหมาย:</span>
-        <div class="flex flex-wrap gap-1.5">
-          ${allTechnicians.map(tName => {
-            const isSelected = (row.techs || []).includes(tName);
-            return `
-              <button type="button" onclick="window.toggleAssignRowTech(${idx}, '${tName}')" class="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-                isSelected ? 'bg-slate-900 text-white font-semibold' : 'bg-white border border-slate-200 text-slate-600'
-              }">
-                ${isSelected ? '✓ ' : ''}${tName}
-              </button>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-    container.appendChild(card);
+  allTechnicians.forEach(tName => {
+    const isSelected = selectedAssignTechs.includes(tName);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+      isSelected ? "bg-slate-900 text-white font-semibold shadow-xs" : "bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700"
+    }`;
+    btn.innerHTML = `${isSelected ? '✓ ' : ''}${tName}`;
+    btn.onclick = () => toggleAssignTech(tName, allTechnicians);
+    container.appendChild(btn);
   });
 }
 
-export function updateAssignRowField(idx, field, val) {
-  if (assignRows[idx]) assignRows[idx][field] = val;
-}
-
-export function toggleAssignRowTech(idx, tName, allTechnicians) {
-  if (!assignRows[idx]) return;
-  let cur = assignRows[idx].techs || [];
-  if (cur.includes(tName)) {
-    cur = cur.filter(t => t !== tName);
+export function toggleAssignTech(tName, allTechnicians) {
+  if (selectedAssignTechs.includes(tName)) {
+    selectedAssignTechs = selectedAssignTechs.filter(t => t !== tName);
   } else {
-    cur.push(tName);
+    selectedAssignTechs.push(tName);
   }
-  assignRows[idx].techs = cur;
-  renderAssignRows(allTechnicians);
-}
-
-export function addAssignRow(allTechnicians) {
-  assignRows.push({
-    id: assignRows.length + 1,
-    title: "",
-    desc: "",
-    startDate: getTodayYMD(),
-    deadline: getSevenDaysLaterYMD(),
-    techs: []
-  });
-  renderAssignRows(allTechnicians);
-}
-
-export function removeAssignRow(idx, allTechnicians) {
-  assignRows.splice(idx, 1);
-  renderAssignRows(allTechnicians);
+  renderAssignTechChips(allTechnicians);
 }
 
 export async function submitAssignForm({ tasksList, onComplete }) {
-  const validRows = assignRows.filter(r => r.title.trim() !== "");
-  if (validRows.length === 0) {
-    alert("กรุณากรอกชื่องานอย่างน้อย 1 รายการ");
+  const custNameInput = document.getElementById("assignCustNameInput");
+  const custAddressInput = document.getElementById("assignCustAddressInput");
+  const custPhoneInput = document.getElementById("assignCustPhoneInput");
+  const custEmailInput = document.getElementById("assignCustEmailInput");
+  const custLineIdInput = document.getElementById("assignCustLineIdInput");
+  const jobDetailInput = document.getElementById("assignJobDetailInput");
+  const locationInput = document.getElementById("assignLocationInput");
+  const startInput = document.getElementById("assignStartDateInput");
+  const deadInput = document.getElementById("assignDeadlineInput");
+  const otherCatInput = document.getElementById("assignCategoryOtherInput");
+
+  const custName = custNameInput ? custNameInput.value.trim() : "";
+  const custAddress = custAddressInput ? custAddressInput.value.trim() : "";
+  const custPhone = custPhoneInput ? custPhoneInput.value.trim() : "";
+
+  // Mandatory Customer Verification
+  if (!custName) {
+    alert("กรุณากรอก 'ชื่อลูกค้า' (จำเป็นสำหรับการบันทึก)");
+    if (custNameInput) custNameInput.focus();
+    return;
+  }
+  if (!custAddress) {
+    alert("กรุณากรอก 'ที่อยู่ลูกค้า' (จำเป็นสำหรับการบันทึก)");
+    if (custAddressInput) custAddressInput.focus();
+    return;
+  }
+  if (!custPhone) {
+    alert("กรุณากรอก 'เบอร์โทรศัพท์ลูกค้า' (จำเป็นสำหรับการบันทึก)");
+    if (custPhoneInput) custPhoneInput.focus();
     return;
   }
 
-  for (let r of validRows) {
-    if (!r.techs || r.techs.length === 0) {
-      alert(`กรุณาเลือกช่างผู้รับผิดชอบสำหรับงาน "${r.title}"`);
+  // Category handling
+  let finalCategory = selectedAssignCategory;
+  if (selectedAssignCategory === "อื่นๆ") {
+    const otherText = otherCatInput ? otherCatInput.value.trim() : "";
+    if (!otherText) {
+      alert("กรุณากรอกระบุประเภทงานอื่นๆ");
+      if (otherCatInput) otherCatInput.focus();
       return;
     }
+    finalCategory = `อื่นๆ: ${otherText}`;
   }
+
+  if (selectedAssignTechs.length === 0) {
+    alert("กรุณาเลือกช่างผู้รับผิดชอบงานอย่างน้อย 1 คน");
+    return;
+  }
+
+  const jobDetail = jobDetailInput ? jobDetailInput.value.trim() : "";
+  const location = locationInput ? locationInput.value.trim() : "";
+  const startDate = startInput && startInput.value ? startInput.value : getTodayYMD();
+  const deadline = deadInput && deadInput.value ? deadInput.value : getSevenDaysLaterYMD();
+  const custEmail = custEmailInput ? custEmailInput.value.trim() : "-";
+  const custLineId = custLineIdInput ? custLineIdInput.value.trim() : "-";
 
   closeAssignModal();
 
-  const newItems = validRows.map(r => ({
-    id: `TASK-${Math.floor(100 + Math.random() * 900)}`,
-    title: r.title,
-    desc: r.desc || "-",
-    techs: [...r.techs],
-    startDate: r.startDate,
-    deadline: r.deadline,
-    status: selectedAssignStatus,
+  const taskId = `TASK-${Math.floor(100 + Math.random() * 900)}`;
+  const titleDisplay = `${finalCategory} - ${custName}`;
+
+  const newTask = {
+    id: taskId,
+    title: titleDisplay,
+    category: finalCategory,
+    priority: selectedAssignPriority,
+    desc: jobDetail || `งาน ${finalCategory} สำหรับ ${custName}`,
+    location: location || custAddress,
+    customer: {
+      name: custName,
+      address: custAddress,
+      phone: custPhone,
+      email: custEmail || "-",
+      lineId: custLineId || "-"
+    },
+    techs: [...selectedAssignTechs],
+    startDate: startDate,
+    deadline: deadline,
+    status: "กำลังทำ",
     progress: 0,
-    latestUpdate: "มอบหมายงานใหม่",
+    latestUpdate: `มอบหมายงานใหม่ [ความเร่งด่วน: ${selectedAssignPriority}]`,
     reason: "-",
     updateBy: "หัวหน้างาน",
     updateTime: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
-  }));
+  };
 
   // Sync to Sheet
-  newItems.forEach(item => {
-    saveTaskApi(item);
-  });
+  saveTaskApi(newTask);
 
-  tasksList.unshift(...newItems);
+  tasksList.unshift(newTask);
   localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
-  if (onComplete) onComplete(newItems);
+  if (onComplete) onComplete([newTask]);
 }
 
 // -------------------------------------------------------------
@@ -623,6 +681,18 @@ export async function submitExtendDeadline(tasksList, currentLineUserName, onCom
     reason: reason,
     updateBy: currentLineUserName || "ช่างหน้างาน"
   });
+
+  // Client Requirement: Always alert LINE group / supervisor when extending deadline
+  const flexCard = createExtendDeadlineFlexCard({
+    taskId: task.id,
+    taskTitle: task.title,
+    techs: task.techs,
+    oldDeadline: oldDeadline,
+    newDeadline: newDeadline,
+    reason: reason,
+    requestBy: currentLineUserName || "ช่างหน้างาน"
+  });
+  await triggerLiffShare(flexCard, "ส่งคำขอขยายเวลางานเข้ากลุ่ม LINE สำเร็จ!");
 
   localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
   if (onComplete) onComplete(task);

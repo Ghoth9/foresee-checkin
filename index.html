@@ -260,10 +260,9 @@
 
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">สถานะงาน</label>
-                <div class="grid grid-cols-3 gap-1.5">
-                  <button type="button" id="checkoutStatusChoice-กำลังทำ" onclick="window.setCheckoutUpdateStatus('กำลังทำ')" class="py-2 px-2 rounded-lg border text-center text-xs font-bold transition-all bg-blue-600 text-white border-blue-600 shadow-xs">กำลังทำ</button>
-                  <button type="button" id="checkoutStatusChoice-รออะไหล่" onclick="window.setCheckoutUpdateStatus('รออะไหล่')" class="py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 text-slate-600 border-slate-200">รออะไหล่</button>
-                  <button type="button" id="checkoutStatusChoice-รอดำเนินการ" onclick="window.setCheckoutUpdateStatus('รอดำเนินการ')" class="py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 text-slate-600 border-slate-200">รอดำเนินการ</button>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <button type="button" id="checkoutStatusChoice-กำลังทำ" onclick="window.setCheckoutUpdateStatus('กำลังทำ')" class="py-2 px-3 rounded-lg border text-center text-xs font-bold transition-all bg-blue-600 text-white border-blue-600 shadow-xs">กำลังทำ</button>
+                  <button type="button" id="checkoutStatusChoice-เสร็จสิ้น" onclick="window.setCheckoutUpdateStatus('เสร็จสิ้น')" class="py-2 px-3 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 text-slate-600 border-slate-200">เสร็จสิ้น</button>
                 </div>
               </div>
 
@@ -295,34 +294,51 @@
               </div>
             </div>
 
-            <!-- PANEL 2: FINAL CLOSE (MODE 2: งานเสร็จ 100%) -->
-            <div id="actionPanelClose" class="hidden space-y-3.5 pt-1">
+            <!-- PANEL 2: FINAL CLOSE (MODE 2: ปิดงานเมื่อเสร็จสิ้น 100%) -->
+            <div id="actionPanelClose" class="hidden space-y-4 pt-1">
+              <!-- ข้อที่ 2: สรุปผลดำเนินงาน -->
               <div>
-                <label class="block text-xs font-semibold text-slate-800 mb-1.5">สรุปผลการปฏิบัติงาน <span class="text-rose-500">*</span></label>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  <button type="button" id="outcomeBtn-ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด" onclick="setCheckoutOutcome('ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด')" class="py-2 px-2.5 rounded-lg border text-xs font-bold text-left transition-all bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs">
-                    ✅ ติดตั้งเสร็จเรียบร้อย ภาพชัดเจน
+                <label class="block text-xs font-bold text-slate-800 mb-1.5">2. สรุปผลการดำเนินงาน <span class="text-rose-500">*</span></label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button type="button" id="outcomeBtn-ปฏิบัติงานเรียบร้อย" onclick="setCheckoutOutcome('ปฏิบัติงานเรียบร้อย')" class="py-2.5 px-3 rounded-xl border text-xs font-bold text-left transition-all bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs">
+                    ✅ ปฏิบัติงานเรียบร้อย
                   </button>
-                  <button type="button" id="outcomeBtn-แก้ไขปัญหาสำเร็จ ส่งมอบงานแล้ว" onclick="setCheckoutOutcome('แก้ไขปัญหาสำเร็จ ส่งมอบงานแล้ว')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
-                    🔧 ซ่อมแซม/แก้ไขสำเร็จ
-                  </button>
-                  <button type="button" id="outcomeBtn-เข้าตรวจสอบแล้ว รออะไหล่/อุปกรณ์เพิ่มเติม" onclick="setCheckoutOutcome('เข้าตรวจสอบแล้ว รออะไหล่/อุปกรณ์เพิ่มเติม')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
-                    ⏳ เข้าตรวจแล้ว รออะไหล่เพิ่ม
-                  </button>
-                  <button type="button" id="outcomeBtn-อื่นๆ" onclick="setCheckoutOutcome('อื่นๆ')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
-                    ✏️ อื่นๆ (ระบุในหมายเหตุ)
+                  <button type="button" id="outcomeBtn-ติดปัญหา" onclick="setCheckoutOutcome('ติดปัญหา')" class="py-2.5 px-3 rounded-xl border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+                    ⚠️ ติดปัญหา
                   </button>
                 </div>
               </div>
 
+              <!-- ช่องใส่รายละเอียด / หมายเหตุ -->
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">หมายเหตุ / รายละเอียดการส่งมอบ</label>
-                <input type="text" id="checkoutNoteInput" placeholder="เช่น ส่งมอบ User/Password ให้ลูกค้าเรียบร้อยแล้ว..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none">
+                <label id="checkoutOutcomeDetailLabel" class="block text-xs font-bold text-slate-800 mb-1">รายละเอียดผลการทำงาน / ปัญหาที่พบ</label>
+                <textarea id="checkoutNoteInput" rows="2" placeholder="ระบุรายละเอียดการปฏิบัติงาน หรือปัญหาที่พบ..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800"></textarea>
+              </div>
+
+              <!-- ข้อที่ 3: แนบรูปภาพการดำเนินงาน เพื่อปิดงาน ขั้นต่ำแนบอย่างน้อย 5 รูปภาพ -->
+              <div class="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <label class="text-xs font-bold text-slate-800">3. แนบรูปภาพการดำเนินงานเพื่อปิดงาน <span class="text-rose-500">*</span></label>
+                    <p class="text-[10px] text-slate-500">ข้อบังคับ: แนบอย่างน้อย 5 รูปภาพ (สูงสุด 10 รูป)</p>
+                  </div>
+                  <span id="checkoutClosePhotoCountBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                    0/5 รูป (ต้องการอย่างน้อย 5 รูป)
+                  </span>
+                </div>
+                <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
+                  <label class="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/50 flex flex-col items-center justify-center cursor-pointer transition-colors flex-shrink-0 bg-white">
+                    <span class="text-xl">📷</span>
+                    <span class="text-[9px] font-bold text-slate-700 mt-0.5">เพิ่มรูป</span>
+                    <input type="file" accept="image/*" multiple onchange="window.handleCheckoutPhotoUpload(event)" class="hidden">
+                  </label>
+                  <div id="checkoutClosePhotoPreviewsContainer" class="flex items-center space-x-2"></div>
+                </div>
               </div>
 
               <div class="pt-2">
                 <button type="button" onclick="submitCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center space-x-2">
-                  <span>🏁 บันทึกปิดงาน & แชร์สรุปเข้ากลุ่ม LINE</span>
+                  <span>🏁 บันทึกปิดงาน & ส่งสรุปเข้ากลุ่ม LINE</span>
                 </button>
               </div>
             </div>
@@ -407,36 +423,135 @@
 
   <!-- 1. ASSIGN TASK MODAL -->
   <div id="assignModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
-    <div class="bg-white rounded-2xl max-w-xl w-full p-4 md:p-6 shadow-2xl border border-slate-200 my-8 space-y-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-4 md:p-6 shadow-2xl border border-slate-200 my-8 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h2 class="text-sm font-bold text-slate-900">มอบหมายงานใหม่</h2>
-          <p class="text-[10px] text-slate-500 mt-0.5">ระบบจะส่งข้อมูลไปยัง Google Sheet และแจ้งเตือนช่าง</p>
+          <h2 class="text-base font-bold text-slate-900">มอบหมายงานใหม่</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">กรอกข้อมูลงาน รายละเอียดลูกค้า และมอบหมายทีมช่าง</p>
         </div>
-        <button type="button" onclick="closeAssignModal()" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
+        <button type="button" onclick="closeAssignModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">✕</button>
       </div>
 
-      <!-- Status selection pills -->
+      <!-- 1. สถานะเริ่มต้น (ความเร่งด่วน 3 ประเภท) -->
       <div>
-        <label class="block text-xs font-semibold text-slate-700 mb-1.5">สถานะงานเริ่มต้น</label>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <button type="button" onclick="selectAssignStatus('กำลังทำ')" id="assignStatusPill-กำลังทำ" class="assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-bold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200">กำลังทำ</button>
-          <button type="button" onclick="selectAssignStatus('รอดำเนินการ')" id="assignStatusPill-รอดำเนินการ" class="assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">รอดำเนินการ</button>
-          <button type="button" onclick="selectAssignStatus('ด่วน')" id="assignStatusPill-ด่วน" class="assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">⚡ ด่วน</button>
-          <button type="button" onclick="selectAssignStatus('ด่วนที่สุด')" id="assignStatusPill-ด่วนที่สุด" class="assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">🔥 ด่วนที่สุด</button>
+        <label class="block text-xs font-bold text-slate-800 mb-1.5">1. สถานะเริ่มต้น (ความเร่งด่วน) <span class="text-rose-500">*</span></label>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" id="assignPriorityBtn-ปกติ" onclick="selectAssignPriority('ปกติ')" class="py-2 px-3 rounded-lg border text-xs font-bold text-center transition-all bg-slate-900 text-white border-slate-900 shadow-xs ring-2 ring-slate-300">
+            ปกติ
+          </button>
+          <button type="button" id="assignPriorityBtn-ด่วน" onclick="selectAssignPriority('ด่วน')" class="py-2 px-3 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+            ⚡ ด่วน
+          </button>
+          <button type="button" id="assignPriorityBtn-ด่วนที่สุด" onclick="selectAssignPriority('ด่วนที่สุด')" class="py-2 px-3 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+            🔥 ด่วนที่สุด
+          </button>
         </div>
       </div>
 
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-slate-700">รายการงานที่ต้องการมอบหมาย</span>
-        <button type="button" onclick="addAssignRow()" class="text-[11px] text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors">+ เพิ่มงานอีกแถว</button>
+      <!-- 2. รายการที่ต้องการมอบหมาย ประเภทงาน (6 ประเภท) -->
+      <div>
+        <label class="block text-xs font-bold text-slate-800 mb-1.5">2. รายการที่ต้องการมอบหมาย (ประเภทงาน) <span class="text-rose-500">*</span></label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+          <button type="button" id="assignCatBtn-ติดตั้งงานใหม่" onclick="selectAssignCategory('ติดตั้งงานใหม่')" class="py-2 px-3 rounded-lg border text-xs font-bold text-left transition-all bg-blue-50 border-blue-600 text-blue-900 shadow-2xs ring-1 ring-blue-500">
+            1. ติดตั้งงานใหม่
+          </button>
+          <button type="button" id="assignCatBtn-งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)" onclick="selectAssignCategory('งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)')" class="py-2 px-3 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+            2. งานเซอร์วิส (ไม่มีค่าใช้จ่าย ในประกัน)
+          </button>
+          <button type="button" id="assignCatBtn-งานเซอร์วิส (มีค่าใช้จ่าย)" onclick="selectAssignCategory('งานเซอร์วิส (มีค่าใช้จ่าย)')" class="py-2 px-3 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+            3. งานเซอร์วิส (มีค่าใช้จ่าย)
+          </button>
+          <button type="button" id="assignCatBtn-งาน PM (Preventive Maintenance)" onclick="selectAssignCategory('งาน PM (Preventive Maintenance)')" class="py-2 px-3 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+            4. งาน PM (Preventive Maintenance)
+          </button>
+          <button type="button" id="assignCatBtn-สำรวจประเมินหน้างาน" onclick="selectAssignCategory('สำรวจประเมินหน้างาน')" class="py-2 px-3 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+            5. สำรวจประเมินหน้างาน
+          </button>
+          <button type="button" id="assignCatBtn-อื่นๆ" onclick="selectAssignCategory('อื่นๆ')" class="py-2 px-3 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+            6. อื่นๆ (ระบุเพิ่มเติม)
+          </button>
+        </div>
+        <div id="assignCategoryOtherWrapper" class="hidden mt-2">
+          <input type="text" id="assignCategoryOtherInput" placeholder="ระบุประเภทงานอื่นๆ..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-800">
+        </div>
       </div>
 
-      <div id="assignRowsContainer" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1"></div>
+      <!-- 3. รายละเอียดของงาน -->
+      <div>
+        <label class="block text-xs font-bold text-slate-800 mb-1">3. รายละเอียดของงาน</label>
+        <textarea id="assignJobDetailInput" rows="2" placeholder="เช่น ติดตั้งกล้อง IP Camera 8 จุด พร้อมเดินสายสัญญาณและตั้งค่า NVR..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-800"></textarea>
+      </div>
 
-      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
-        <button type="button" onclick="closeAssignModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3.5 rounded-lg text-xs">ยกเลิก</button>
-        <button type="button" onclick="submitAssignModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-xs shadow-xs">บันทึกและมอบหมายงาน</button>
+      <!-- 4. สถานที่หน้างาน -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-xs font-bold text-slate-800">4. สถานที่หน้างาน (พิกัด หรือ ที่อยู่)</label>
+          <button type="button" onclick="window.fetchCurrentCoordsForAssign()" class="text-[11px] text-blue-700 hover:text-blue-800 font-semibold flex items-center space-x-1">
+            <span>📍 ดึงพิกัดปัจจุบัน</span>
+          </button>
+        </div>
+        <input type="text" id="assignLocationInput" placeholder="เช่น ไซต์บางนา กม.12 หรือ 13.7563, 100.5018" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-800">
+      </div>
+
+      <!-- 5. รายละเอียดลูกค้า (ส่วนนี้สำคัญต้องให้กรอกเท่านั้น จึงจะบันทึกข้อมูลได้) -->
+      <div class="bg-amber-50/70 border border-amber-300/80 rounded-xl p-3.5 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-1.5 text-xs font-bold text-amber-900">
+            <span>👤</span>
+            <span>5. รายละเอียดลูกค้า (จำเป็นต้องกรอกก่อนบันทึก)</span>
+          </div>
+          <span class="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full">จำเป็น 3 ช่องแรก</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-800 mb-1">1. ชื่อลูกค้า <span class="text-rose-500 font-bold">*</span></label>
+            <input type="text" id="assignCustNameInput" placeholder="เช่น คุณสมชาย (บจก. เอสวี พลัส)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-800 mb-1">3. เบอร์โทรศัพท์ <span class="text-rose-500 font-bold">*</span></label>
+            <input type="tel" id="assignCustPhoneInput" placeholder="เช่น 081-234-5678" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-800 mb-1">2. ที่อยู่ลูกค้า <span class="text-rose-500 font-bold">*</span></label>
+          <input type="text" id="assignCustAddressInput" placeholder="เช่น 88/9 หมู่บ้านกรีนวิลล์ ถ.บางนา-ตราด แขวง/เขต บางนา กทม." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-700 mb-1">4. Email</label>
+            <input type="email" id="assignCustEmailInput" placeholder="customer@example.com" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-700 mb-1">5. ID Line หรือ อื่นๆ</label>
+            <input type="text" id="assignCustLineIdInput" placeholder="เช่น somchai_cctv" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. ปุ่มเลือก รายชื่อผู้รับผิดชอบงาน -->
+      <div>
+        <label class="block text-xs font-bold text-slate-800 mb-1.5">6. ช่างผู้รับผิดชอบงาน <span class="text-rose-500">*</span></label>
+        <div id="assignTechChipsContainer" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <!-- 7. วันที่เริ่มงาน / กำหนดส่งงาน -->
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <label class="block font-bold text-slate-800 mb-1">7. วันที่เริ่มงาน</label>
+          <input type="date" id="assignStartDateInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:bg-white focus:outline-none">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-800 mb-1">กำหนดส่งงาน <span class="text-rose-500">*</span></label>
+          <input type="date" id="assignDeadlineInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:bg-white focus:outline-none">
+        </div>
+      </div>
+
+      <!-- Submit & Cancel -->
+      <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeAssignModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl text-xs transition-colors">ยกเลิก</button>
+        <button type="button" onclick="submitAssignModal()" class="bg-slate-950 hover:bg-slate-800 text-white font-bold py-2 px-5 rounded-xl text-xs shadow-sm transition-all flex items-center space-x-1.5">
+          <span>✓ บันทึกและมอบหมายงาน</span>
+        </button>
       </div>
     </div>
   </div>
@@ -547,10 +662,8 @@
         <div>
           <label class="block font-semibold text-slate-700 mb-1.5">สถานะงาน</label>
           <div class="grid grid-cols-2 gap-1.5">
-            <button type="button" id="statusChoice-กำลังทำ" onclick="setUpdateStatus('กำลังทำ')" class="py-2 px-2 rounded-lg border text-center text-xs font-bold transition-all bg-blue-600 text-white border-blue-600 shadow-xs">กำลังทำ</button>
-            <button type="button" id="statusChoice-รอดำเนินการ" onclick="setUpdateStatus('รอดำเนินการ')" class="py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 text-slate-600 border-slate-200">รอดำเนินการ</button>
-            <button type="button" id="statusChoice-รออะไหล่" onclick="setUpdateStatus('รออะไหล่')" class="py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 text-slate-600 border-slate-200">รออะไหล่</button>
-            <button type="button" id="statusChoice-เสร็จสิ้น" onclick="setUpdateStatus('เสร็จสิ้น')" class="py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 text-slate-600 border-slate-200">เสร็จสิ้น</button>
+            <button type="button" id="statusChoice-กำลังทำ" onclick="setUpdateStatus('กำลังทำ')" class="py-2 px-3 rounded-lg border text-center text-xs font-bold transition-all bg-blue-600 text-white border-blue-600 shadow-xs">กำลังทำ</button>
+            <button type="button" id="statusChoice-เสร็จสิ้น" onclick="setUpdateStatus('เสร็จสิ้น')" class="py-2 px-3 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">เสร็จสิ้น</button>
           </div>
         </div>
 

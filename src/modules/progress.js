@@ -58,8 +58,6 @@ export function setProgressStatus(st) {
   currentProgressStatus = st;
   const statuses = [
     { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 shadow-xs" },
-    { key: "รอดำเนินการ", activeClass: "bg-amber-600 text-white border-amber-600 shadow-xs" },
-    { key: "รออะไหล่", activeClass: "bg-purple-600 text-white border-purple-600 shadow-xs" },
     { key: "เสร็จสิ้น", activeClass: "bg-emerald-600 text-white border-emerald-600 shadow-xs" }
   ];
 
@@ -67,9 +65,9 @@ export function setProgressStatus(st) {
     const btn = document.getElementById(`statusChoice-${s.key}`);
     if (btn) {
       if (s.key === st) {
-        btn.className = `py-1.5 px-2 rounded-lg border text-center text-xs font-bold transition-all ${s.activeClass}`;
+        btn.className = `py-2 px-3 rounded-lg border text-center text-xs font-bold transition-all ${s.activeClass}`;
       } else {
-        btn.className = "py-1.5 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200";
+        btn.className = "py-2 px-3 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
       }
     }
   });

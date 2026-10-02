@@ -398,3 +398,76 @@ export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, durat
     }
   };
 }
+
+export function createExtendDeadlineFlexCard({ taskId, taskTitle, oldDeadline, newDeadline, reason, requestBy }) {
+  return {
+    type: "flex",
+    altText: `[ขอขยายเวลาปฏิบัติงาน] ${taskTitle} -> ${newDeadline}`,
+    contents: {
+      type: "bubble",
+      size: "mega",
+      header: {
+        type: "box",
+        layout: "vertical",
+        backgroundColor: "#B45309",
+        paddingAll: "18px",
+        contents: [
+          {
+            type: "box",
+            layout: "horizontal",
+            contents: [
+              { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#FDE68A", size: "xxs", flex: 6 },
+              { type: "text", text: taskId || "", color: "#FEF3C7", size: "xs", align: "end", weight: "bold", flex: 4 }
+            ]
+          },
+          {
+            type: "text",
+            text: "⏰ แจ้งขอขยายเวลางาน",
+            weight: "bold",
+            color: "#FFFFFF",
+            size: "lg",
+            margin: "sm"
+          }
+        ]
+      },
+      body: {
+        type: "box",
+        layout: "vertical",
+        spacing: "sm",
+        paddingAll: "18px",
+        contents: [
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ชื่องาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: taskTitle, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "กำหนดเดิม", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: oldDeadline || "-", size: "xs", color: "#DC2626", weight: "bold", flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ขอขยายเป็น", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: newDeadline || "-", size: "xs", color: "#D97706", weight: "bold", flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ผู้ขอขยายเวลา", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: requestBy || "ช่างหน้างาน", size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "vertical", margin: "md", contents: [
+              { type: "text", text: "เหตุผลความจำเป็น:", size: "xs", color: "#64748B", weight: "bold" },
+              { type: "text", text: `"${reason}"`, size: "xs", color: "#0F172A", wrap: true, margin: "xs" }
+            ]
+          }
+        ]
+      }
+    }
+  };
+}

@@ -32,11 +32,10 @@ import {
   renderTasksList,
   openAssignModal,
   closeAssignModal,
-  selectAssignStatus,
-  addAssignRow,
-  removeAssignRow,
-  updateAssignRowField,
-  toggleAssignRowTech,
+  selectAssignPriority,
+  selectAssignCategory,
+  toggleAssignTech,
+  renderAssignTechChips,
   submitAssignForm,
   openEditTaskModal,
   closeEditTaskModal,
@@ -209,20 +208,21 @@ export function renderActiveCheckoutList() {
   container.innerHTML = activeTasks.map(item => {
     const isSelected = selectedActiveCheckoutId === item.id;
     const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ช่างทั่วไป");
+    const displayTaskId = item.taskId ? `${item.taskId} (${item.id})` : item.id;
     return `
-      <div onclick="window.selectActiveTaskForCheckout('${item.id}')" class="p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+      <div onclick="window.selectActiveTaskForCheckout('${item.id}')" class="p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
         isSelected
-          ? 'bg-emerald-50/90 border-emerald-500 shadow-xs ring-1 ring-emerald-400'
-          : 'bg-white hover:bg-slate-50 border-slate-200'
+          ? 'bg-emerald-50 border-2 border-emerald-600 shadow-sm ring-2 ring-emerald-200'
+          : 'bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs'
       }">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">${item.id}</span>
-          <span class="text-[11px] text-emerald-700 font-semibold font-mono">⏰ เข้างาน: ${formatGasTime(item.time)} น.</span>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
+          <span class="text-xs text-emerald-800 font-bold font-mono">⏰ เข้างาน: ${formatGasTime(item.time)} น.</span>
         </div>
-        <div class="font-bold text-slate-900">${item.task}</div>
-        <div class="text-slate-500 mt-1 flex items-center justify-between">
-          <span>👷 ช่าง: ${techList}</span>
-          <span class="text-[10px] text-slate-400">ระยะเวลา: ${calculateDuration(item.time)}</span>
+        <div class="font-bold text-sm text-slate-950">${item.task}</div>
+        <div class="text-slate-600 mt-1.5 flex items-center justify-between font-medium">
+          <span>👷 ช่าง: <strong class="text-slate-900">${techList}</strong></span>
+          <span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>
         </div>
       </div>
     `;
@@ -242,21 +242,32 @@ export function selectActiveTaskForCheckout(id) {
 export function setCheckoutOutcome(outcome) {
   selectedCheckoutOutcome = outcome;
   const outcomes = [
-    "ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด",
-    "แก้ไขปัญหาสำเร็จ ส่งมอบงานแล้ว",
-    "เข้าตรวจสอบแล้ว รออะไหล่/อุปกรณ์เพิ่มเติม",
-    "อื่นๆ"
+    { key: "ปฏิบัติงานเรียบร้อย", activeClass: "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs ring-1 ring-emerald-400" },
+    { key: "ติดปัญหา", activeClass: "bg-rose-50 border-rose-500 text-rose-800 shadow-2xs ring-1 ring-rose-400" }
   ];
+
   outcomes.forEach(oc => {
-    const btn = document.getElementById(`outcomeBtn-${oc}`);
+    const btn = document.getElementById(`outcomeBtn-${oc.key}`);
     if (btn) {
-      if (oc === outcome) {
-        btn.className = "py-2 px-2.5 rounded-lg border text-xs font-bold text-left transition-all bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs";
+      if (oc.key === outcome) {
+        btn.className = `py-2.5 px-3 rounded-xl border text-xs font-bold text-left transition-all ${oc.activeClass}`;
       } else {
-        btn.className = "py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
+        btn.className = "py-2.5 px-3 rounded-xl border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
       }
     }
   });
+
+  const detailLabel = document.getElementById("checkoutOutcomeDetailLabel");
+  const noteInput = document.getElementById("checkoutNoteInput");
+  if (detailLabel && noteInput) {
+    if (outcome === "ติดปัญหา") {
+      detailLabel.innerHTML = `รายละเอียดปัญหาที่พบ <span class="text-rose-500 font-bold">* (จำเป็นต้องระบุ)</span>`;
+      noteInput.placeholder = "เช่น กล้องจุดที่ 3 สัญญาณภาพไม่ออก รอเบิกสาย RG6 เส้นใหม่ หรือติดปัญหาระบบไฟฟ้า...";
+    } else {
+      detailLabel.innerHTML = `รายละเอียดผลการทำงาน / หมายเหตุ`;
+      noteInput.placeholder = "ระบุรายละเอียดการปฏิบัติงาน เช่น ปรับมุมกล้องและส่งมอบงานให้ลูกค้าเรียบร้อย...";
+    }
+  }
 }
 
 // -------------------------------------------------------------
@@ -480,6 +491,19 @@ window.submitCheckout = () => {
         log.checkoutTime = closedRecord.outTime;
         log.outcome = closedRecord.outcome;
       }
+
+      // Link and complete the assigned task in tasksList
+      if (closedRecord.taskId) {
+        const linkedTask = tasksList.find(t => t.id === closedRecord.taskId);
+        if (linkedTask) {
+          linkedTask.status = "เสร็จสิ้น";
+          linkedTask.progress = 100;
+          linkedTask.latestUpdate = `ปิดงานเรียบร้อย: ${closedRecord.outcome}`;
+          localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+          renderTasksList(tasksList);
+        }
+      }
+
       localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
       localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
       renderTodayLogs();
@@ -498,11 +522,23 @@ window.handleTaskSearch = (query) => {
 
 window.openAssignModal = () => openAssignModal(allTechnicians);
 window.closeAssignModal = closeAssignModal;
-window.selectAssignStatus = selectAssignStatus;
-window.addAssignRow = () => addAssignRow(allTechnicians);
-window.removeAssignRow = (idx) => removeAssignRow(idx, allTechnicians);
-window.updateAssignRowField = updateAssignRowField;
-window.toggleAssignRowTech = (idx, t) => toggleAssignRowTech(idx, t, allTechnicians);
+window.selectAssignPriority = selectAssignPriority;
+window.selectAssignCategory = selectAssignCategory;
+window.toggleAssignTech = (t) => toggleAssignTech(t, allTechnicians);
+window.fetchCurrentCoordsForAssign = () => {
+  const coords = getCurrentCoords();
+  const locInput = document.getElementById("assignLocationInput");
+  if (!locInput) return;
+  if (coords.isReady && coords.lat && coords.lng) {
+    locInput.value = `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
+  } else {
+    requestLocation((c) => {
+      if (c && c.lat && c.lng) {
+        locInput.value = `${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`;
+      }
+    });
+  }
+};
 window.submitAssignModal = () => submitAssignForm({
   tasksList: tasksList,
   onComplete: () => {

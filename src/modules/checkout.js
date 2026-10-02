@@ -68,17 +68,16 @@ export function setUpdateStatus(st) {
   updateStatus = st;
   const statuses = [
     { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 shadow-xs" },
-    { key: "รออะไหล่", activeClass: "bg-purple-600 text-white border-purple-600 shadow-xs" },
-    { key: "รอดำเนินการ", activeClass: "bg-amber-600 text-white border-amber-600 shadow-xs" }
+    { key: "เสร็จสิ้น", activeClass: "bg-emerald-600 text-white border-emerald-600 shadow-xs" }
   ];
 
   statuses.forEach(s => {
     const btn = document.getElementById(`checkoutStatusChoice-${s.key}`);
     if (btn) {
       if (s.key === st) {
-        btn.className = `py-2 px-2 rounded-lg border text-center text-xs font-bold transition-all ${s.activeClass}`;
+        btn.className = `py-2 px-3 rounded-lg border text-center text-xs font-bold transition-all ${s.activeClass}`;
       } else {
-        btn.className = "py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200";
+        btn.className = "py-2 px-3 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
       }
     }
   });
@@ -89,14 +88,14 @@ export async function handleCheckoutPhotoUpload(event) {
   if (!files || files.length === 0) return;
 
   const currentCount = checkoutPhotos.length;
-  const remainingSlots = 5 - currentCount;
+  const remainingSlots = 10 - currentCount;
   if (remainingSlots <= 0) {
-    alert("แนบรูปได้สูงสุด 5 รูปแล้ว");
+    alert("แนบรูปได้สูงสุด 10 รูปแล้ว");
     return;
   }
 
   const newCompressed = await compressMultipleFiles(files, remainingSlots);
-  checkoutPhotos = [...checkoutPhotos, ...newCompressed].slice(0, 5);
+  checkoutPhotos = [...checkoutPhotos, ...newCompressed].slice(0, 10);
   renderCheckoutPhotoPreviews();
   event.target.value = "";
 }
@@ -107,33 +106,42 @@ export function removeCheckoutPhoto(index) {
 }
 
 export function renderCheckoutPhotoPreviews() {
-  const container = document.getElementById("checkoutPhotoPreviewsContainer");
-  const countBadge = document.getElementById("checkoutPhotoCountBadge");
-  if (!container) return;
+  const containers = [
+    document.getElementById("checkoutPhotoPreviewsContainer"),
+    document.getElementById("checkoutClosePhotoPreviewsContainer")
+  ].filter(Boolean);
 
-  if (countBadge) {
-    countBadge.innerText = `${checkoutPhotos.length}/5 รูป`;
-    if (checkoutPhotos.length > 0) {
-      countBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700";
+  const countBadges = [
+    document.getElementById("checkoutPhotoCountBadge"),
+    document.getElementById("checkoutClosePhotoCountBadge")
+  ].filter(Boolean);
+
+  const isMet = checkoutPhotos.length >= 5;
+  countBadges.forEach(badge => {
+    badge.innerText = `${checkoutPhotos.length} รูป ${isMet ? '(✓ ครบขั้นต่ำ 5 รูป)' : '(ต้องการอย่างน้อย 5 รูป)'}`;
+    if (isMet) {
+      badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
     } else {
-      countBadge.className = "text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500";
+      badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
     }
-  }
+  });
 
-  container.innerHTML = "";
-  checkoutPhotos.forEach((photo, idx) => {
-    const thumb = document.createElement("div");
-    thumb.className = "relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 group flex-shrink-0";
-    thumb.innerHTML = `
-      <img src="${photo.dataUrl}" class="w-full h-full object-cover" alt="photo ${idx + 1}">
-      <button type="button" onclick="window.removeCheckoutPhoto(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow-xs hover:bg-rose-700">
-        ×
-      </button>
-      <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2">
-        ${photo.sizeKb}KB
-      </div>
-    `;
-    container.appendChild(thumb);
+  containers.forEach(container => {
+    container.innerHTML = "";
+    checkoutPhotos.forEach((photo, idx) => {
+      const thumb = document.createElement("div");
+      thumb.className = "relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 group flex-shrink-0";
+      thumb.innerHTML = `
+        <img src="${photo.dataUrl}" class="w-full h-full object-cover" alt="photo ${idx + 1}">
+        <button type="button" onclick="window.removeCheckoutPhoto(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow-xs hover:bg-rose-700">
+          ×
+        </button>
+        <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2">
+          ${photo.sizeKb}KB
+        </div>
+      `;
+      container.appendChild(thumb);
+    });
   });
 }
 
@@ -238,7 +246,20 @@ export async function submitCheckoutForm({
     return;
   }
   if (!selectedOutcome) {
-    alert("กรุณาเลือกผลการปฏิบัติงาน");
+    alert("กรุณาเลือกสรุปผลการปฏิบัติงาน");
+    return;
+  }
+
+  if (selectedOutcome === "ติดปัญหา" && (!noteText || !noteText.trim())) {
+    alert("กรณีติดปัญหา กรุณาระบุรายละเอียดปัญหาที่พบ");
+    const noteEl = document.getElementById("checkoutNoteInput");
+    if (noteEl) noteEl.focus();
+    return;
+  }
+
+  // Client requirement: Minimum 5 photos required to close job
+  if (checkoutPhotos.length < 5) {
+    alert(`กรุณาแนบรูปภาพการดำเนินงานเพื่อปิดงานอย่างน้อย 5 รูปภาพ (ปัจจุบันแนบแล้ว ${checkoutPhotos.length}/5 รูป)`);
     return;
   }
 
