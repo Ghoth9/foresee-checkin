@@ -32,16 +32,23 @@ export function setActionTab(tab) {
   const tabBtnClose = document.getElementById("actionTabBtnClose");
 
   if (tab === "update") {
-    if (updatePanel) updatePanel.classList.remove("hidden");
+    if (updatePanel) {
+      updatePanel.classList.remove("hidden");
+      updatePanel.classList.add("animate-fade-in");
+    }
     if (closePanel) closePanel.classList.add("hidden");
-    if (tabBtnUpdate) tabBtnUpdate.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5";
-    if (tabBtnClose) tabBtnClose.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5";
+    if (tabBtnUpdate) tabBtnUpdate.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all duration-200 bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5 active:scale-[0.98]";
+    if (tabBtnClose) tabBtnClose.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5 active:scale-[0.98]";
   } else {
-    if (closePanel) closePanel.classList.remove("hidden");
+    if (closePanel) {
+      closePanel.classList.remove("hidden");
+      closePanel.classList.add("animate-fade-in");
+    }
     if (updatePanel) updatePanel.classList.add("hidden");
-    if (tabBtnClose) tabBtnClose.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all bg-white text-emerald-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5";
-    if (tabBtnUpdate) tabBtnUpdate.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5";
+    if (tabBtnClose) tabBtnClose.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all duration-200 bg-white text-emerald-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5 active:scale-[0.98]";
+    if (tabBtnUpdate) tabBtnUpdate.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5 active:scale-[0.98]";
   }
+  updateCheckoutSubmitButtonsState();
 }
 
 export function setUpdatePercent(val) {
@@ -130,10 +137,10 @@ export function renderCheckoutPhotoPreviews() {
     container.innerHTML = "";
     checkoutPhotos.forEach((photo, idx) => {
       const thumb = document.createElement("div");
-      thumb.className = "relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 group flex-shrink-0";
+      thumb.className = "relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 group flex-shrink-0 animate-pop-in shadow-2xs";
       thumb.innerHTML = `
         <img src="${photo.dataUrl}" class="w-full h-full object-cover" alt="photo ${idx + 1}">
-        <button type="button" onclick="window.removeCheckoutPhoto(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow-xs hover:bg-rose-700">
+        <button type="button" onclick="window.removeCheckoutPhoto(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow-xs hover:bg-rose-700 active:scale-90 transition-transform">
           ×
         </button>
         <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2">
@@ -143,6 +150,39 @@ export function renderCheckoutPhotoPreviews() {
       container.appendChild(thumb);
     });
   });
+
+  updateCheckoutSubmitButtonsState();
+}
+
+export function updateCheckoutSubmitButtonsState() {
+  const updateBtn = document.getElementById("submitUpdateBtn");
+  const checkoutBtn = document.getElementById("submitCheckoutBtn");
+
+  // 1. Progress Update Button
+  if (updateBtn) {
+    if (checkoutPhotos.length === 0) {
+      updateBtn.disabled = true;
+      updateBtn.className = "w-full bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-300 transition-all duration-200 flex items-center justify-center space-x-2 select-none shadow-none";
+      updateBtn.innerHTML = `<span>🔒 แนบรูปความคืบหน้าอย่างน้อย 1 รูปก่อนส่ง (0/5)</span>`;
+    } else {
+      updateBtn.disabled = false;
+      updateBtn.className = "w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
+      updateBtn.innerHTML = `<span>📊 อัปเดตความคืบหน้า & ส่งรายงานเข้ากลุ่ม LINE (แนบแล้ว ${checkoutPhotos.length} รูป)</span>`;
+    }
+  }
+
+  // 2. Final Checkout Button (Must have at least 5 photos)
+  if (checkoutBtn) {
+    if (checkoutPhotos.length < 5) {
+      checkoutBtn.disabled = true;
+      checkoutBtn.className = "w-full bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-300 transition-all duration-200 flex items-center justify-center space-x-2 select-none shadow-none";
+      checkoutBtn.innerHTML = `<span>🔒 แนบรูปให้ครบอย่างน้อย 5 รูปเพื่อปิดงาน (${checkoutPhotos.length}/5)</span>`;
+    } else {
+      checkoutBtn.disabled = false;
+      checkoutBtn.className = "w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-emerald-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
+      checkoutBtn.innerHTML = `<span>🏁 บันทึกปิดงาน & ส่งสรุปเข้ากลุ่ม LINE (แนบแล้ว ${checkoutPhotos.length} รูป)</span>`;
+    }
+  }
 }
 
 export function calculateDuration(checkinTimeStr) {

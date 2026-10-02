@@ -60,17 +60,25 @@ export function setStatusFilter(status, tasksList) {
   renderTasksList(tasksList);
 }
 
-export function setTechFilter(techName, tasksList) {
+let cachedTechnicians = [];
+
+export function setTechFilter(techName, tasksList, allTechnicians) {
   currentTechFilter = techName;
-  renderTechFilterChips(tasksList);
+  if (Array.isArray(allTechnicians) && allTechnicians.length > 0) {
+    cachedTechnicians = allTechnicians;
+  }
+  renderTechFilterChips(tasksList, cachedTechnicians);
   renderTasksList(tasksList);
 }
 
 export function renderTechFilterChips(tasksList, allTechnicians = []) {
+  if (Array.isArray(allTechnicians) && allTechnicians.length > 0) {
+    cachedTechnicians = allTechnicians;
+  }
   const container = document.getElementById("techFilterChipsContainer");
   if (!container) return;
 
-  const techs = ["ทั้งหมด", ...allTechnicians];
+  const techs = ["ทั้งหมด", ...cachedTechnicians];
   container.innerHTML = techs.map(tName => {
     const isSelected = currentTechFilter === tName;
     return `
@@ -198,7 +206,7 @@ export function renderTasksList(tasksList) {
             </div>
           </td>
           <td class="py-3 px-3 whitespace-nowrap">
-            <div class="font-mono text-xs text-slate-800 font-semibold">${task.deadline}</div>
+            <div class="font-mono text-xs text-slate-800 font-semibold">${formatThaiDateDisplay(task.deadline)}</div>
             <div class="mt-0.5">${getDeadlineCountdownBadge(task.deadline, isDone)}</div>
           </td>
           <td class="py-3 px-3 whitespace-nowrap">
@@ -266,7 +274,7 @@ export function renderTasksList(tasksList) {
 
         <div class="pt-2 border-t border-slate-100 space-y-2">
           <div class="flex items-center justify-between text-xs font-mono">
-            <span class="text-slate-500">กำหนดส่ง: <strong>${task.deadline}</strong></span>
+            <span class="text-slate-500">กำหนดส่ง: <strong>${formatThaiDateDisplay(task.deadline)}</strong></span>
             ${getDeadlineCountdownBadge(task.deadline, isDone)}
           </div>
           <div class="flex items-center space-x-2">

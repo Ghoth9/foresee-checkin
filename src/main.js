@@ -22,7 +22,8 @@ import {
   setActionTab,
   setUpdatePercent,
   setUpdateStatus,
-  calculateDuration
+  calculateDuration,
+  updateCheckoutSubmitButtonsState
 } from './modules/checkout.js';
 import {
   setTaskViewMode,
@@ -92,8 +93,13 @@ export function switchTab(tab) {
   sections.forEach(s => {
     const el = document.getElementById(`${s}Section`);
     if (el) {
-      if (s === tab) el.classList.remove("hidden");
-      else el.classList.add("hidden");
+      if (s === tab) {
+        el.classList.remove("hidden");
+        el.classList.add("animate-fade-in");
+      } else {
+        el.classList.add("hidden");
+        el.classList.remove("animate-fade-in");
+      }
     }
 
     // Desktop nav buttons
@@ -229,14 +235,20 @@ export function renderActiveCheckoutList() {
   }).join('');
 
   if (outcomeSection) {
-    if (selectedActiveCheckoutId) outcomeSection.classList.remove("hidden");
-    else outcomeSection.classList.add("hidden");
+    if (selectedActiveCheckoutId) {
+      outcomeSection.classList.remove("hidden");
+      outcomeSection.classList.add("animate-fade-in");
+    } else {
+      outcomeSection.classList.add("hidden");
+      outcomeSection.classList.remove("animate-fade-in");
+    }
   }
 }
 
 export function selectActiveTaskForCheckout(id) {
   selectedActiveCheckoutId = id;
   renderActiveCheckoutList();
+  updateCheckoutSubmitButtonsState();
 }
 
 export function setCheckoutOutcome(outcome) {
@@ -515,7 +527,7 @@ window.submitCheckout = () => {
 
 window.setTaskViewMode = (mode) => setTaskViewMode(mode, tasksList);
 window.setStatusFilter = (st) => setStatusFilter(st, tasksList);
-window.setTaskTechFilter = (tech) => setTechFilter(tech, tasksList);
+window.setTaskTechFilter = (tech) => setTechFilter(tech, tasksList, allTechnicians);
 window.handleTaskSearch = (query) => {
   renderTasksList(tasksList);
 };
