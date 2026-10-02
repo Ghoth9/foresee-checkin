@@ -1,0 +1,22 @@
+{
+  "name": "foresee-checkin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Ghoth9/foresee-checkin/issues"
+  },
+  "homepage": "https://github.com/Ghoth9/foresee-checkin#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.3.2"
+  }
+}
