@@ -60,6 +60,10 @@ export function addNewTechnicianApi(name) {
   return postToGas("addNewTechnician", { name });
 }
 
+export function deleteTechnicianApi(name) {
+  return postToGas("deleteTechnician", { name });
+}
+
 export function deleteCheckinApi(id) {
   return postToGas("deleteCheckin", { id });
 }

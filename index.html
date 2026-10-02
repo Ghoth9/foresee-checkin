@@ -361,9 +361,12 @@
           <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
           <p class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงาน CCTV และมอบหมายช่างผู้รับผิดชอบ</p>
         </div>
-        <div class="flex items-center space-x-2">
-          <input id="taskSearchInput" type="text" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ช่าง, ไซต์งาน..." class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 w-44 sm:w-56 shadow-2xs">
-          <button type="button" onclick="openAssignModal()" class="bg-slate-950 hover:bg-slate-800 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition-all flex items-center space-x-1.5">
+        <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+          <input id="taskSearchInput" type="text" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ช่าง, ไซต์งาน..." class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 w-36 sm:w-52 shadow-2xs">
+          <button type="button" onclick="openManageTechModal()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-2xs active:scale-95">
+            <span>👥 จัดการทีมช่าง</span>
+          </button>
+          <button type="button" onclick="openAssignModal()" class="bg-slate-950 hover:bg-slate-800 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition-all flex items-center space-x-1.5 active:scale-95">
             <span>+ มอบหมายงานใหม่</span>
           </button>
         </div>
@@ -678,6 +681,56 @@
         <button type="button" onclick="closeUpdateProgressModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3.5 rounded-lg text-xs">ยกเลิก</button>
         <button type="button" onclick="submitUpdateProgress()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-xs shadow-xs">บันทึก & แชร์เข้า LINE</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 5. MANAGE TECHNICIANS MODAL (ADD / REMOVE) -->
+  <div id="manageTechModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 my-auto space-y-4 animate-modal-in">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center text-sm shadow-2xs">
+            👥
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">จัดการรายชื่อทีมช่าง</h3>
+            <p class="text-[11px] text-slate-500">เพิ่มหรือลบรายชื่อช่างในระบบ</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeManageTechModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Input to Add New Technician -->
+      <div>
+        <label class="block text-xs font-bold text-slate-800 mb-1.5">เพิ่มช่างคนใหม่</label>
+        <div class="flex space-x-2">
+          <input type="text" id="newTechNameInput" onkeydown="if(event.key==='Enter') confirmAddTech()" placeholder="เช่น ช่างกนก, ช่างสมชาย" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+          <button type="button" onclick="confirmAddTech()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center space-x-1 flex-shrink-0 active:scale-95 shadow-2xs">
+            <span>+ เพิ่ม</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Current Technicians List with Delete Button -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-bold text-slate-800">รายชื่อช่างในระบบ</label>
+          <span class="text-[11px] font-semibold text-slate-500" id="techCountLabel">0 คน</span>
+        </div>
+        <div id="manageTechListContainer" class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100">
+        <button type="button" onclick="closeManageTechModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-2xs">
+          ปิดหน้าต่าง
+        </button>
+      </div>
+
     </div>
   </div>
 

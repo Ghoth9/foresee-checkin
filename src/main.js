@@ -6,7 +6,7 @@
 import './style.css';
 import { initLiff, isLineLoggedIn, getLineUserName, loginLine, logoutLine } from './liff/line.js';
 import { requestLocation, getCurrentCoords } from './utils/gps.js';
-import { fetchInitialData, addNewTechnicianApi, deleteCheckinApi, deleteTaskApi } from './api/gas.js';
+import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheckinApi, deleteTaskApi } from './api/gas.js';
 import {
   renderAssignedTasksBanner,
   selectAssignedTask,
@@ -167,6 +167,92 @@ export function renderCheckinTechChips() {
 export function setCheckinTechs(techs) {
   selectedCheckinTechs = [...techs];
   renderCheckinTechChips();
+}
+
+// -------------------------------------------------------------
+// MANAGE TECHNICIANS MODAL
+// -------------------------------------------------------------
+export function openManageTechModal() {
+  const input = document.getElementById("newTechNameInput");
+  if (input) input.value = "";
+  renderManageTechList();
+  const modal = document.getElementById("manageTechModal");
+  if (modal) modal.classList.remove("hidden");
+}
+
+export function closeManageTechModal() {
+  const modal = document.getElementById("manageTechModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+export function renderManageTechList() {
+  const container = document.getElementById("manageTechListContainer");
+  const countLabel = document.getElementById("techCountLabel");
+  if (countLabel) countLabel.innerText = `${allTechnicians.length} คน`;
+  if (!container) return;
+  container.innerHTML = "";
+
+  allTechnicians.forEach((name, idx) => {
+    const row = document.createElement("div");
+    row.className = "flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs";
+    row.innerHTML = `
+      <div class="flex items-center space-x-2.5">
+        <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-[10px]">${idx + 1}</span>
+        <span class="font-bold text-slate-800">${name}</span>
+      </div>
+      <button type="button" onclick="window.deleteTech('${name}')" title="ลบรายชื่อช่างนี้" class="text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-colors flex items-center space-x-1 text-[11px] font-semibold border border-rose-200 active:scale-95">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        <span>ลบ</span>
+      </button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+export async function confirmAddTech() {
+  const input = document.getElementById("newTechNameInput");
+  const name = input ? input.value.trim() : "";
+  if (!name) return;
+  if (allTechnicians.includes(name)) {
+    alert(`มีชื่อ "${name}" อยู่ในระบบแล้ว`);
+    return;
+  }
+  allTechnicians.push(name);
+  try {
+    localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
+  } catch (e) {}
+
+  if (input) input.value = "";
+  renderManageTechList();
+  renderCheckinTechChips();
+  renderTechFilterChips(tasksList, allTechnicians);
+  renderAssignTechChips(allTechnicians);
+
+  // Sync to Google Sheet Users tab
+  addNewTechnicianApi(name);
+}
+
+export async function deleteTech(name) {
+  if (allTechnicians.length <= 1) {
+    alert("ต้องมีรายชื่อช่างอย่างน้อย 1 คนในระบบ");
+    return;
+  }
+  if (confirm(`คุณต้องการลบ "${name}" ออกจากระบบช่างหรือไม่?`)) {
+    allTechnicians = allTechnicians.filter(t => t !== name);
+    selectedCheckinTechs = selectedCheckinTechs.filter(t => t !== name);
+    try {
+      localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
+    } catch(e) {}
+
+    renderManageTechList();
+    renderCheckinTechChips();
+    renderTechFilterChips(tasksList, allTechnicians);
+    renderAssignTechChips(allTechnicians);
+    renderTasksList(tasksList);
+
+    // Sync deletion to Google Sheet
+    deleteTechnicianApi(name);
+  }
 }
 
 export function selectJobType(type) {
@@ -531,6 +617,11 @@ window.setTaskTechFilter = (tech) => setTechFilter(tech, tasksList, allTechnicia
 window.handleTaskSearch = (query) => {
   renderTasksList(tasksList);
 };
+
+window.openManageTechModal = openManageTechModal;
+window.closeManageTechModal = closeManageTechModal;
+window.confirmAddTech = confirmAddTech;
+window.deleteTech = deleteTech;
 
 window.openAssignModal = () => openAssignModal(allTechnicians);
 window.closeAssignModal = closeAssignModal;
