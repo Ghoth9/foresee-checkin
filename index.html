@@ -7,13 +7,13 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=2026.10.02.v23">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png?v=2026.10.02.v23">
-  <link rel="shortcut icon" href="favicon.ico?v=2026.10.02.v23">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026.10.02.v23">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=2026.10.02.v26">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png?v=2026.10.02.v26">
+  <link rel="shortcut icon" href="favicon.ico?v=2026.10.02.v26">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026.10.02.v26">
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.02.v24";
+    const FORESEE_APP_VERSION = "2026.10.02.v26";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -363,7 +363,7 @@
     <!-- ========================================================================= -->
     <!-- TAB 3: มอบหมายงาน - OFFICE TASK MANAGEMENT -->
     <!-- ========================================================================= -->
-    <section id="tasksSection" class="hidden space-y-4">
+    <section id="tasksSection" class="hidden space-y-4 max-w-6xl mx-auto">
       
       <!-- Operations Header & Actions -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-slate-200/90">
@@ -471,32 +471,22 @@
         </button>
       </div>
 
-      <!-- Custom Initial Status Selector -->
+      <!-- Status Selection Pills (Replaces dropdown) -->
       <div class="mb-3.5">
-        <label class="block text-xs font-semibold text-slate-700 mb-1">สถานะงานเริ่มต้น</label>
-        <div class="relative">
-          <button type="button" id="assignStatusBtn" onclick="toggleCustomDropdown('assignStatusMenu')" class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 flex items-center justify-between transition-colors">
-            <span id="assignStatusText" class="font-medium">กำลังทำ</span>
-            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">สถานะงานเริ่มต้น</label>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button type="button" onclick="selectAssignStatus('กำลังทำ')" id="assignStatusPill-กำลังทำ" class="assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-bold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200">
+            กำลังทำ
           </button>
-          <div id="assignStatusMenu" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-20 py-1 text-xs">
-            <div onclick="selectAssignStatus('กำลังทำ')" class="px-3 py-2 hover:bg-blue-50 hover:text-blue-700 cursor-pointer font-medium flex items-center justify-between">
-              <span>กำลังทำ</span>
-              <span id="check-กำลังทำ" class="text-blue-600">✓</span>
-            </div>
-            <div onclick="selectAssignStatus('รอดำเนินการ')" class="px-3 py-2 hover:bg-blue-50 hover:text-blue-700 cursor-pointer font-medium flex items-center justify-between">
-              <span>รอดำเนินการ</span>
-              <span id="check-รอดำเนินการ" class="hidden text-blue-600">✓</span>
-            </div>
-            <div onclick="selectAssignStatus('ด่วน')" class="px-3 py-2 hover:bg-blue-50 hover:text-blue-700 cursor-pointer font-medium flex items-center justify-between">
-              <span>ด่วน</span>
-              <span id="check-ด่วน" class="hidden text-blue-600">✓</span>
-            </div>
-            <div onclick="selectAssignStatus('ด่วนที่สุด')" class="px-3 py-2 hover:bg-blue-50 hover:text-blue-700 cursor-pointer font-medium flex items-center justify-between">
-              <span>ด่วนที่สุด</span>
-              <span id="check-ด่วนที่สุด" class="hidden text-blue-600">✓</span>
-            </div>
-          </div>
+          <button type="button" onclick="selectAssignStatus('รอดำเนินการ')" id="assignStatusPill-รอดำเนินการ" class="assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">
+            รอดำเนินการ
+          </button>
+          <button type="button" onclick="selectAssignStatus('ด่วน')" id="assignStatusPill-ด่วน" class="assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">
+            ⚡ ด่วน
+          </button>
+          <button type="button" onclick="selectAssignStatus('ด่วนที่สุด')" id="assignStatusPill-ด่วนที่สุด" class="assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">
+            🔥 ด่วนที่สุด
+          </button>
         </div>
       </div>
 
@@ -680,13 +670,22 @@
         </div>
 
         <div>
-          <label class="block font-semibold text-slate-700 mb-1">สถานะ</label>
-          <select id="editStatusSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:outline-none">
-            <option value="กำลังทำ">กำลังทำ</option>
-            <option value="รอดำเนินการ">รอดำเนินการ</option>
-            <option value="รออะไหล่">รออะไหล่</option>
-            <option value="เสร็จสิ้น">เสร็จสิ้น</option>
-          </select>
+          <label class="block font-semibold text-slate-700 mb-1.5 text-xs">สถานะงาน</label>
+          <input type="hidden" id="editStatusSelect" value="กำลังทำ">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button type="button" onclick="setEditModalStatus('กำลังทำ')" id="editStatusPill-กำลังทำ" class="edit-status-pill py-2 px-2 rounded-lg border text-xs font-semibold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200">
+              กำลังทำ
+            </button>
+            <button type="button" onclick="setEditModalStatus('รอดำเนินการ')" id="editStatusPill-รอดำเนินการ" class="edit-status-pill py-2 px-2 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">
+              รอดำเนินการ
+            </button>
+            <button type="button" onclick="setEditModalStatus('รออะไหล่')" id="editStatusPill-รออะไหล่" class="edit-status-pill py-2 px-2 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">
+              รออะไหล่
+            </button>
+            <button type="button" onclick="setEditModalStatus('เสร็จสิ้น')" id="editStatusPill-เสร็จสิ้น" class="edit-status-pill py-2 px-2 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">
+              เสร็จสิ้น
+            </button>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
@@ -3123,18 +3122,17 @@
       // Check view mode: List table view on desktop >= 768px
       if (taskViewMode === "list" && window.innerWidth >= 768) {
         let tableHtml = `
-          <div class="overflow-x-auto bg-white rounded-xl border border-slate-200/90 shadow-2xs">
-            <table class="w-full text-left text-sm border-collapse min-w-[1020px]">
+          <div class="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <table class="w-full text-left text-sm border-collapse">
               <thead class="bg-slate-50/90 text-xs font-bold text-slate-600 border-b border-slate-200">
                 <tr>
-                  <th class="py-3 px-3 w-12 text-center font-mono">#</th>
-                  <th class="py-3 px-4 w-32">สถานะ</th>
-                  <th class="py-3 px-4 min-w-[260px]">ชื่องานปฏิบัติการ & ไซต์งาน</th>
-                  <th class="py-3 px-4 min-w-[160px]">ช่างผู้รับผิดชอบ</th>
-                  <th class="py-3 px-4 min-w-[220px]">กำหนดส่งมอบ</th>
-                  <th class="py-3 px-4 min-w-[140px]">ความคืบหน้า</th>
-                  <th class="py-3 px-4 min-w-[220px]">อัปเดตล่าสุด</th>
-                  <th class="py-3 px-4 w-44 text-right pr-5">จัดการ</th>
+                  <th class="py-3 px-3 w-10 text-center font-mono">#</th>
+                  <th class="py-3 px-3 w-28 whitespace-nowrap">สถานะ</th>
+                  <th class="py-3 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
+                  <th class="py-3 px-3 w-36">ช่างผู้รับผิดชอบ</th>
+                  <th class="py-3 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
+                  <th class="py-3 px-3 w-28 whitespace-nowrap">ความคืบหน้า</th>
+                  <th class="py-3 px-3 w-36 text-right pr-4 whitespace-nowrap">จัดการ</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
@@ -3151,60 +3149,52 @@
 
           tableHtml += `
             <tr class="hover:bg-slate-50/70 transition-colors group">
-              <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-400 font-semibold">${index + 1}</td>
-              <td class="py-3.5 px-4 whitespace-nowrap">
-                <span class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeBg}">
+              <td class="py-3 px-3 text-center font-mono text-xs text-slate-400 font-semibold">${index + 1}</td>
+              <td class="py-3 px-3 whitespace-nowrap">
+                <span class="inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-full border ${badgeBg}">
                   ${task.status}
                 </span>
               </td>
-              <td class="py-3.5 px-4">
+              <td class="py-3 px-3">
                 <div class="cursor-pointer" onclick="openTaskActionModal('${task.id}')">
                   <div class="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">${task.title}</div>
                   ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
+                  ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 line-clamp-1 mt-0.5">💬 ${task.latestUpdate}</div>` : ''}
                 </div>
               </td>
-              <td class="py-3.5 px-4">
+              <td class="py-3 px-3">
                 <div class="flex flex-wrap gap-1">
-                  ${techs.map(tName => `<span class="text-xs bg-slate-100 text-slate-800 font-medium px-2 py-0.5 rounded border border-slate-200">${tName}</span>`).join('')}
+                  ${techs.map(tName => `<span class="text-xs bg-slate-100 text-slate-800 font-medium px-1.5 py-0.5 rounded border border-slate-200">${tName}</span>`).join('')}
                 </div>
               </td>
-              <td class="py-3.5 px-4 whitespace-nowrap">
-                <div class="flex items-center space-x-2 font-mono text-xs text-slate-800">
-                  <span class="font-semibold">${task.deadline}</span>
-                  <span class="whitespace-nowrap flex-shrink-0">${getDeadlineCountdownBadge(task.deadline, isDone)}</span>
-                </div>
+              <td class="py-3 px-3 whitespace-nowrap">
+                <div class="font-mono text-xs text-slate-800 font-semibold">${task.deadline}</div>
+                <div class="mt-0.5">${getDeadlineCountdownBadge(task.deadline, isDone)}</div>
                 ${task.oldDeadline && task.oldDeadline !== '-' && task.oldDeadline !== task.deadline ? `
-                  <div class="text-xs text-amber-700 font-normal line-through font-mono mt-0.5">(เดิม ${task.oldDeadline})</div>
+                  <div class="text-[11px] text-amber-700 font-normal line-through font-mono mt-0.5">(เดิม ${task.oldDeadline})</div>
                 ` : ''}
               </td>
-              <td class="py-3.5 px-4 whitespace-nowrap">
-                <div class="flex items-center space-x-2.5">
-                  <div class="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <td class="py-3 px-3 whitespace-nowrap">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div class="h-1.5 ${isDone ? 'bg-emerald-500' : 'bg-slate-900'} rounded-full transition-all" style="width: ${task.progress || 0}%"></div>
                   </div>
                   <span class="font-mono text-xs font-bold text-slate-800">${task.progress || 0}%</span>
                 </div>
               </td>
-              <td class="py-3.5 px-4">
-                <div class="text-xs text-slate-800 font-medium line-clamp-1">${task.latestUpdate || 'ยังไม่มีอัปเดต'}</div>
-                ${task.updateBy && task.updateBy !== '-' ? `<div class="text-xs text-slate-500 mt-0.5 font-mono">โดย ${task.updateBy}${task.updateTime && task.updateTime !== 'undefined' ? ` • ${task.updateTime}` : ''}</div>` : ''}
-              </td>
-              <td class="py-3.5 px-4 text-right pr-5 whitespace-nowrap">
-                <div class="flex items-center justify-end space-x-1.5">
-                  <button type="button" onclick="openTaskActionModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg text-xs font-semibold border border-slate-200 transition-colors" title="ดูรายละเอียด">
-                    ดูงาน
-                  </button>
-                  <button type="button" onclick="openUpdateProgressModal('${task.id}')" class="px-2.5 py-1 text-blue-700 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-blue-200 transition-colors" title="อัปเดตงาน">
+              <td class="py-3 px-3 text-right pr-4 whitespace-nowrap">
+                <div class="flex items-center justify-end space-x-1">
+                  <button type="button" onclick="openUpdateProgressModal('${task.id}')" class="px-2 py-1 text-blue-700 hover:bg-blue-50 rounded-md text-xs font-semibold border border-blue-200 transition-colors" title="อัปเดตงาน">
                     อัปเดต
                   </button>
-                  <button type="button" onclick="openExtendModal('${task.id}')" class="px-2.5 py-1 text-amber-800 hover:bg-amber-50 rounded-lg text-xs font-semibold border border-amber-200 transition-colors" title="ขยายเวลา">
+                  <button type="button" onclick="openExtendModal('${task.id}')" class="px-2 py-1 text-amber-800 hover:bg-amber-50 rounded-md text-xs font-semibold border border-amber-200 transition-colors" title="ขยายเวลา">
                     ขยาย
                   </button>
-                  <button type="button" onclick="openEditTaskModal('${task.id}')" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="แก้ไข">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  <button type="button" onclick="openEditTaskModal('${task.id}')" class="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors" title="แก้ไข">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   </button>
-                  <button type="button" onclick="shareExistingTask('${task.id}')" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="แชร์เข้า LINE">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                  <button type="button" onclick="shareExistingTask('${task.id}')" class="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors" title="แชร์เข้า LINE">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                   </button>
                 </div>
               </td>
@@ -3420,9 +3410,7 @@
     // SUPERVISOR ASSIGN MODAL
     // =========================================================================
     function openAssignModal() {
-      selectedAssignStatus = "กำลังทำ";
-      document.getElementById("assignStatusText").innerText = selectedAssignStatus;
-      document.getElementById("assignStatusMenu").classList.add("hidden");
+      selectAssignStatus("กำลังทำ");
 
       assignRows = [
         {
@@ -3444,22 +3432,24 @@
       setModalScrollLock(false);
     }
 
-    function toggleCustomDropdown(menuId) {
-      const menu = document.getElementById(menuId);
-      if (menu) menu.classList.toggle("hidden");
-    }
-
     function selectAssignStatus(st) {
       selectedAssignStatus = st;
-      document.getElementById("assignStatusText").innerText = st;
-      ["กำลังทำ", "รอดำเนินการ", "ด่วน", "ด่วนที่สุด"].forEach(item => {
-        const check = document.getElementById(`check-${item}`);
-        if (check) {
-          if (item === st) check.classList.remove("hidden");
-          else check.classList.add("hidden");
+      const statuses = [
+        { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200" },
+        { key: "รอดำเนินการ", activeClass: "bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-200" },
+        { key: "ด่วน", activeClass: "bg-orange-600 text-white border-orange-600 shadow-xs ring-2 ring-orange-200" },
+        { key: "ด่วนที่สุด", activeClass: "bg-rose-600 text-white border-rose-600 shadow-xs ring-2 ring-rose-200" }
+      ];
+      statuses.forEach(s => {
+        const btn = document.getElementById(`assignStatusPill-${s.key}`);
+        if (btn) {
+          if (s.key === st) {
+            btn.className = `assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-bold text-center transition-all ${s.activeClass}`;
+          } else {
+            btn.className = "assign-status-pill py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200";
+          }
         }
       });
-      document.getElementById("assignStatusMenu").classList.add("hidden");
     }
 
     function addAssignRow() {
@@ -4056,6 +4046,27 @@
     // =========================================================================
     // EDIT TASK MODAL
     // =========================================================================
+    function setEditModalStatus(st) {
+      const hiddenInput = document.getElementById("editStatusSelect");
+      if (hiddenInput) hiddenInput.value = st;
+      const statuses = [
+        { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200" },
+        { key: "รอดำเนินการ", activeClass: "bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-200" },
+        { key: "รออะไหล่", activeClass: "bg-purple-600 text-white border-purple-600 shadow-xs ring-2 ring-purple-200" },
+        { key: "เสร็จสิ้น", activeClass: "bg-emerald-600 text-white border-emerald-600 shadow-xs ring-2 ring-emerald-200" }
+      ];
+      statuses.forEach(s => {
+        const btn = document.getElementById(`editStatusPill-${s.key}`);
+        if (btn) {
+          if (s.key === st) {
+            btn.className = `edit-status-pill py-2 px-2 rounded-lg border text-xs font-semibold text-center transition-all ${s.activeClass}`;
+          } else {
+            btn.className = "edit-status-pill py-2 px-2 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200";
+          }
+        }
+      });
+    }
+
     function openEditTaskModal(taskId) {
       currentEditingTaskId = taskId;
       const task = tasksList.find(t => t.id === taskId);
@@ -4067,7 +4078,7 @@
       editingTechs = [...getTaskTechs(task)];
       renderEditTechChips();
 
-      document.getElementById("editStatusSelect").value = task.status || "กำลังทำ";
+      setEditModalStatus(task.status || "กำลังทำ");
 
       editingStartDate = task.startDate;
       editingDeadlineDate = task.deadline;
