@@ -111,7 +111,40 @@ export function getSevenDaysLaterYMD() {
   return `${y}-${m}-${day}`;
 }
 
-export function formatDisplayTime(timeStr) {
-  if (!timeStr || timeStr === "-") return "-";
-  return timeStr.slice(0, 5);
+export function formatGasTime(val) {
+  if (!val || val === "-") return "-";
+  const s = String(val).trim();
+  if (s.includes("T")) {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const h = String((d.getUTCHours() + 7) % 24).padStart(2, "0");
+      const m = String(d.getUTCMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    }
+  }
+  const match = s.match(/(\d{1,2}):(\d{2})/);
+  if (match) {
+    return `${match[1].padStart(2, "0")}:${match[2]}`;
+  }
+  return s.length > 5 ? s.slice(0, 5) : s;
 }
+
+export function formatGasDate(val) {
+  if (!val || val === "-") return "-";
+  const s = String(val);
+  if (s.includes("GMT") || s.includes("T")) {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+  }
+  return s;
+}
+
+export function formatDisplayTime(timeStr) {
+  return formatGasTime(timeStr);
+}
+

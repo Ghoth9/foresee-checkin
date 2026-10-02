@@ -20,11 +20,9 @@
     <div class="max-w-[1600px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
       
       <!-- Brand & Logo -->
-      <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="switchTab('checkin')">
-        <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 shadow-xs flex-shrink-0">
-          <img src="/foresee-logo.png" alt="Foresee Logo" class="w-full h-full object-contain">
-        </div>
-        <div>
+      <div class="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer select-none" onclick="switchTab('checkin')">
+        <img src="/foresee-logo.png" alt="Foresee Technology" class="h-9 md:h-10 w-auto object-contain select-none flex-shrink-0">
+        <div class="flex flex-col sm:border-l sm:border-slate-200 sm:pl-3 min-w-0">
           <div class="flex items-center space-x-1.5">
             <span class="font-extrabold text-sm md:text-base tracking-tight text-slate-900">FORESEE</span>
             <span class="text-[10px] bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded border border-slate-200">FIELD 2.0</span>
@@ -40,8 +38,8 @@
           <span>เช็กอินหน้างาน</span>
         </button>
         <button id="deskTabBtnCheckout" type="button" onclick="switchTab('checkout')" class="px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center space-x-1.5">
-          <span>🏁</span>
-          <span>บันทึกปิดงาน</span>
+          <span>📊</span>
+          <span>อัปเดต & ปิดงาน</span>
         </button>
         <button id="deskTabBtnTasks" type="button" onclick="switchTab('tasks')" class="px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center space-x-1.5">
           <span>📋</span>
@@ -75,7 +73,7 @@
         <span>📍 เช็กอิน</span>
       </button>
       <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
-        <span>🏁 ปิดงาน</span>
+        <span>📊 อัปเดต & ปิดงาน</span>
       </button>
       <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
         <span>📋 มอบงาน</span>
@@ -207,7 +205,8 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- TAB 2: ปิดงาน (CCTV TECHNICIAN FIELD CHECK-OUT - FEATURE 4) -->
+    <!-- ========================================================================= -->
+    <!-- TAB 2: อัปเดตงาน & ปิดงาน (FIELD PROGRESS UPDATE & CHECK-OUT) -->
     <!-- ========================================================================= -->
     <section id="checkoutSection" class="hidden space-y-4">
       <div class="max-w-2xl mx-auto space-y-4">
@@ -215,12 +214,12 @@
         <div class="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm space-y-4 md:space-y-5">
           <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
             <div>
-              <h2 class="text-base md:text-lg font-bold text-slate-900">ปิดงานหน้างานและบันทึกเวลาจบ</h2>
-              <p class="text-xs text-slate-500 mt-0.5">เลือกงานที่กำลังทำอยู่และสรุปผลการปฏิบัติงาน</p>
+              <h2 class="text-base md:text-lg font-bold text-slate-900">อัปเดตงาน & ปิดงานหน้างาน</h2>
+              <p class="text-xs text-slate-500 mt-0.5">เลือกงานที่กำลังทำอยู่ เพื่อรายงานความคืบหน้าระหว่างวัน หรือบันทึกปิดงานเมื่อเสร็จสิ้น</p>
             </div>
           </div>
 
-          <!-- Active tasks list -->
+          <!-- 1. Active tasks list -->
           <div class="space-y-2">
             <label class="block text-xs font-semibold text-slate-800">1. เลือกงานหน้างานที่กำลังทำอยู่ <span class="text-rose-500">*</span></label>
             <div id="activeListContainer" class="space-y-2 max-h-60 overflow-y-auto pr-0.5">
@@ -228,54 +227,106 @@
             </div>
           </div>
 
-          <!-- Outcome and completion section -->
+          <!-- 2. Dual Action Section (Appears after choosing a task) -->
           <div id="checkoutOutcomeSection" class="hidden space-y-4 pt-3 border-t border-slate-100">
-            <div>
-              <label class="block text-xs font-semibold text-slate-800 mb-1.5">2. สรุปผลการปฏิบัติงาน <span class="text-rose-500">*</span></label>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                <button type="button" id="outcomeBtn-ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด" onclick="setCheckoutOutcome('ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด')" class="py-2 px-2.5 rounded-lg border text-xs font-bold text-left transition-all bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs">
-                  ✅ ติดตั้งเสร็จเรียบร้อย ภาพชัดเจน
-                </button>
-                <button type="button" id="outcomeBtn-แก้ไขปัญหาสำเร็จ ส่งมอบงานแล้ว" onclick="setCheckoutOutcome('แก้ไขปัญหาสำเร็จ ส่งมอบงานแล้ว')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
-                  🔧 ซ่อมแซม/แก้ไขสำเร็จ
-                </button>
-                <button type="button" id="outcomeBtn-เข้าตรวจสอบแล้ว รออะไหล่/อุปกรณ์เพิ่มเติม" onclick="setCheckoutOutcome('เข้าตรวจสอบแล้ว รออะไหล่/อุปกรณ์เพิ่มเติม')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
-                  ⏳ เข้าตรวจแล้ว รออะไหล่เพิ่ม
-                </button>
-                <button type="button" id="outcomeBtn-อื่นๆ" onclick="setCheckoutOutcome('อื่นๆ')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
-                  ✏️ อื่นๆ (ระบุในหมายเหตุ)
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">3. หมายเหตุ / รายละเอียดการส่งมอบ</label>
-              <input type="text" id="checkoutNoteInput" placeholder="เช่น ส่งมอบ User/Password ให้ลูกค้าเรียบร้อยแล้ว..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none">
-            </div>
-
-            <!-- Completion Photos Attachment (Up to 5) -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <label class="text-xs font-semibold text-slate-700">📸 แนบรูปส่งมอบงาน / ผลงานเสร็จสิ้น (สูงสุด 5 รูป)</label>
-                <span id="checkoutPhotoCountBadge" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">0/5 รูป</span>
-              </div>
-              <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
-                <label class="w-16 h-16 rounded-lg border-2 border-dashed border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/50 flex flex-col items-center justify-center cursor-pointer transition-colors flex-shrink-0">
-                  <span class="text-xl">📷</span>
-                  <span class="text-[9px] font-bold text-slate-600 mt-0.5">เพิ่มรูป</span>
-                  <input type="file" accept="image/*" multiple onchange="window.handleCheckoutPhotoUpload(event)" class="hidden">
-                </label>
-                <div id="checkoutPhotoPreviewsContainer" class="flex items-center space-x-2">
-                  <!-- Injected dynamically -->
-                </div>
-              </div>
-            </div>
-
-            <div class="pt-2">
-              <button type="button" onclick="submitCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center space-x-2">
-                <span>🏁 บันทึกปิดงาน & แชร์สรุปเข้ากลุ่ม LINE</span>
+            
+            <!-- Segmented Mode Switcher: Update Progress vs Final Close -->
+            <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1">
+              <button type="button" id="actionTabBtnUpdate" onclick="window.setActionTab('update')" class="flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5">
+                <span>📊 อัปเดตความคืบหน้า (งานยังไม่เสร็จ)</span>
+              </button>
+              <button type="button" id="actionTabBtnClose" onclick="window.setActionTab('close')" class="flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5">
+                <span>🏁 บันทึกปิดงาน (งานเสร็จ 100%)</span>
               </button>
             </div>
+
+            <!-- PANEL 1: UPDATE PROGRESS (MODE 1: งานยังไม่เสร็จ) -->
+            <div id="actionPanelUpdate" class="space-y-3.5 pt-1">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="text-xs font-semibold text-slate-700">ระดับความคืบหน้าปัจจุบัน</label>
+                  <span id="checkoutUpdateProgressNum" class="font-bold font-mono text-blue-600 text-sm">50%</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mb-2">
+                  <div id="checkoutUpdateProgressBarFill" class="h-2 bg-blue-600 rounded-full transition-all" style="width: 50%"></div>
+                </div>
+                <div class="grid grid-cols-4 gap-1.5">
+                  <button type="button" id="checkoutQuickProg-25" onclick="window.setCheckoutUpdatePercent(25)" class="py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">25%</button>
+                  <button type="button" id="checkoutQuickProg-50" onclick="window.setCheckoutUpdatePercent(50)" class="py-1.5 px-2 rounded-lg text-xs font-bold border text-center transition-all bg-blue-600 text-white border-blue-600">50%</button>
+                  <button type="button" id="checkoutQuickProg-75" onclick="window.setCheckoutUpdatePercent(75)" class="py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">75%</button>
+                  <button type="button" id="checkoutQuickProg-90" onclick="window.setCheckoutUpdatePercent(90)" class="py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">90%</button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">สถานะงาน</label>
+                <div class="grid grid-cols-3 gap-1.5">
+                  <button type="button" id="checkoutStatusChoice-กำลังทำ" onclick="window.setCheckoutUpdateStatus('กำลังทำ')" class="py-2 px-2 rounded-lg border text-center text-xs font-bold transition-all bg-blue-600 text-white border-blue-600 shadow-xs">กำลังทำ</button>
+                  <button type="button" id="checkoutStatusChoice-รออะไหล่" onclick="window.setCheckoutUpdateStatus('รออะไหล่')" class="py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 text-slate-600 border-slate-200">รออะไหล่</button>
+                  <button type="button" id="checkoutStatusChoice-รอดำเนินการ" onclick="window.setCheckoutUpdateStatus('รอดำเนินการ')" class="py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 text-slate-600 border-slate-200">รอดำเนินการ</button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดความคืบหน้าระหว่างวัน</label>
+                <input type="text" id="checkoutUpdateNoteInput" placeholder="เช่น เดินท่อร้อยสายชั้น 2 เสร็จแล้ว กำลังขึ้นตู้ Rack..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none">
+              </div>
+
+              <!-- Progress Photos Attachment (Up to 5) -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-semibold text-slate-700">📸 แนบรูปความคืบหน้า (สูงสุด 5 รูป)</label>
+                  <span id="checkoutPhotoCountBadge" class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">0/5 รูป</span>
+                </div>
+                <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
+                  <label class="w-16 h-16 rounded-lg border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/50 flex flex-col items-center justify-center cursor-pointer transition-colors flex-shrink-0">
+                    <span class="text-xl">📷</span>
+                    <span class="text-[9px] font-bold text-slate-600 mt-0.5">เพิ่มรูป</span>
+                    <input type="file" accept="image/*" multiple onchange="window.handleCheckoutPhotoUpload(event)" class="hidden">
+                  </label>
+                  <div id="checkoutPhotoPreviewsContainer" class="flex items-center space-x-2"></div>
+                </div>
+              </div>
+
+              <div class="pt-2">
+                <button type="button" onclick="window.submitOngoingUpdate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all flex items-center justify-center space-x-2">
+                  <span>📊 อัปเดตความคืบหน้า & ส่งรายงานเข้ากลุ่ม LINE</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- PANEL 2: FINAL CLOSE (MODE 2: งานเสร็จ 100%) -->
+            <div id="actionPanelClose" class="hidden space-y-3.5 pt-1">
+              <div>
+                <label class="block text-xs font-semibold text-slate-800 mb-1.5">สรุปผลการปฏิบัติงาน <span class="text-rose-500">*</span></label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  <button type="button" id="outcomeBtn-ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด" onclick="setCheckoutOutcome('ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด')" class="py-2 px-2.5 rounded-lg border text-xs font-bold text-left transition-all bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs">
+                    ✅ ติดตั้งเสร็จเรียบร้อย ภาพชัดเจน
+                  </button>
+                  <button type="button" id="outcomeBtn-แก้ไขปัญหาสำเร็จ ส่งมอบงานแล้ว" onclick="setCheckoutOutcome('แก้ไขปัญหาสำเร็จ ส่งมอบงานแล้ว')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+                    🔧 ซ่อมแซม/แก้ไขสำเร็จ
+                  </button>
+                  <button type="button" id="outcomeBtn-เข้าตรวจสอบแล้ว รออะไหล่/อุปกรณ์เพิ่มเติม" onclick="setCheckoutOutcome('เข้าตรวจสอบแล้ว รออะไหล่/อุปกรณ์เพิ่มเติม')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+                    ⏳ เข้าตรวจแล้ว รออะไหล่เพิ่ม
+                  </button>
+                  <button type="button" id="outcomeBtn-อื่นๆ" onclick="setCheckoutOutcome('อื่นๆ')" class="py-2 px-2.5 rounded-lg border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">
+                    ✏️ อื่นๆ (ระบุในหมายเหตุ)
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">หมายเหตุ / รายละเอียดการส่งมอบ</label>
+                <input type="text" id="checkoutNoteInput" placeholder="เช่น ส่งมอบ User/Password ให้ลูกค้าเรียบร้อยแล้ว..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none">
+              </div>
+
+              <div class="pt-2">
+                <button type="button" onclick="submitCheckout()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center space-x-2">
+                  <span>🏁 บันทึกปิดงาน & แชร์สรุปเข้ากลุ่ม LINE</span>
+                </button>
+              </div>
+            </div>
+
           </div>
 
         </div>

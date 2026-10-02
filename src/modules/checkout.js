@@ -1,13 +1,19 @@
 /**
- * Field Check-out Module (บันทึกปิดงาน)
+ * Field Update & Close Module (อัปเดตงาน & ปิดงานหน้างาน)
+ * Handles both:
+ * 1. Progress updates when work is ongoing (% progress, status, photos, LINE share)
+ * 2. Final completion check-out when work is 100% finished
  */
 
 import { compressMultipleFiles } from '../utils/compressor.js';
-import { createCheckoutFlexCard, triggerLiffShare } from '../liff/line.js';
-import { saveCheckoutApi } from '../api/gas.js';
+import { createCheckoutFlexCard, createProgressFlexCard, triggerLiffShare } from '../liff/line.js';
+import { saveCheckoutApi, updateTaskProgressApi } from '../api/gas.js';
+import { formatGasTime } from '../utils/date.js';
 
 let checkoutPhotos = [];
-let currentCheckoutItem = null;
+let currentActionTab = "update"; // "update" or "close"
+let updatePercent = 50;
+let updateStatus = "กำลังทำ";
 
 export function getCheckoutPhotos() {
   return checkoutPhotos;
@@ -16,6 +22,66 @@ export function getCheckoutPhotos() {
 export function clearCheckoutPhotos() {
   checkoutPhotos = [];
   renderCheckoutPhotoPreviews();
+}
+
+export function setActionTab(tab) {
+  currentActionTab = tab;
+  const updatePanel = document.getElementById("actionPanelUpdate");
+  const closePanel = document.getElementById("actionPanelClose");
+  const tabBtnUpdate = document.getElementById("actionTabBtnUpdate");
+  const tabBtnClose = document.getElementById("actionTabBtnClose");
+
+  if (tab === "update") {
+    if (updatePanel) updatePanel.classList.remove("hidden");
+    if (closePanel) closePanel.classList.add("hidden");
+    if (tabBtnUpdate) tabBtnUpdate.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5";
+    if (tabBtnClose) tabBtnClose.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5";
+  } else {
+    if (closePanel) closePanel.classList.remove("hidden");
+    if (updatePanel) updatePanel.classList.add("hidden");
+    if (tabBtnClose) tabBtnClose.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all bg-white text-emerald-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5";
+    if (tabBtnUpdate) tabBtnUpdate.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5";
+  }
+}
+
+export function setUpdatePercent(val) {
+  updatePercent = Math.min(100, Math.max(0, parseInt(val, 10) || 0));
+  const numElem = document.getElementById("checkoutUpdateProgressNum");
+  if (numElem) numElem.innerText = `${updatePercent}%`;
+
+  const barElem = document.getElementById("checkoutUpdateProgressBarFill");
+  if (barElem) barElem.style.width = `${updatePercent}%`;
+
+  [25, 50, 75, 90].forEach(p => {
+    const btn = document.getElementById(`checkoutQuickProg-${p}`);
+    if (btn) {
+      if (p === updatePercent) {
+        btn.className = "py-1.5 px-2 rounded-lg text-xs font-bold border transition-all bg-blue-600 text-white border-blue-600 shadow-xs";
+      } else {
+        btn.className = "py-1.5 px-2 rounded-lg text-xs font-medium border transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
+      }
+    }
+  });
+}
+
+export function setUpdateStatus(st) {
+  updateStatus = st;
+  const statuses = [
+    { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 shadow-xs" },
+    { key: "รออะไหล่", activeClass: "bg-purple-600 text-white border-purple-600 shadow-xs" },
+    { key: "รอดำเนินการ", activeClass: "bg-amber-600 text-white border-amber-600 shadow-xs" }
+  ];
+
+  statuses.forEach(s => {
+    const btn = document.getElementById(`checkoutStatusChoice-${s.key}`);
+    if (btn) {
+      if (s.key === st) {
+        btn.className = `py-2 px-2 rounded-lg border text-center text-xs font-bold transition-all ${s.activeClass}`;
+      } else {
+        btn.className = "py-2 px-2 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200";
+      }
+    }
+  });
 }
 
 export async function handleCheckoutPhotoUpload(event) {
@@ -47,6 +113,11 @@ export function renderCheckoutPhotoPreviews() {
 
   if (countBadge) {
     countBadge.innerText = `${checkoutPhotos.length}/5 รูป`;
+    if (checkoutPhotos.length > 0) {
+      countBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700";
+    } else {
+      countBadge.className = "text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500";
+    }
   }
 
   container.innerHTML = "";
@@ -67,13 +138,17 @@ export function renderCheckoutPhotoPreviews() {
 }
 
 export function calculateDuration(checkinTimeStr) {
-  if (!checkinTimeStr || checkinTimeStr === "-") return "-";
+  if (!checkinTimeStr || checkinTimeStr === "-") return "ตามเวลาปฏิบัติงาน";
   try {
-    const now = new Date();
-    const parts = checkinTimeStr.split(":");
+    const cleanTime = formatGasTime(checkinTimeStr);
+    const parts = cleanTime.split(":");
+    if (parts.length < 2) return "ตามเวลาปฏิบัติงาน";
+
     const inHours = parseInt(parts[0], 10);
     const inMins = parseInt(parts[1], 10);
+    if (isNaN(inHours) || isNaN(inMins)) return "ตามเวลาปฏิบัติงาน";
 
+    const now = new Date();
     const inDate = new Date();
     inDate.setHours(inHours, inMins, 0, 0);
 
@@ -88,10 +163,69 @@ export function calculateDuration(checkinTimeStr) {
     }
     return `${diffMinutes} นาที`;
   } catch (e) {
-    return "-";
+    return "ตามเวลาปฏิบัติงาน";
   }
 }
 
+// -------------------------------------------------------------
+// SUBMIT: PROGRESS UPDATE (MODE 1: งานยังไม่เสร็จ)
+// -------------------------------------------------------------
+export async function submitProgressOnly({
+  activeItem,
+  noteText,
+  closerName,
+  onComplete
+}) {
+  if (!activeItem) {
+    alert("กรุณาเลือกงานที่ต้องการอัปเดต");
+    return;
+  }
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+  const dateStr = now.toLocaleDateString("th-TH");
+  const updateEntry = `[คืบหน้า ${updatePercent}%: ${updateStatus}] ${noteText.trim() || 'อัปเดตงานตามขั้นตอน'} (โดย ${closerName || 'ช่างหน้างาน'} เมื่อ ${dateStr} ${timeStr})`;
+
+  // 1. Send Progress Flex Card
+  const flexCard = createProgressFlexCard({
+    taskId: activeItem.taskId || activeItem.id,
+    taskTitle: activeItem.task,
+    techs: activeItem.techs,
+    progress: updatePercent,
+    status: updateStatus,
+    note: noteText.trim() || "อัปเดตความคืบหน้าระหว่างปฏิบัติงาน",
+    updateBy: closerName || "ช่างหน้างาน",
+    updateTime: timeStr
+  });
+
+  // 2. Sync to GAS
+  updateTaskProgressApi({
+    taskId: activeItem.taskId || activeItem.id,
+    taskTitle: activeItem.task,
+    progress: updatePercent,
+    status: updateStatus,
+    note: noteText.trim() || "-",
+    updateBy: closerName || "ช่างหน้างาน",
+    updateEntry: updateEntry,
+    photos: checkoutPhotos.map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }))
+  });
+
+  // 3. Share to LINE
+  await triggerLiffShare(flexCard, "อัปเดตความคืบหน้างานและส่งเข้า LINE สำเร็จ!");
+
+  clearCheckoutPhotos();
+  if (onComplete) onComplete({
+    id: activeItem.id,
+    task: activeItem.task,
+    status: updateStatus,
+    progress: updatePercent,
+    latestUpdate: updateEntry
+  });
+}
+
+// -------------------------------------------------------------
+// SUBMIT: FINAL COMPLETION (MODE 2: งานเสร็จสิ้น 100%)
+// -------------------------------------------------------------
 export async function submitCheckoutForm({
   activeItem,
   selectedOutcome,
@@ -117,7 +251,7 @@ export async function submitCheckoutForm({
     taskId: activeItem.taskId || null,
     task: activeItem.task,
     techs: activeItem.techs,
-    inTime: activeItem.time,
+    inTime: formatGasTime(activeItem.time),
     outTime: outTimeStr,
     duration: durationStr,
     outcome: selectedOutcome,
@@ -132,7 +266,7 @@ export async function submitCheckoutForm({
     id: activeItem.id,
     task: activeItem.task,
     techs: activeItem.techs,
-    inTime: activeItem.time,
+    inTime: formatGasTime(activeItem.time),
     outTime: outTimeStr,
     duration: durationStr,
     outcome: selectedOutcome,

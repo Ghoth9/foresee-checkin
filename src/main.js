@@ -18,6 +18,10 @@ import {
   handleCheckoutPhotoUpload,
   removeCheckoutPhoto,
   submitCheckoutForm,
+  submitProgressOnly,
+  setActionTab,
+  setUpdatePercent,
+  setUpdateStatus,
   calculateDuration
 } from './modules/checkout.js';
 import {
@@ -49,7 +53,7 @@ import {
   setProgressStatus,
   submitProgressUpdate
 } from './modules/progress.js';
-import { formatDisplayTime } from './utils/date.js';
+import { formatDisplayTime, formatGasTime, formatGasDate } from './utils/date.js';
 
 // -------------------------------------------------------------
 // GLOBAL STATE
@@ -213,7 +217,7 @@ export function renderActiveCheckoutList() {
       }">
         <div class="flex items-center justify-between mb-1">
           <span class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700">${item.id}</span>
-          <span class="text-[11px] text-emerald-700 font-semibold font-mono">⏰ เข้างาน: ${item.time} น.</span>
+          <span class="text-[11px] text-emerald-700 font-semibold font-mono">⏰ เข้างาน: ${formatGasTime(item.time)} น.</span>
         </div>
         <div class="font-bold text-slate-900">${item.task}</div>
         <div class="text-slate-500 mt-1 flex items-center justify-between">
@@ -334,10 +338,11 @@ async function bootstrapApp() {
     if (gasData.activeCheckins && Array.isArray(gasData.activeCheckins)) {
       activeTasks = gasData.activeCheckins.map(a => ({
         id: a.id,
+        taskId: a.taskId || null,
         task: a.task,
         techs: [a.tech],
-        time: a.time ? a.time.slice(0, 5) : "09:00",
-        date: a.date
+        time: formatGasTime(a.time) || "09:00",
+        date: formatGasDate(a.date)
       }));
       localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
     }
@@ -420,6 +425,36 @@ window.submitCheckin = () => {
       renderTodayLogs();
       renderActiveCheckoutList();
       alert("เช็กอินเรียบร้อยและบันทึกเวลาแล้ว!");
+    }
+  });
+};
+
+window.setActionTab = setActionTab;
+window.setCheckoutUpdatePercent = setUpdatePercent;
+window.setCheckoutUpdateStatus = setUpdateStatus;
+window.submitOngoingUpdate = () => {
+  const activeItem = activeTasks.find(a => a.id === selectedActiveCheckoutId);
+  const noteInput = document.getElementById("checkoutUpdateNoteInput");
+
+  submitProgressOnly({
+    activeItem: activeItem,
+    noteText: noteInput ? noteInput.value : "",
+    closerName: getLineUserName() || "ช่างหน้างาน",
+    onComplete: (updatedInfo) => {
+      const act = activeTasks.find(a => a.id === updatedInfo.id);
+      if (act) {
+        act.status = updatedInfo.status;
+      }
+      const log = dailyLogs.find(l => l.id === updatedInfo.id);
+      if (log) {
+        log.status = updatedInfo.status;
+        log.latestUpdate = updatedInfo.latestUpdate;
+      }
+      localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+      localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
+      renderTodayLogs();
+      renderActiveCheckoutList();
+      alert("อัปเดตความคืบหน้างานเข้า LINE เรียบร้อยแล้ว!");
     }
   });
 };
