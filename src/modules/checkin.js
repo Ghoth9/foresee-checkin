@@ -10,7 +10,7 @@
 import { getCurrentCoords, getMapUrl } from '../utils/gps.js';
 import { compressMultipleFiles } from '../utils/compressor.js';
 import { createCheckinFlexCard, triggerLiffShare } from '../liff/line.js';
-import { saveCheckinApi } from '../api/gas.js';
+import { saveCheckinApi } from '../api/supabase.js';
 import { formatThaiDateDisplay } from '../utils/date.js';
 import { showAppAlert } from '../utils/dialog.js';
 

@@ -6,7 +6,7 @@
 import './style.css';
 import { initLiff, isLineLoggedIn, getLineUserName, loginLine, logoutLine } from './liff/line.js';
 import { requestLocation, getCurrentCoords } from './utils/gps.js';
-import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheckinApi, deleteTaskApi, postToGas } from './api/gas.js';
+import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheckinApi, deleteTaskApi, clearAllCheckinsApi, subscribeToRealtimeChanges } from './api/supabase.js';
 import {
   renderAssignedTasksBanner,
   selectAssignedTask,
@@ -451,7 +451,7 @@ export function clearAllActiveCheckins() {
       renderActiveCheckoutList();
       renderTodayLogs();
 
-      postToGas("clearAllCheckins");
+      clearAllCheckinsApi();
 
       showAppAlert({
         type: "success",
@@ -731,6 +731,40 @@ async function bootstrapApp() {
   }
 
   renderTodayLogs();
+
+  // 6. Supabase Realtime Live Synchronization across all devices!
+  subscribeToRealtimeChanges({
+    onTasksChange: async () => {
+      const fresh = await fetchInitialData();
+      if (fresh && fresh.tasks) {
+        tasksList = fresh.tasks;
+        localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+        renderTasksList(tasksList);
+      }
+    },
+    onCheckinsChange: async () => {
+      const fresh = await fetchInitialData();
+      if (fresh) {
+        activeTasks = fresh.activeCheckins || [];
+        dailyLogs = [...(fresh.activeCheckins || []), ...(fresh.closedCheckins || [])];
+        localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+        localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
+        renderActiveCheckoutList();
+        renderTodayLogs();
+      }
+    },
+    onTechsChange: async () => {
+      const fresh = await fetchInitialData();
+      if (fresh && fresh.technicians) {
+        allTechnicians = fresh.technicians;
+        localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
+        renderManageTechList();
+        renderCheckinTechChips();
+        renderTechFilterChips(tasksList, allTechnicians);
+        renderAssignTechChips(allTechnicians);
+      }
+    }
+  });
 }
 
 function updateLineStatusUI() {

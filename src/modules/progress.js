@@ -3,7 +3,7 @@
  */
 
 import { createProgressFlexCard, triggerLiffShare } from '../liff/line.js';
-import { updateTaskProgressApi } from '../api/gas.js';
+import { updateTaskProgressApi } from '../api/supabase.js';
 
 let currentProgressTaskId = null;
 let currentProgressPercent = 50;

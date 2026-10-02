@@ -7,7 +7,7 @@
 
 import { compressMultipleFiles } from '../utils/compressor.js';
 import { createCheckoutFlexCard, createProgressFlexCard, triggerLiffShare } from '../liff/line.js';
-import { saveCheckoutApi, updateTaskProgressApi } from '../api/gas.js';
+import { saveCheckoutApi, updateTaskProgressApi } from '../api/supabase.js';
 import { formatGasTime } from '../utils/date.js';
 import { showAppAlert } from '../utils/dialog.js';
 

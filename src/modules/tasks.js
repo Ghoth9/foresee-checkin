@@ -3,7 +3,7 @@
  */
 
 import { formatThaiDateDisplay, getDeadlineCountdownBadge, isTaskOverdue, getTodayYMD, getSevenDaysLaterYMD } from '../utils/date.js';
-import { saveTaskApi, extendTaskDeadlineApi, deleteTaskApi } from '../api/gas.js';
+import { saveTaskApi, extendTaskDeadlineApi, deleteTaskApi } from '../api/supabase.js';
 import { createExtendDeadlineFlexCard, createAssignTaskFlexCard, triggerLiffShare } from '../liff/line.js';
 import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
 import { openCustomCalendar } from '../utils/calendar.js';
