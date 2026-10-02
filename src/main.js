@@ -51,7 +51,10 @@ import {
   deleteCurrentDetailTask,
   openExtendModal,
   closeExtendModal,
-  submitExtendDeadline
+  submitExtendDeadline,
+  pickAssignDate,
+  pickDetailDate,
+  pickExtendModalDate
 } from './modules/tasks.js';
 import {
   openProgressModal,
@@ -61,6 +64,14 @@ import {
   submitProgressUpdate
 } from './modules/progress.js';
 import { formatDisplayTime, formatGasTime, formatGasDate } from './utils/date.js';
+import { showAppAlert, showAppConfirm } from './utils/dialog.js';
+import {
+  openCustomCalendar,
+  closeCustomCalendar,
+  prevCalendarMonth,
+  nextCalendarMonth,
+  selectTodayOnCalendar
+} from './utils/calendar.js';
 
 // -------------------------------------------------------------
 // GLOBAL STATE
@@ -221,7 +232,11 @@ export async function confirmAddTech() {
   const name = input ? input.value.trim() : "";
   if (!name) return;
   if (allTechnicians.includes(name)) {
-    alert(`มีชื่อ "${name}" อยู่ในระบบแล้ว`);
+    showAppAlert({
+      type: "warning",
+      title: "มีชื่อนี้แล้ว",
+      message: `มีชื่อ "${name}" อยู่ในระบบแล้ว`
+    });
     return;
   }
   allTechnicians.push(name);
@@ -237,29 +252,53 @@ export async function confirmAddTech() {
 
   // Sync to Google Sheet Users tab
   addNewTechnicianApi(name);
+
+  showAppAlert({
+    type: "success",
+    title: "เพิ่มช่างสำเร็จ",
+    message: `เพิ่ม "${name}" เข้าสู่ระบบทีมช่างเรียบร้อยแล้ว`
+  });
 }
 
 export async function deleteTech(name) {
   if (allTechnicians.length <= 1) {
-    alert("ต้องมีรายชื่อช่างอย่างน้อย 1 คนในระบบ");
+    showAppAlert({
+      type: "warning",
+      title: "ไม่สามารถลบได้",
+      message: "ต้องมีรายชื่อช่างอย่างน้อย 1 คนในระบบ"
+    });
     return;
   }
-  if (confirm(`คุณต้องการลบ "${name}" ออกจากระบบช่างหรือไม่?`)) {
-    allTechnicians = allTechnicians.filter(t => t !== name);
-    selectedCheckinTechs = selectedCheckinTechs.filter(t => t !== name);
-    try {
-      localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
-    } catch(e) {}
 
-    renderManageTechList();
-    renderCheckinTechChips();
-    renderTechFilterChips(tasksList, allTechnicians);
-    renderAssignTechChips(allTechnicians);
-    renderTasksList(tasksList);
+  showAppConfirm({
+    title: "ยืนยันการลบรายชื่อช่าง",
+    message: `คุณต้องการลบ "${name}" ออกจากระบบทีมช่างหรือไม่?`,
+    confirmText: "ลบช่างคนนี้",
+    cancelText: "ยกเลิก",
+    isDanger: true,
+    onConfirm: () => {
+      allTechnicians = allTechnicians.filter(t => t !== name);
+      selectedCheckinTechs = selectedCheckinTechs.filter(t => t !== name);
+      try {
+        localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
+      } catch(e) {}
 
-    // Sync deletion to Google Sheet
-    deleteTechnicianApi(name);
-  }
+      renderManageTechList();
+      renderCheckinTechChips();
+      renderTechFilterChips(tasksList, allTechnicians);
+      renderAssignTechChips(allTechnicians);
+      renderTasksList(tasksList);
+
+      // Sync deletion to Google Sheet
+      deleteTechnicianApi(name);
+
+      showAppAlert({
+        type: "success",
+        title: "ลบช่างเรียบร้อย",
+        message: `ลบ "${name}" ออกจากระบบแล้ว`
+      });
+    }
+  });
 }
 
 export function selectJobType(type) {
@@ -550,7 +589,11 @@ window.submitCheckin = () => {
       localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
       renderTodayLogs();
       renderActiveCheckoutList();
-      alert("เช็กอินเรียบร้อยและบันทึกเวลาแล้ว!");
+      showAppAlert({
+        type: "success",
+        title: "เช็กอินสำเร็จ!",
+        message: `เช็กอินเข้าหน้างานและบันทึกเวลา ${record.time} น. เรียบร้อยแล้ว`
+      });
     }
   });
 };
@@ -580,7 +623,11 @@ window.submitOngoingUpdate = () => {
       localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
       renderTodayLogs();
       renderActiveCheckoutList();
-      alert("อัปเดตความคืบหน้างานเข้า LINE เรียบร้อยแล้ว!");
+      showAppAlert({
+        type: "success",
+        title: "อัปเดตสำเร็จ!",
+        message: "อัปเดตความคืบหน้างานเข้า LINE เรียบร้อยแล้ว"
+      });
     }
   });
 };
@@ -623,7 +670,11 @@ window.submitCheckout = () => {
       localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
       renderTodayLogs();
       renderActiveCheckoutList();
-      alert("ปิดงานและส่งผลงานเรียบร้อยแล้ว!");
+      showAppAlert({
+        type: "success",
+        title: "ปิดงานสำเร็จ!",
+        message: "ปิดงานและส่งผลงานเข้าห้องแชท LINE เรียบร้อยแล้ว"
+      });
     }
   });
 };
@@ -665,9 +716,18 @@ window.submitAssignModal = () => submitAssignForm({
   onComplete: () => {
     renderTasksList(tasksList);
     renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
-    alert("มอบหมายงานใหม่สำเร็จ!");
   }
 });
+
+// Calendar Pickers
+window.pickAssignDate = pickAssignDate;
+window.pickDetailDate = pickDetailDate;
+window.pickExtendModalDate = pickExtendModalDate;
+window.openCustomCalendar = openCustomCalendar;
+window.closeCustomCalendar = closeCustomCalendar;
+window.prevCalendarMonth = prevCalendarMonth;
+window.nextCalendarMonth = nextCalendarMonth;
+window.selectTodayOnCalendar = selectTodayOnCalendar;
 
 window.openTaskDetailModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
 window.closeTaskDetailModal = closeTaskDetailModal;
@@ -676,11 +736,9 @@ window.setDetailModalPriority = setDetailModalPriority;
 window.updateDetailPhoneLink = updateDetailPhoneLink;
 window.saveTaskDetailChanges = () => saveTaskDetailChanges(tasksList, () => {
   renderTasksList(tasksList);
-  alert("บันทึกการแก้ไขข้อมูลงานเรียบร้อยแล้ว!");
 });
 window.deleteCurrentDetailTask = () => deleteCurrentDetailTask(tasksList, () => {
   renderTasksList(tasksList);
-  alert("ลบงานออกจากระบบเรียบร้อยแล้ว!");
 });
 
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);

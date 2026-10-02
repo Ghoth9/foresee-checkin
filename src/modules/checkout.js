@@ -9,6 +9,7 @@ import { compressMultipleFiles } from '../utils/compressor.js';
 import { createCheckoutFlexCard, createProgressFlexCard, triggerLiffShare } from '../liff/line.js';
 import { saveCheckoutApi, updateTaskProgressApi } from '../api/gas.js';
 import { formatGasTime } from '../utils/date.js';
+import { showAppAlert } from '../utils/dialog.js';
 
 let checkoutPhotos = [];
 let currentActionTab = "update"; // "update" or "close"
@@ -97,7 +98,11 @@ export async function handleCheckoutPhotoUpload(event) {
   const currentCount = checkoutPhotos.length;
   const remainingSlots = 10 - currentCount;
   if (remainingSlots <= 0) {
-    alert("แนบรูปได้สูงสุด 10 รูปแล้ว");
+    showAppAlert({
+      type: "warning",
+      title: "แนบรูปครบแล้ว",
+      message: "แนบรูปได้สูงสุด 10 รูปแล้ว"
+    });
     return;
   }
 
@@ -225,7 +230,11 @@ export async function submitProgressOnly({
   onComplete
 }) {
   if (!activeItem) {
-    alert("กรุณาเลือกงานที่ต้องการอัปเดต");
+    showAppAlert({
+      type: "warning",
+      title: "ยังไม่ได้เลือกงาน",
+      message: "กรุณาเลือกงานที่ต้องการอัปเดต"
+    });
     return;
   }
 
@@ -282,16 +291,28 @@ export async function submitCheckoutForm({
   onComplete
 }) {
   if (!activeItem) {
-    alert("กรุณาเลือกงานที่ต้องการปิด");
+    showAppAlert({
+      type: "warning",
+      title: "ยังไม่ได้เลือกงาน",
+      message: "กรุณาเลือกงานที่ต้องการปิด"
+    });
     return;
   }
   if (!selectedOutcome) {
-    alert("กรุณาเลือกสรุปผลการปฏิบัติงาน");
+    showAppAlert({
+      type: "warning",
+      title: "ยังไม่ได้เลือกผลงาน",
+      message: "กรุณาเลือกสรุปผลการปฏิบัติงาน"
+    });
     return;
   }
 
   if (selectedOutcome === "ติดปัญหา" && (!noteText || !noteText.trim())) {
-    alert("กรณีติดปัญหา กรุณาระบุรายละเอียดปัญหาที่พบ");
+    showAppAlert({
+      type: "warning",
+      title: "จำเป็นต้องระบุปัญหา",
+      message: "กรณีติดปัญหา กรุณาระบุรายละเอียดปัญหาที่พบ"
+    });
     const noteEl = document.getElementById("checkoutNoteInput");
     if (noteEl) noteEl.focus();
     return;
@@ -299,7 +320,11 @@ export async function submitCheckoutForm({
 
   // Client requirement: Minimum 5 photos required to close job
   if (checkoutPhotos.length < 5) {
-    alert(`กรุณาแนบรูปภาพการดำเนินงานเพื่อปิดงานอย่างน้อย 5 รูปภาพ (ปัจจุบันแนบแล้ว ${checkoutPhotos.length}/5 รูป)`);
+    showAppAlert({
+      type: "warning",
+      title: "รูปถ่ายไม่ครบตามกำหนด",
+      message: `กรุณาแนบรูปภาพการดำเนินงานเพื่อปิดงานอย่างน้อย 5 รูปภาพ (ปัจจุบันแนบแล้ว ${checkoutPhotos.length}/5 รูป)`
+    });
     return;
   }
 

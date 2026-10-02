@@ -49,17 +49,27 @@ export function logoutLine() {
   }
 }
 
+import { showAppAlert } from '../utils/dialog.js';
+
 export async function triggerLiffShare(flexCard, successMessage = "แชร์เข้าห้องแชท LINE สำเร็จ!") {
   if (typeof liff === "undefined") {
-    alert("ระบบไม่พบ LINE LIFF SDK");
+    showAppAlert({
+      type: "error",
+      title: "ไม่พบ LINE SDK",
+      message: "ระบบไม่พบ LINE LIFF SDK ในเบราว์เซอร์นี้"
+    });
     return false;
   }
 
   try {
     await liff.ready;
     if (!liff.isLoggedIn()) {
-      alert("กรุณากด 'เข้าสู่ระบบ LINE' เพื่อแชร์การ์ดเข้ากลุ่ม");
-      liff.login({ redirectUri: window.location.href });
+      showAppAlert({
+        type: "warning",
+        title: "กรุณาเข้าสู่ระบบ LINE",
+        message: "กรุณากด 'เข้าสู่ระบบ LINE' เพื่อแชร์การ์ดเข้ากลุ่ม",
+        onOk: () => liff.login({ redirectUri: window.location.href })
+      });
       return false;
     }
 
@@ -73,10 +83,18 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
       // In-app 1-on-1 fallback
       if (liff.isInClient()) {
         await liff.sendMessages([flexCard]);
-        alert(successMessage);
+        showAppAlert({
+          type: "success",
+          title: "ส่งการ์ดสำเร็จ",
+          message: successMessage
+        });
         return true;
       } else {
-        alert("เบราว์เซอร์นี้ไม่รองรับการเปิด Share Target Picker ของ LINE");
+        showAppAlert({
+          type: "info",
+          title: "แจ้งเตือน",
+          message: "เบราว์เซอร์นี้ไม่รองรับการเปิด Share Target Picker ของ LINE โดยตรง"
+        });
         return false;
       }
     }
@@ -465,6 +483,116 @@ export function createExtendDeadlineFlexCard({ taskId, taskTitle, oldDeadline, n
               { type: "text", text: "เหตุผลความจำเป็น:", size: "xs", color: "#64748B", weight: "bold" },
               { type: "text", text: `"${reason}"`, size: "xs", color: "#0F172A", wrap: true, margin: "xs" }
             ]
+          }
+        ]
+      }
+    }
+  };
+}
+
+export function createAssignTaskFlexCard({ id, title, category, priority, customer, techs, startDate, deadline, desc }) {
+  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
+  const isUrgent = (priority || "").includes("ด่วน");
+  const headerBg = isUrgent ? "#991B1B" : "#1E3A8A";
+  const custName = customer?.name || "-";
+  const custPhone = customer?.phone || "-";
+  const custAddress = customer?.address || "-";
+
+  return {
+    type: "flex",
+    altText: `[มอบหมายงาน CCTV] ${title} ถึง ${techList}`,
+    contents: {
+      type: "bubble",
+      size: "mega",
+      header: {
+        type: "box",
+        layout: "vertical",
+        backgroundColor: headerBg,
+        paddingAll: "18px",
+        contents: [
+          {
+            type: "box",
+            layout: "horizontal",
+            contents: [
+              { type: "text", text: "FORESEE WORKPLACE", weight: "bold", color: "#93C5FD", size: "xxs", flex: 6 },
+              { type: "text", text: priority || "ปกติ", color: "#FFFFFF", size: "xs", align: "end", weight: "bold", flex: 4 }
+            ]
+          },
+          {
+            type: "text",
+            text: "📋 มอบหมายงานใหม่",
+            weight: "bold",
+            color: "#FFFFFF",
+            size: "lg",
+            margin: "sm"
+          }
+        ]
+      },
+      body: {
+        type: "box",
+        layout: "vertical",
+        spacing: "sm",
+        paddingAll: "18px",
+        contents: [
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "รหัสงาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: id, size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ผู้รับผิดชอบ", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: techList, size: "xs", weight: "bold", color: "#1D4ED8", wrap: true, flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ประเภทงาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: category || "ติดตั้งงานใหม่", size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ลูกค้า / เบอร์", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: `${custName} (${custPhone})`, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "สถานที่หน้างาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: custAddress, size: "xs", color: "#334155", wrap: true, flex: 6 }
+            ]
+          },
+          {
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ช่วงเวลางาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: `${startDate} ถึง ${deadline}`, size: "xs", color: "#334155", flex: 6 }
+            ]
+          },
+          ...(desc ? [{
+            type: "box", layout: "vertical", margin: "xs", contents: [
+              { type: "text", text: `รายละเอียด: ${desc}`, size: "xs", color: "#64748B", wrap: true }
+            ]
+          }] : [])
+        ]
+      },
+      footer: {
+        type: "box",
+        layout: "vertical",
+        paddingAll: "12px",
+        paddingTop: "0px",
+        contents: [
+          {
+            type: "button",
+            style: "primary",
+            color: "#1E3A8A",
+            height: "sm",
+            action: {
+              type: "uri",
+              label: "📍 แตะเพื่อเปิดเช็กอินงานนี้",
+              uri: `https://liff.line.me/${MY_LIFF_ID}?tab=checkin&taskId=${encodeURIComponent(id)}`
+            }
           }
         ]
       }

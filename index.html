@@ -566,11 +566,19 @@
       <div class="grid grid-cols-2 gap-2 text-xs">
         <div>
           <label class="block font-bold text-slate-800 mb-1">7. วันที่เริ่มงาน</label>
-          <input type="date" id="assignStartDateInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:bg-white focus:outline-none">
+          <button type="button" onclick="window.pickAssignDate('start')" class="w-full bg-slate-50 hover:bg-blue-50/50 border border-slate-300 hover:border-blue-400 rounded-xl p-2.5 text-left flex items-center space-x-2 transition-all shadow-2xs cursor-pointer">
+            <span class="text-sm">📅</span>
+            <span id="assignStartDateText" class="font-bold text-slate-800 truncate">เลือกวันที่</span>
+          </button>
+          <input type="hidden" id="assignStartDateInput">
         </div>
         <div>
           <label class="block font-bold text-slate-800 mb-1">กำหนดส่งงาน <span class="text-rose-500">*</span></label>
-          <input type="date" id="assignDeadlineInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:bg-white focus:outline-none">
+          <button type="button" onclick="window.pickAssignDate('deadline')" class="w-full bg-slate-50 hover:bg-blue-50/50 border border-slate-300 hover:border-blue-400 rounded-xl p-2.5 text-left flex items-center space-x-2 transition-all shadow-2xs cursor-pointer">
+            <span class="text-sm">📅</span>
+            <span id="assignDeadlineText" class="font-bold text-slate-800 truncate">เลือกวันที่</span>
+          </button>
+          <input type="hidden" id="assignDeadlineInput">
         </div>
       </div>
 
@@ -709,11 +717,19 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/90">
           <div>
             <label class="block text-[11px] font-bold text-slate-700 mb-1">วันที่เริ่มงาน</label>
-            <input type="date" id="detailStartDateInput" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none focus:border-blue-600">
+            <button type="button" onclick="window.pickDetailDate('start')" class="w-full bg-white hover:bg-blue-50/50 border border-slate-300 rounded-lg p-2 text-left flex items-center space-x-1.5 transition-all cursor-pointer">
+              <span class="text-xs">📅</span>
+              <span id="detailStartDateText" class="font-bold text-slate-800 truncate text-xs">-</span>
+            </button>
+            <input type="hidden" id="detailStartDateInput">
           </div>
           <div>
             <label class="block text-[11px] font-bold text-slate-700 mb-1">กำหนดส่งงาน</label>
-            <input type="date" id="detailDeadlineInput" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none focus:border-blue-600">
+            <button type="button" onclick="window.pickDetailDate('deadline')" class="w-full bg-white hover:bg-blue-50/50 border border-slate-300 rounded-lg p-2 text-left flex items-center space-x-1.5 transition-all cursor-pointer">
+              <span class="text-xs">📅</span>
+              <span id="detailDeadlineText" class="font-bold text-slate-800 truncate text-xs">-</span>
+            </button>
+            <input type="hidden" id="detailDeadlineInput">
           </div>
           <div>
             <div class="flex items-center justify-between mb-1">
@@ -769,7 +785,11 @@
         </div>
         <div>
           <label class="block font-semibold text-slate-700 mb-1">เลือกกำหนดส่งใหม่</label>
-          <input type="date" id="extendNewDateInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs">
+          <button type="button" onclick="window.pickExtendModalDate()" class="w-full bg-slate-50 hover:bg-amber-50/50 border border-slate-300 rounded-lg p-2 text-left flex items-center space-x-1.5 transition-all cursor-pointer">
+            <span class="text-xs">📅</span>
+            <span id="extendDatePreviewText" class="font-bold text-slate-800 truncate text-xs">คลิกเพื่อเลือกวันที่ใหม่</span>
+          </button>
+          <input type="hidden" id="extendNewDateInput">
         </div>
         <div>
           <label class="block font-semibold text-slate-700 mb-1">เหตุผลการขยายเวลา <span class="text-rose-500">*</span></label>
@@ -881,6 +901,59 @@
       <div class="pt-2 border-t border-slate-100">
         <button type="button" onclick="closeManageTechModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow-2xs">
           ปิดหน้าต่าง
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 6. APP DIALOG MODAL (Replaces native browser alert & confirm) -->
+  <div id="appDialogModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 my-auto space-y-4 animate-modal-in text-center">
+      <div id="appDialogIconContainer" class="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-2xs bg-blue-50 text-blue-600 border border-blue-200">
+        ℹ️
+      </div>
+      <div>
+        <h3 id="appDialogTitle" class="text-base font-bold text-slate-900">หัวข้อข้อความ</h3>
+        <p id="appDialogMessage" class="text-xs text-slate-600 mt-1 leading-relaxed"></p>
+      </div>
+      <div id="appDialogButtonsContainer" class="flex items-center justify-center gap-2 pt-2 border-t border-slate-100">
+        <!-- Buttons injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. CUSTOM ENTERPRISE THAI CALENDAR MODAL -->
+  <div id="customCalendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
+    <div class="bg-white rounded-2xl p-4 max-w-[320px] w-full shadow-2xl border border-slate-200 my-auto animate-modal-in">
+      
+      <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+        <button type="button" onclick="prevCalendarMonth()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 active:scale-95 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="text-center">
+          <h4 id="calMonthYearTitle" class="text-xs font-bold text-slate-900">ตุลาคม 2569</h4>
+          <span class="text-[10px] text-slate-400">เลือกวันที่ต้องการ</span>
+        </div>
+        <button type="button" onclick="nextCalendarMonth()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 active:scale-95 transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-1.5">
+        <span class="text-rose-500">อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+      </div>
+
+      <div id="calDaysGrid" class="grid grid-cols-7 gap-1 text-center text-xs">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="flex items-center justify-between pt-3 mt-3 border-t border-slate-100">
+        <button type="button" onclick="selectTodayOnCalendar()" class="text-blue-600 hover:text-blue-800 text-[11px] font-bold py-1.5 px-3 rounded-lg hover:bg-blue-50 transition-colors">
+          วันนี้
+        </button>
+        <button type="button" onclick="closeCustomCalendar()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-1.5 px-3.5 rounded-lg text-xs transition-colors">
+          ปิด
         </button>
       </div>
 

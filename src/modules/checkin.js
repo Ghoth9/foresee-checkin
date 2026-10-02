@@ -12,6 +12,7 @@ import { compressMultipleFiles } from '../utils/compressor.js';
 import { createCheckinFlexCard, triggerLiffShare } from '../liff/line.js';
 import { saveCheckinApi } from '../api/gas.js';
 import { formatThaiDateDisplay } from '../utils/date.js';
+import { showAppAlert } from '../utils/dialog.js';
 
 let checkinPhotos = [];
 let selectedAssignedTaskId = null;
@@ -115,7 +116,11 @@ export async function handlePhotoUpload(event) {
   const currentCount = checkinPhotos.length;
   const remainingSlots = 5 - currentCount;
   if (remainingSlots <= 0) {
-    alert("แนบรูปได้สูงสุด 5 รูปแล้ว");
+    showAppAlert({
+      type: "warning",
+      title: "แนบรูปครบแล้ว",
+      message: "แนบรูปได้สูงสุด 5 รูปแล้ว"
+    });
     return;
   }
 
@@ -171,7 +176,11 @@ export function renderPhotoPreviews() {
 
 export async function submitCheckinForm({ selectedTechs, selectedJobType, customJobType, locationText, noteText, onComplete }) {
   if (selectedTechs.length === 0) {
-    alert("กรุณาเลือกทีมช่างอย่างน้อย 1 คน");
+    showAppAlert({
+      type: "warning",
+      title: "ยังไม่ได้เลือกช่าง",
+      message: "กรุณาเลือกทีมช่างอย่างน้อย 1 คนก่อนเช็กอิน"
+    });
     return;
   }
 
@@ -183,7 +192,11 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
   } else if (selectedJobType) {
     finalJobTitle = selectedJobType;
   } else {
-    alert("กรุณากรอกสถานที่ / ไซต์งาน หรือเลือกงานมอบหมาย");
+    showAppAlert({
+      type: "warning",
+      title: "ข้อมูลไม่ครบถ้วน",
+      message: "กรุณากรอกสถานที่ / ไซต์งาน หรือเลือกงานมอบหมาย"
+    });
     return;
   }
 

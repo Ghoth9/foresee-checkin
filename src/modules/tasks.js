@@ -4,7 +4,9 @@
 
 import { formatThaiDateDisplay, getDeadlineCountdownBadge, isTaskOverdue, getTodayYMD, getSevenDaysLaterYMD } from '../utils/date.js';
 import { saveTaskApi, extendTaskDeadlineApi, deleteTaskApi } from '../api/gas.js';
-import { createExtendDeadlineFlexCard, triggerLiffShare } from '../liff/line.js';
+import { createExtendDeadlineFlexCard, createAssignTaskFlexCard, triggerLiffShare } from '../liff/line.js';
+import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
+import { openCustomCalendar } from '../utils/calendar.js';
 
 let taskViewMode = window.innerWidth >= 768 ? "list" : "grid";
 let currentStatusFilter = "ทั้งหมด";
@@ -291,6 +293,44 @@ export function renderTasksList(tasksList) {
 }
 
 // -------------------------------------------------------------
+// CUSTOM THAI CALENDAR INTEGRATION
+// -------------------------------------------------------------
+export function pickAssignDate(type) {
+  const isStart = type === 'start';
+  const inputEl = document.getElementById(isStart ? 'assignStartDateInput' : 'assignDeadlineInput');
+  const textEl = document.getElementById(isStart ? 'assignStartDateText' : 'assignDeadlineText');
+  const currentVal = inputEl && inputEl.value ? inputEl.value : (isStart ? getTodayYMD() : getSevenDaysLaterYMD());
+
+  openCustomCalendar(currentVal, (selectedDate) => {
+    if (inputEl) inputEl.value = selectedDate;
+    if (textEl) textEl.innerText = formatThaiDateDisplay(selectedDate);
+  });
+}
+
+export function pickDetailDate(type) {
+  const isStart = type === 'start';
+  const inputEl = document.getElementById(isStart ? 'detailStartDateInput' : 'detailDeadlineInput');
+  const textEl = document.getElementById(isStart ? 'detailStartDateText' : 'detailDeadlineText');
+  const currentVal = inputEl && inputEl.value ? inputEl.value : (isStart ? getTodayYMD() : getSevenDaysLaterYMD());
+
+  openCustomCalendar(currentVal, (selectedDate) => {
+    if (inputEl) inputEl.value = selectedDate;
+    if (textEl) textEl.innerText = formatThaiDateDisplay(selectedDate);
+  });
+}
+
+export function pickExtendModalDate() {
+  const inputEl = document.getElementById('extendNewDateInput');
+  const textEl = document.getElementById('extendDatePreviewText');
+  const currentVal = inputEl && inputEl.value ? inputEl.value : getTodayYMD();
+
+  openCustomCalendar(currentVal, (selectedDate) => {
+    if (inputEl) inputEl.value = selectedDate;
+    if (textEl) textEl.innerText = formatThaiDateDisplay(selectedDate);
+  });
+}
+
+// -------------------------------------------------------------
 // ASSIGN TASK MODAL
 // -------------------------------------------------------------
 let selectedAssignPriority = "ปกติ";
@@ -315,6 +355,8 @@ export function openAssignModal(allTechnicians) {
   const catOther = document.getElementById("assignCategoryOtherInput");
   const startInput = document.getElementById("assignStartDateInput");
   const deadInput = document.getElementById("assignDeadlineInput");
+  const startText = document.getElementById("assignStartDateText");
+  const deadText = document.getElementById("assignDeadlineText");
 
   if (jobDetail) jobDetail.value = "";
   if (locInput) locInput.value = "";
@@ -324,8 +366,13 @@ export function openAssignModal(allTechnicians) {
   if (custEmail) custEmail.value = "";
   if (custLineId) custLineId.value = "";
   if (catOther) catOther.value = "";
-  if (startInput) startInput.value = getTodayYMD();
-  if (deadInput) deadInput.value = getSevenDaysLaterYMD();
+
+  const today = getTodayYMD();
+  const next7Days = getSevenDaysLaterYMD();
+  if (startInput) startInput.value = today;
+  if (deadInput) deadInput.value = next7Days;
+  if (startText) startText.innerText = formatThaiDateDisplay(today);
+  if (deadText) deadText.innerText = formatThaiDateDisplay(next7Days);
 
   renderAssignTechChips(allTechnicians);
 
@@ -435,17 +482,29 @@ export async function submitAssignForm({ tasksList, onComplete }) {
 
   // Mandatory Customer Verification
   if (!custName) {
-    alert("กรุณากรอก 'ชื่อลูกค้า' (จำเป็นสำหรับการบันทึก)");
+    showAppAlert({
+      type: "warning",
+      title: "กรุณากรอกชื่อลูกค้า",
+      message: "จำเป็นต้องระบุชื่อลูกค้าก่อนบันทึกข้อมูลงาน"
+    });
     if (custNameInput) custNameInput.focus();
     return;
   }
   if (!custAddress) {
-    alert("กรุณากรอก 'ที่อยู่ลูกค้า' (จำเป็นสำหรับการบันทึก)");
+    showAppAlert({
+      type: "warning",
+      title: "กรุณากรอกที่อยู่ลูกค้า",
+      message: "จำเป็นต้องระบุที่อยู่ลูกค้าก่อนบันทึกข้อมูลงาน"
+    });
     if (custAddressInput) custAddressInput.focus();
     return;
   }
   if (!custPhone) {
-    alert("กรุณากรอก 'เบอร์โทรศัพท์ลูกค้า' (จำเป็นสำหรับการบันทึก)");
+    showAppAlert({
+      type: "warning",
+      title: "กรุณากรอกเบอร์โทรศัพท์",
+      message: "จำเป็นต้องระบุเบอร์โทรศัพท์ลูกค้าก่อนบันทึกข้อมูลงาน"
+    });
     if (custPhoneInput) custPhoneInput.focus();
     return;
   }
@@ -455,7 +514,11 @@ export async function submitAssignForm({ tasksList, onComplete }) {
   if (selectedAssignCategory === "อื่นๆ") {
     const otherText = otherCatInput ? otherCatInput.value.trim() : "";
     if (!otherText) {
-      alert("กรุณากรอกระบุประเภทงานอื่นๆ");
+      showAppAlert({
+        type: "warning",
+        title: "ระบุประเภทงานอื่นๆ",
+        message: "กรุณากรอกระบุประเภทงานอื่นๆ"
+      });
       if (otherCatInput) otherCatInput.focus();
       return;
     }
@@ -463,7 +526,11 @@ export async function submitAssignForm({ tasksList, onComplete }) {
   }
 
   if (selectedAssignTechs.length === 0) {
-    alert("กรุณาเลือกช่างผู้รับผิดชอบงานอย่างน้อย 1 คน");
+    showAppAlert({
+      type: "warning",
+      title: "ยังไม่ได้เลือกช่าง",
+      message: "กรุณาเลือกช่างผู้รับผิดชอบงานอย่างน้อย 1 คน"
+    });
     return;
   }
 
@@ -509,6 +576,17 @@ export async function submitAssignForm({ tasksList, onComplete }) {
 
   tasksList.unshift(newTask);
   localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+
+  // Trigger LINE Share Target Picker
+  const flexCard = createAssignTaskFlexCard(newTask);
+  await triggerLiffShare(flexCard, "มอบหมายงานใหม่และส่งเข้ากลุ่ม LINE เรียบร้อยแล้ว");
+
+  showAppAlert({
+    type: "success",
+    title: "มอบหมายงานสำเร็จ!",
+    message: `บันทึกงาน "${titleDisplay}" (${taskId}) และส่งข้อมูลเข้ากลุ่ม LINE เรียบร้อยแล้ว`
+  });
+
   if (onComplete) onComplete([newTask]);
 }
 
@@ -580,8 +658,15 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians) {
   // Dates
   const startInput = document.getElementById("detailStartDateInput");
   const deadInput = document.getElementById("detailDeadlineInput");
-  if (startInput) startInput.value = task.startDate || getTodayYMD();
-  if (deadInput) deadInput.value = task.deadline || getSevenDaysLaterYMD();
+  const startText = document.getElementById("detailStartDateText");
+  const deadText = document.getElementById("detailDeadlineText");
+
+  const sVal = task.startDate || getTodayYMD();
+  const dVal = task.deadline || getSevenDaysLaterYMD();
+  if (startInput) startInput.value = sVal;
+  if (deadInput) deadInput.value = dVal;
+  if (startText) startText.innerText = formatThaiDateDisplay(sVal);
+  if (deadText) deadText.innerText = formatThaiDateDisplay(dVal);
 
   // Progress
   const progRange = document.getElementById("detailProgressRange");
@@ -674,7 +759,11 @@ export function renderDetailTechChips(allTechnicians) {
         if (currentDetailTechs.length > 1) {
           currentDetailTechs = currentDetailTechs.filter(t => t !== tName);
         } else {
-          alert("ต้องมีช่างผู้รับผิดชอบงานอย่างน้อย 1 คน");
+          showAppAlert({
+            type: "warning",
+            title: "ไม่สามารถลบได้",
+            message: "ต้องมีช่างผู้รับผิดชอบงานอย่างน้อย 1 คน"
+          });
         }
       } else {
         currentDetailTechs.push(tName);
@@ -706,7 +795,11 @@ export function saveTaskDetailChanges(tasksList, onComplete) {
 
   const newTitle = titleInput ? titleInput.value.trim() : task.title;
   if (!newTitle) {
-    alert("กรุณากรอกชื่องาน");
+    showAppAlert({
+      type: "warning",
+      title: "กรุณากรอกชื่องาน",
+      message: "ต้องระบุชื่องานเพื่อบันทึกข้อมูล"
+    });
     return;
   }
 
@@ -739,6 +832,12 @@ export function saveTaskDetailChanges(tasksList, onComplete) {
   // Sync to Sheet
   saveTaskApi(task);
 
+  showAppAlert({
+    type: "success",
+    title: "บันทึกการแก้ไขสำเร็จ",
+    message: `บันทึกข้อมูลงาน "${task.title}" เรียบร้อยแล้ว`
+  });
+
   if (onComplete) onComplete(task);
 }
 
@@ -746,19 +845,32 @@ export function deleteCurrentDetailTask(tasksList, onComplete) {
   const task = tasksList.find(t => t.id === currentDetailTaskId);
   if (!task) return;
 
-  if (confirm(`คุณต้องการลบงาน "${task.title}" (${task.id}) ออกจากระบบหรือไม่?`)) {
-    const idx = tasksList.findIndex(t => t.id === currentDetailTaskId);
-    if (idx !== -1) {
-      tasksList.splice(idx, 1);
+  showAppConfirm({
+    title: "ยืนยันการลบงาน",
+    message: `คุณต้องการลบงาน "${task.title}" (${task.id}) ออกจากระบบหรือไม่? ข้อมูลจะไม่สามารถกู้คืนได้`,
+    confirmText: "ลบงานนี้",
+    cancelText: "ยกเลิก",
+    isDanger: true,
+    onConfirm: () => {
+      const idx = tasksList.findIndex(t => t.id === currentDetailTaskId);
+      if (idx !== -1) {
+        tasksList.splice(idx, 1);
+      }
+      closeTaskDetailModal();
+      localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+
+      // Sync deletion to Sheet
+      deleteTaskApi(task.id);
+
+      showAppAlert({
+        type: "success",
+        title: "ลบงานสำเร็จ",
+        message: `ลบงาน ${task.id} ออกจากระบบเรียบร้อยแล้ว`
+      });
+
+      if (onComplete) onComplete();
     }
-    closeTaskDetailModal();
-    localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
-
-    // Sync deletion to Sheet
-    deleteTaskApi(task.id);
-
-    if (onComplete) onComplete();
-  }
+  });
 }
 
 // Aliases for backwards compatibility
@@ -780,11 +892,13 @@ export function openExtendModal(taskId, tasksList) {
   const curDeadLabel = document.getElementById("currentDeadlineDisplay");
   const reasonInput = document.getElementById("extendReasonInput");
   const dateInput = document.getElementById("extendNewDateInput");
+  const datePreviewText = document.getElementById("extendDatePreviewText");
 
   if (titleLabel) titleLabel.innerText = task.title;
   if (curDeadLabel) curDeadLabel.innerText = formatThaiDateDisplay(task.deadline);
   if (reasonInput) reasonInput.value = "";
   if (dateInput) dateInput.value = "";
+  if (datePreviewText) datePreviewText.innerText = "คลิกเพื่อเลือกวันที่ใหม่";
 
   const modal = document.getElementById("extendDeadlineModal");
   if (modal) modal.classList.remove("hidden");
@@ -803,11 +917,19 @@ export async function submitExtendDeadline(tasksList, currentLineUserName, onCom
   const reason = reasonInput ? reasonInput.value.trim() : "";
 
   if (!newDeadline) {
-    alert("กรุณาเลือกกำหนดส่งใหม่");
+    showAppAlert({
+      type: "warning",
+      title: "ยังไม่ได้เลือกวันที่",
+      message: "กรุณาเลือกกำหนดส่งใหม่"
+    });
     return;
   }
   if (!reason) {
-    alert("กรุณาระบุเหตุผลการขยายเวลา");
+    showAppAlert({
+      type: "warning",
+      title: "กรุณาระบุเหตุผล",
+      message: "กรุณาระบุเหตุผลการขยายเวลากำหนดส่ง"
+    });
     return;
   }
 
@@ -845,6 +967,12 @@ export async function submitExtendDeadline(tasksList, currentLineUserName, onCom
     requestBy: currentLineUserName || "ช่างหน้างาน"
   });
   await triggerLiffShare(flexCard, "ส่งคำขอขยายเวลางานเข้ากลุ่ม LINE สำเร็จ!");
+
+  showAppAlert({
+    type: "success",
+    title: "ขยายเวลาสำเร็จ",
+    message: `ขยายกำหนดส่งเป็น ${formatThaiDateDisplay(newDeadline)} และส่งแจ้งเตือนเข้ากลุ่ม LINE เรียบร้อยแล้ว`
+  });
 
   localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
   if (onComplete) onComplete(task);
