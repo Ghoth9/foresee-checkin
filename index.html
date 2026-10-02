@@ -7,13 +7,13 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=2026.10.02.v22">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png?v=2026.10.02.v22">
-  <link rel="shortcut icon" href="favicon.ico?v=2026.10.02.v22">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026.10.02.v22">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=2026.10.02.v23">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png?v=2026.10.02.v23">
+  <link rel="shortcut icon" href="favicon.ico?v=2026.10.02.v23">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026.10.02.v23">
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.02.v22";
+    const FORESEE_APP_VERSION = "2026.10.02.v23";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -108,6 +108,11 @@
 
       <!-- Right Actions: Refresh, Sheet Status, GPS Status, + New Task Button -->
       <div class="flex items-center space-x-2">
+        <!-- Desktop LINE Login / Share Status Button -->
+        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="hidden md:flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-lg font-medium border border-slate-200 transition-colors bg-white hover:bg-slate-50 text-slate-700 shadow-2xs" title="เข้าสู่ระบบ LINE สำหรับแชร์การ์ดเข้ากลุ่ม">
+          <span id="lineLoginDot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+          <span id="lineLoginText">เข้าสู่ระบบ LINE</span>
+        </button>
         <button id="gasSyncBtn" type="button" onclick="syncWithGoogleSheet()" class="text-xs px-2.5 py-1.5 rounded-lg font-medium bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 flex items-center space-x-1.5 transition-colors" title="ซิงค์ข้อมูล Google Sheet">
           <span id="gasDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span id="gasStatusText" class="hidden md:inline text-xs text-slate-600">ซิงค์แล้ว</span>
@@ -4268,7 +4273,7 @@
         await liff.ready;
 
         if (!liff.isLoggedIn()) {
-          showStatusModal("success", "บันทึกข้อมูลเรียบร้อยแล้ว!", "บันทึกข้อมูลลง Google Sheet สำเร็จ (การส่งการ์ดเข้ากลุ่ม LINE แนะนำเปิดผ่านแอป LINE บนมือถือ)");
+          showStatusModal("success", "บันทึกข้อมูลเรียบร้อยแล้ว!", "บันทึกข้อมูลลง Google Sheet สำเร็จ (หากต้องการแชร์การ์ดเข้ากลุ่ม LINE จากคอมพิวเตอร์ สามารถกดปุ่ม 'เข้าสู่ระบบ LINE' ด้านบนได้เลยครับ)");
           return;
         }
 
@@ -4295,13 +4300,14 @@
     }
 
     // =========================================================================
-    // UTILITIES
+    // UTILITIES & LIFF AUTH
     // =========================================================================
     async function initLiff() {
       if (typeof liff === "undefined") return;
       try {
         await liff.init({ liffId: MY_LIFF_ID });
         await liff.ready;
+        updateLineLoginUI();
         if (liff.isLoggedIn()) {
           try {
             const profile = await liff.getProfile();
@@ -4311,11 +4317,43 @@
               if (nameElem) nameElem.innerText = profile.displayName;
               const avatarElem = document.getElementById("userAvatarElem");
               if (avatarElem) avatarElem.innerText = profile.displayName.charAt(0);
+              updateLineLoginUI(profile.displayName);
             }
           } catch(pe) {}
         }
       } catch (err) {
         console.warn("LIFF Init error:", err);
+      }
+    }
+
+    function updateLineLoginUI(userName) {
+      const btn = document.getElementById("lineLoginBtn");
+      const dot = document.getElementById("lineLoginDot");
+      const text = document.getElementById("lineLoginText");
+      if (!btn || !dot || !text) return;
+
+      if (typeof liff !== "undefined" && liff.isLoggedIn()) {
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+        text.innerText = userName ? `LINE: ${userName}` : "LINE เชื่อมต่อแล้ว";
+        btn.title = "เชื่อมต่อบัญชี LINE เรียบร้อย สามารถแชร์การ์ดเข้ากลุ่มได้ (คลิกเพื่อออกจากระบบ)";
+        btn.classList.add("border-emerald-200", "bg-emerald-50/60");
+      } else {
+        dot.className = "w-2 h-2 rounded-full bg-slate-400";
+        text.innerText = "เข้าสู่ระบบ LINE";
+        btn.title = "เข้าสู่ระบบ LINE บนคอมพิวเตอร์ เพื่อให้สามารถแชร์การ์ดเข้ากลุ่ม LINE ได้";
+        btn.classList.remove("border-emerald-200", "bg-emerald-50/60");
+      }
+    }
+
+    function handleLineLoginToggle() {
+      if (typeof liff === "undefined") return;
+      if (liff.isLoggedIn()) {
+        if (confirm("ต้องการออกจากระบบ LINE บนอุปกรณ์นี้หรือไม่?")) {
+          liff.logout();
+          window.location.reload();
+        }
+      } else {
+        liff.login({ redirectUri: window.location.href });
       }
     }
 
