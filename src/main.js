@@ -740,6 +740,8 @@ async function bootstrapApp() {
         tasksList = fresh.tasks;
         localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
         renderTasksList(tasksList);
+        renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+        renderTechFilterChips(tasksList, allTechnicians);
       }
     },
     onCheckinsChange: async () => {
