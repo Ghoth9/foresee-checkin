@@ -218,8 +218,8 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
     lng: coords.lng || "",
     mapUrl: mapUrl,
     note: noteText.trim() || "-",
-    photoCount: checkinPhotos.length,
-    photos: checkinPhotos.map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }))
+    photoCount: 0,
+    photos: []
   };
 
   // 1. Send LINE Flex Card
@@ -230,7 +230,7 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
     time: timeStr,
     coords: coords.isReady ? `${coords.lat}, ${coords.lng}` : null,
     mapUrl: mapUrl,
-    photoCount: checkinPhotos.length,
+    photoCount: 0,
     taskId: selectedAssignedTaskId
   });
 

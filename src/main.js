@@ -107,6 +107,9 @@ try {
 // -------------------------------------------------------------
 export function switchTab(tab) {
   currentTab = tab;
+  try {
+    sessionStorage.setItem("fs_active_tab", tab);
+  } catch (e) {}
   const sections = ["checkin", "checkout", "tasks"];
   sections.forEach(s => {
     const el = document.getElementById(`${s}Section`);
@@ -466,11 +469,40 @@ export function toggleTodayLogsCollapse() {
 // INITIAL SYNC & BOOTSTRAP
 // -------------------------------------------------------------
 async function bootstrapApp() {
-  // 1. LIFF Init
+  // 1. Determine Initial Active Tab & Switch Immediately to avoid layout shift or jumping
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlTab = urlParams.get("tab");
+  let savedTab = null;
+  try {
+    savedTab = sessionStorage.getItem("fs_active_tab");
+  } catch (e) {}
+  const targetTab = urlTab || savedTab || "checkin";
+  const targetTaskId = urlParams.get("taskId");
+  const targetAction = urlParams.get("action");
+  const targetId = urlParams.get("id");
+
+  switchTab(targetTab);
+
+  if (targetTab === "checkout") {
+    if (targetAction === "update") {
+      setActionTab("update");
+    } else if (targetAction === "close") {
+      setActionTab("close");
+    }
+    const matchId = targetId || targetTaskId;
+    if (matchId) {
+      const existing = activeTasks.find(a => a.id === matchId || a.taskId === matchId);
+      if (existing) {
+        selectActiveTaskForCheckout(existing.id);
+      }
+    }
+  }
+
+  // 2. LIFF Init
   await initLiff();
   updateLineStatusUI();
 
-  // 2. GPS Request
+  // 3. GPS Request
   requestLocation((coords) => {
     const title = document.getElementById("gpsLocationTitle");
     const coordsText = document.getElementById("gpsCoordsText");
@@ -489,7 +521,7 @@ async function bootstrapApp() {
     }
   });
 
-  // 3. Sync initial data from Google Sheet
+  // 4. Sync initial data from Google Sheet in background
   const gasData = await fetchInitialData();
   if (gasData) {
     if (gasData.technicians && gasData.technicians.length > 0) {
@@ -513,29 +545,22 @@ async function bootstrapApp() {
     }
   }
 
-  // 4. Handle Deep Linking via URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const targetTab = urlParams.get("tab") || "checkin";
-  const targetTaskId = urlParams.get("taskId");
-  const targetAction = urlParams.get("action");
-
-  switchTab(targetTab);
-
-  if (targetTab === "tasks" && targetAction === "update" && targetTaskId) {
-    const task = tasksList.find(t => t.id === targetTaskId);
-    if (task) openProgressModal(task);
-  } else if (targetTab === "checkout" && urlParams.get("id")) {
-    const id = urlParams.get("id");
-    const existing = activeTasks.find(a => a.id === id);
-    if (!existing) {
-      activeTasks.unshift({
-        id: id,
-        task: urlParams.get("task") || "งานหน้างาน",
-        techs: (urlParams.get("techs") || "").split(","),
-        time: urlParams.get("time") || "09:00"
-      });
+  // 5. Re-render views for current tab without resetting tab
+  if (currentTab === "checkin") {
+    renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+    renderCheckinTechChips();
+  } else if (currentTab === "checkout") {
+    renderActiveCheckoutList();
+    const matchId = targetId || targetTaskId;
+    if (matchId) {
+      const existing = activeTasks.find(a => a.id === matchId || a.taskId === matchId);
+      if (existing) {
+        selectActiveTaskForCheckout(existing.id);
+      }
     }
-    selectActiveTaskForCheckout(id);
+  } else if (currentTab === "tasks") {
+    renderTechFilterChips(tasksList, allTechnicians);
+    renderTasksList(tasksList);
   }
 
   renderTodayLogs();
@@ -751,8 +776,28 @@ window.closeExtendModal = closeExtendModal;
 window.submitExtendDeadline = () => submitExtendDeadline(tasksList, getLineUserName(), () => renderTasksList(tasksList));
 
 window.openProgressModalForTask = (taskId) => {
-  const task = tasksList.find(t => t.id === taskId);
-  if (task) openProgressModal(task);
+  switchTab("checkout");
+  setActionTab("update");
+  let match = activeTasks.find(a => a.taskId === taskId || a.id === taskId);
+  if (!match) {
+    const task = tasksList.find(t => t.id === taskId);
+    if (task) {
+      match = {
+        id: task.id,
+        taskId: task.id,
+        task: task.title,
+        techs: task.assignee ? task.assignee.split(", ") : ["ช่างประจำทีม"],
+        time: "09:00",
+        date: "วันนี้"
+      };
+      activeTasks.unshift(match);
+      localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+      renderActiveCheckoutList();
+    }
+  }
+  if (match) {
+    selectActiveTaskForCheckout(match.id);
+  }
 };
 window.closeUpdateProgressModal = closeProgressModal;
 window.setProgressPercent = setProgressPercent;

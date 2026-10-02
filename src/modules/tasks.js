@@ -25,6 +25,12 @@ let editModalStatus = "กำลังทำ";
 let currentExtendingTaskId = null;
 let selectedExtendNewDeadline = null;
 
+let recentNewTaskIds = new Set();
+try {
+  const savedNew = localStorage.getItem("fs_recent_new_tasks");
+  if (savedNew) recentNewTaskIds = new Set(JSON.parse(savedNew));
+} catch (e) {}
+
 export function getTaskTechs(task) {
   if (Array.isArray(task.techs)) return task.techs;
   if (typeof task.techs === "string") return [task.techs];
@@ -146,6 +152,15 @@ export function renderTasksList(tasksList) {
     return true;
   });
 
+  // Sort: Newly created tasks always appear at the top!
+  filteredTasks.sort((a, b) => {
+    const isNewA = recentNewTaskIds.has(a.id) || a.isNew;
+    const isNewB = recentNewTaskIds.has(b.id) || b.isNew;
+    if (isNewA && !isNewB) return -1;
+    if (!isNewA && isNewB) return 1;
+    return 0;
+  });
+
   if (filteredTasks.length === 0) {
     container.innerHTML = `
       <div class="text-center py-10 bg-white rounded-xl border border-slate-200 p-6">
@@ -166,7 +181,7 @@ export function renderTasksList(tasksList) {
           <thead class="bg-slate-100 text-xs font-bold text-slate-800 border-b-2 border-slate-200">
             <tr>
               <th class="py-3.5 px-3 w-10 text-center font-mono">#</th>
-              <th class="py-3.5 px-3 w-28 whitespace-nowrap">สถานะ</th>
+              <th class="py-3.5 px-3 w-32 whitespace-nowrap">สถานะ</th>
               <th class="py-3.5 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
               <th class="py-3.5 px-3 w-36">ช่างผู้รับผิดชอบ</th>
               <th class="py-3.5 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
@@ -180,6 +195,7 @@ export function renderTasksList(tasksList) {
     filteredTasks.forEach((task, index) => {
       const isDone = task.status === "เสร็จสิ้น";
       const isOver = isTaskOverdue(task.deadline, isDone);
+      const isNew = recentNewTaskIds.has(task.id) || task.isNew;
       const techs = getTaskTechs(task);
 
       let badgeBg = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
@@ -187,17 +203,26 @@ export function renderTasksList(tasksList) {
       else if (isOver) badgeBg = "bg-rose-100 text-rose-900 border-rose-300 font-bold";
       else if (task.status === "กำลังทำ") badgeBg = "bg-blue-100 text-blue-900 border-blue-300 font-bold";
 
+      const rowClass = isNew
+        ? "bg-blue-50/70 border-l-4 border-l-blue-600 hover:bg-blue-100/70 transition-colors group cursor-pointer ring-1 ring-blue-200/50"
+        : "hover:bg-blue-50/50 transition-colors group cursor-pointer";
+
       tableHtml += `
-        <tr class="hover:bg-blue-50/50 transition-colors group cursor-pointer" onclick="window.openTaskDetailModal('${task.id}')">
+        <tr class="${rowClass}" onclick="window.openTaskDetailModal('${task.id}')">
           <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-500 font-semibold">${index + 1}</td>
           <td class="py-3 px-3 whitespace-nowrap">
-            <span class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeBg}">
-              ${task.status}
-            </span>
+            <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
+              <span class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeBg}">
+                ${task.status}
+              </span>
+              ${isNew ? `<span class="inline-flex items-center space-x-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 border border-amber-300 shadow-xs animate-pulse flex-shrink-0"><span>✨</span><span>งานใหม่</span></span>` : ''}
+            </div>
           </td>
           <td class="py-3 px-3">
             <div>
-              <div class="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">${task.title}</div>
+              <div class="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 flex items-center space-x-2">
+                <span>${task.title}</span>
+              </div>
               ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
               ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 line-clamp-1 mt-0.5">💬 ${task.latestUpdate}</div>` : ''}
             </div>
@@ -243,19 +268,27 @@ export function renderTasksList(tasksList) {
     filteredTasks.forEach((task, index) => {
       const isDone = task.status === "เสร็จสิ้น";
       const isOver = isTaskOverdue(task.deadline, isDone);
+      const isNew = recentNewTaskIds.has(task.id) || task.isNew;
       const techs = getTaskTechs(task);
 
       let badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
       if (isDone) badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200";
       else if (isOver) badgeBg = "bg-rose-50 text-rose-700 border-rose-200";
 
+      const cardClass = isNew
+        ? "group bg-gradient-to-b from-blue-50/70 to-white rounded-xl p-4 border-2 border-blue-500 shadow-md ring-2 ring-blue-400/20 hover:shadow-lg transition-all flex flex-col justify-between space-y-3 cursor-pointer"
+        : "group bg-white rounded-xl p-4 border border-slate-200/90 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between space-y-3 cursor-pointer";
+
       const card = document.createElement("div");
-      card.className = "group bg-white rounded-xl p-4 border border-slate-200/90 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between space-y-3 cursor-pointer";
+      card.className = cardClass;
       card.onclick = () => window.openTaskDetailModal(task.id);
       card.innerHTML = `
         <div>
           <div class="flex items-center justify-between text-xs mb-2">
-            <span class="text-[10px] font-mono text-slate-400 font-bold">#${index + 1} (${task.id})</span>
+            <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
+              <span class="text-[10px] font-mono text-slate-400 font-bold">#${index + 1} (${task.id})</span>
+              ${isNew ? `<span class="inline-flex items-center space-x-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 shadow-xs animate-pulse"><span>✨</span><span>งานใหม่</span></span>` : ''}
+            </div>
             <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg}">${task.status}</span>
           </div>
           <div>
@@ -549,6 +582,8 @@ export async function submitAssignForm({ tasksList, onComplete }) {
   const newTask = {
     id: taskId,
     title: titleDisplay,
+    isNew: true,
+    createdAt: Date.now(),
     category: finalCategory,
     priority: selectedAssignPriority,
     desc: jobDetail || `งาน ${finalCategory} สำหรับ ${custName}`,
@@ -570,6 +605,11 @@ export async function submitAssignForm({ tasksList, onComplete }) {
     updateBy: "หัวหน้างาน",
     updateTime: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
   };
+
+  recentNewTaskIds.add(taskId);
+  try {
+    localStorage.setItem("fs_recent_new_tasks", JSON.stringify(Array.from(recentNewTaskIds)));
+  } catch (e) {}
 
   // Sync to Sheet
   saveTaskApi(newTask);

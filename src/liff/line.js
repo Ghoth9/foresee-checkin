@@ -110,38 +110,35 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
 
 export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, photoCount = 0, taskId = null }) {
   const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
-  const checkoutDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&id=${encodeURIComponent(id)}&task=${encodeURIComponent(task)}&techs=${encodeURIComponent(techList)}&time=${encodeURIComponent(time)}&taskId=${encodeURIComponent(taskId || '')}`;
-  const updateDeepLink = taskId ? `https://liff.line.me/${MY_LIFF_ID}?tab=tasks&action=update&taskId=${encodeURIComponent(taskId)}` : null;
+  const updateDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=update&id=${encodeURIComponent(id)}&task=${encodeURIComponent(task)}&techs=${encodeURIComponent(techList)}&time=${encodeURIComponent(time)}&taskId=${encodeURIComponent(taskId || '')}`;
+  const checkoutDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=close&id=${encodeURIComponent(id)}&task=${encodeURIComponent(task)}&techs=${encodeURIComponent(techList)}&time=${encodeURIComponent(time)}&taskId=${encodeURIComponent(taskId || '')}`;
 
-  const footerContents = [];
-
-  if (updateDeepLink) {
-    footerContents.push({
+  const footerContents = [
+    {
       type: "button",
-      style: "secondary",
+      style: "primary",
       height: "sm",
-      color: "#F1F5F9",
+      color: "#0F172A",
       margin: "xs",
       action: {
         type: "uri",
         label: "📊 อัปเดตความคืบหน้า",
         uri: updateDeepLink
       }
-    });
-  }
-
-  footerContents.push({
-    type: "button",
-    style: "primary",
-    color: "#2563EB",
-    height: "sm",
-    margin: "xs",
-    action: {
-      type: "uri",
-      label: "🏁 บันทึกปิดงานเมื่อเสร็จ",
-      uri: checkoutDeepLink
+    },
+    {
+      type: "button",
+      style: "primary",
+      color: "#2563EB",
+      height: "sm",
+      margin: "xs",
+      action: {
+        type: "uri",
+        label: "🏁 บันทึกปิดงานเมื่อเสร็จ",
+        uri: checkoutDeepLink
+      }
     }
-  });
+  ];
 
   return {
     type: "flex",
@@ -241,9 +238,11 @@ export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, p
   };
 }
 
-export function createProgressFlexCard({ taskId, taskTitle, techs, progress, status, note, updateBy, updateTime }) {
+export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress, status, note, updateBy, updateTime }) {
   const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
-  const checkoutDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&taskId=${encodeURIComponent(taskId)}&task=${encodeURIComponent(taskTitle)}`;
+  const cardId = id || taskId || '';
+  const updateDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=update&id=${encodeURIComponent(cardId)}&taskId=${encodeURIComponent(taskId || '')}&task=${encodeURIComponent(taskTitle)}&techs=${encodeURIComponent(techList)}`;
+  const closeDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=close&id=${encodeURIComponent(cardId)}&taskId=${encodeURIComponent(taskId || '')}&task=${encodeURIComponent(taskTitle)}&techs=${encodeURIComponent(techList)}`;
 
   return {
     type: "flex",
@@ -317,12 +316,25 @@ export function createProgressFlexCard({ taskId, taskTitle, techs, progress, sta
           {
             type: "button",
             style: "primary",
-            color: "#2563EB",
+            color: "#0F172A",
             height: "sm",
+            margin: "xs",
             action: {
               type: "uri",
-              label: "🏁 บันทึกปิดงาน",
-              uri: checkoutDeepLink
+              label: "📊 อัปเดตความคืบหน้าต่อ",
+              uri: updateDeepLink
+            }
+          },
+          {
+            type: "button",
+            style: "primary",
+            color: "#059669",
+            height: "sm",
+            margin: "xs",
+            action: {
+              type: "uri",
+              label: "🏁 บันทึกปิดงานเมื่อเสร็จ",
+              uri: closeDeepLink
             }
           }
         ]

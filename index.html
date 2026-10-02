@@ -156,48 +156,6 @@
             <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-white border-2 border-slate-300 hover:border-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 rounded-xl px-4 py-3 text-xs md:text-sm text-slate-950 font-medium placeholder:text-slate-400 transition-all shadow-2xs">
           </div>
 
-          <!-- 5. แนบรูปถ่ายหน้างาน สูงสุด 5 รูป -->
-          <div class="bg-gradient-to-b from-slate-50 to-blue-50/20 border-2 border-slate-200/90 hover:border-blue-300 rounded-2xl p-4 transition-all space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold shadow-2xs">
-                  📸
-                </div>
-                <div>
-                  <label class="block text-xs font-bold text-slate-900">แนบรูปถ่ายหน้างาน</label>
-                  <p class="text-[10px] text-slate-500">ถ่ายรูปจุดติดตั้ง หรือสภาพหน้างานจริง</p>
-                </div>
-              </div>
-              <span id="checkinPhotoCountBadge" class="text-xs font-bold font-mono px-3 py-1 rounded-full bg-white text-slate-700 border border-slate-300 shadow-2xs">
-                0/5 รูป
-              </span>
-            </div>
-
-            <!-- Upload Area & Previews -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <label class="group relative flex-shrink-0 border-2 border-dashed border-blue-400 hover:border-blue-600 bg-white hover:bg-blue-50/50 rounded-xl p-3 sm:px-4 sm:py-3.5 flex items-center justify-center space-x-2.5 cursor-pointer transition-all shadow-2xs active:scale-[0.98]">
-                <div class="w-8 h-8 rounded-lg bg-blue-50 group-hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                </div>
-                <div class="text-left">
-                  <div class="text-xs font-bold text-blue-700 group-hover:text-blue-800">+ เพิ่มรูปภาพ</div>
-                  <div class="text-[10px] text-slate-500">แตะถ่ายรูป / แนบรูปภาพ</div>
-                </div>
-                <input type="file" accept="image/*" multiple onchange="window.handlePhotoUpload(event)" class="hidden">
-              </label>
-
-              <!-- Thumbnail previews container -->
-              <div id="checkinPhotoPreviewsContainer" class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1 flex-1 min-h-[64px]">
-                <div class="text-[11px] text-slate-400 italic px-2">ยังไม่มีรูปถ่ายที่แนบ</div>
-              </div>
-            </div>
-
-            <div class="flex items-center space-x-1.5 text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
-              <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span>ระบบจะย่อขนาดไฟล์รูปให้อัตโนมัติ (ไม่เกิน 250KB) เพื่อให้ส่งเข้ากลุ่ม LINE ได้รวดเร็ว</span>
-            </div>
-          </div>
-
           <!-- Submit Button -->
           <div class="pt-2 border-t border-slate-200">
             <button type="button" onclick="submitCheckin()" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-black py-4 px-5 rounded-xl text-sm md:text-base shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center space-x-2">
@@ -803,59 +761,7 @@
     </div>
   </div>
 
-  <!-- 4. UPDATE PROGRESS MODAL (FEATURE 3) -->
-  <div id="updateProgressModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
-    <div class="bg-white rounded-2xl max-w-md w-full p-4 md:p-6 shadow-2xl border border-slate-200 my-8 space-y-4 animate-modal-in">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-        <div>
-          <h2 class="text-sm font-bold text-slate-900">อัปเดตความคืบหน้างาน</h2>
-          <p id="updateTaskTitleLabel" class="text-xs text-blue-600 font-medium truncate mt-0.5"></p>
-        </div>
-        <button type="button" onclick="closeUpdateProgressModal()" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
-      </div>
 
-      <div class="space-y-3.5 text-xs">
-        <!-- Progress bar & number -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="font-semibold text-slate-700">ระดับความคืบหน้า</span>
-            <span id="updateProgressNum" class="font-bold font-mono text-blue-600 text-sm">50%</span>
-          </div>
-          <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mb-2">
-            <div id="updateProgressBarFill" class="h-2 bg-blue-600 rounded-full transition-all" style="width: 50%"></div>
-          </div>
-          <!-- Quick buttons -->
-          <div class="grid grid-cols-5 gap-1">
-            <button type="button" id="quickProg-25" onclick="setProgressPercent(25)" class="py-1.5 px-1 rounded-lg text-xs font-medium border text-center transition-all bg-slate-50 border-slate-200">25%</button>
-            <button type="button" id="quickProg-50" onclick="setProgressPercent(50)" class="py-1.5 px-1 rounded-lg text-xs font-bold border text-center transition-all bg-blue-600 text-white border-blue-600">50%</button>
-            <button type="button" id="quickProg-75" onclick="setProgressPercent(75)" class="py-1.5 px-1 rounded-lg text-xs font-medium border text-center transition-all bg-slate-50 border-slate-200">75%</button>
-            <button type="button" id="quickProg-90" onclick="setProgressPercent(90)" class="py-1.5 px-1 rounded-lg text-xs font-medium border text-center transition-all bg-slate-50 border-slate-200">90%</button>
-            <button type="button" id="quickProg-100" onclick="setProgressPercent(100)" class="py-1.5 px-1 rounded-lg text-xs font-medium border text-center transition-all bg-slate-50 border-slate-200">100%</button>
-          </div>
-        </div>
-
-        <!-- Status choices -->
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1.5">สถานะงาน</label>
-          <div class="grid grid-cols-2 gap-1.5">
-            <button type="button" id="statusChoice-กำลังทำ" onclick="setUpdateStatus('กำลังทำ')" class="py-2 px-3 rounded-lg border text-center text-xs font-bold transition-all bg-blue-600 text-white border-blue-600 shadow-xs">กำลังทำ</button>
-            <button type="button" id="statusChoice-เสร็จสิ้น" onclick="setUpdateStatus('เสร็จสิ้น')" class="py-2 px-3 rounded-lg border text-center text-xs font-medium transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200">เสร็จสิ้น</button>
-          </div>
-        </div>
-
-        <!-- Progress note -->
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">รายละเอียดความคืบหน้า</label>
-          <input type="text" id="updateNoteInput" placeholder="เช่น เดินท่อร้อยสายชั้น 2 เสร็จแล้ว รอปรับมุมกล้อง..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none">
-        </div>
-      </div>
-
-      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
-        <button type="button" onclick="closeUpdateProgressModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3.5 rounded-lg text-xs">ยกเลิก</button>
-        <button type="button" onclick="submitUpdateProgress()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-xs shadow-xs">บันทึก & แชร์เข้า LINE</button>
-      </div>
-    </div>
-  </div>
 
   <!-- 5. MANAGE TECHNICIANS MODAL (ADD / REMOVE) -->
   <div id="manageTechModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">

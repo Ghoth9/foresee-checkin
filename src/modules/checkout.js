@@ -245,6 +245,7 @@ export async function submitProgressOnly({
 
   // 1. Send Progress Flex Card
   const flexCard = createProgressFlexCard({
+    id: activeItem.id,
     taskId: activeItem.taskId || activeItem.id,
     taskTitle: activeItem.task,
     techs: activeItem.techs,
