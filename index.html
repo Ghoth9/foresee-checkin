@@ -9,7 +9,7 @@
   <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.01.v15";
+    const FORESEE_APP_VERSION = "2026.10.02.v16";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -57,177 +57,191 @@
 
   <!-- ==================== HEADER ==================== -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 text-slate-800 shadow-xs">
-    <div class="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between">
+    <div class="max-w-md md:max-w-5xl lg:max-w-6xl mx-auto px-4 md:px-6 py-2.5 flex items-center justify-between">
       <div class="flex items-center space-x-2.5">
-        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-xs text-white shadow-sm">
+        <div class="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-xs md:text-sm text-white shadow-sm">
           FS
         </div>
         <div>
-          <div class="text-xs font-bold tracking-wider text-slate-900 uppercase">FORESEE CCTV SERVICE</div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs md:text-sm font-bold tracking-wider text-slate-900 uppercase">FORESEE CCTV SERVICE</span>
+            <span class="hidden md:inline-flex text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">🏢 สำนักงาน & ภาคสนาม</span>
+          </div>
           <div class="text-[10px] text-slate-500">ระบบงานช่างภาคสนาม & บันทึกเวลาหน้างาน</div>
         </div>
       </div>
-      <div class="flex items-center space-x-1.5">
-        <button type="button" onclick="hardRefreshApp()" class="text-[10px] px-1.5 py-1 rounded-md font-medium bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 flex items-center space-x-0.5 active:scale-95 transition-all" title="รีเฟรชรับอัปเดตใหม่">
+      <div class="flex items-center space-x-1.5 md:space-x-2">
+        <button type="button" onclick="hardRefreshApp()" class="text-[10px] px-2 py-1 md:py-1.5 rounded-md font-medium bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 flex items-center space-x-1 active:scale-95 transition-all" title="รีเฟรชรับอัปเดตใหม่">
           <span>🔄</span>
+          <span class="hidden md:inline text-[11px]">รีเฟรช</span>
         </button>
-        <button id="gasSyncBtn" type="button" onclick="syncWithGoogleSheet()" class="text-[10px] px-2 py-1 rounded-md font-medium bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 flex items-center space-x-1 active:scale-95 transition-all" title="กดเพื่อซิงค์ข้อมูลกับ Google Sheet">
+        <button id="gasSyncBtn" type="button" onclick="syncWithGoogleSheet()" class="text-[10px] px-2 md:px-2.5 py-1 md:py-1.5 rounded-md font-medium bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 flex items-center space-x-1 active:scale-95 transition-all" title="กดเพื่อซิงค์ข้อมูลกับ Google Sheet">
           <span id="gasDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span id="gasStatusText">Sheet</span>
+          <span id="gasStatusText" class="text-[11px]">Sheet ซิงค์แล้ว</span>
         </button>
-        <div id="gpsStatusBadge" class="text-[10px] px-2 py-1 rounded-md font-medium bg-slate-100 border border-slate-200 text-slate-700 flex items-center space-x-1.5">
+        <div id="gpsStatusBadge" class="text-[10px] px-2 md:px-2.5 py-1 md:py-1.5 rounded-md font-medium bg-slate-100 border border-slate-200 text-slate-700 flex items-center space-x-1.5">
           <span id="gpsDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span id="gpsStatusText">GPS พร้อม</span>
+          <span id="gpsStatusText" class="text-[11px]">GPS พร้อม</span>
         </div>
       </div>
     </div>
   </header>
 
-  <main class="max-w-md mx-auto px-3.5 pt-3 space-y-3">
+  <main class="max-w-md md:max-w-5xl lg:max-w-6xl mx-auto px-3.5 md:px-6 pt-3 md:pt-5 space-y-3 md:space-y-5">
 
     <!-- ==================== SEGMENTED NAVIGATION ==================== -->
     <!-- Distinctly separated: Field Operations (Check-in/Out) vs Management (Tasks) -->
-    <div class="bg-slate-200/90 p-1 rounded-xl grid grid-cols-3 gap-1 text-xs font-medium text-slate-600 shadow-inner">
-      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold flex items-center justify-center space-x-1">
-        <span>📍 เช็กอินหน้างาน</span>
+    <div class="bg-slate-200/90 p-1 md:p-1.5 rounded-xl grid grid-cols-3 gap-1 md:gap-2 text-xs md:text-sm font-medium text-slate-600 shadow-inner">
+      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2 md:py-2.5 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold flex items-center justify-center space-x-1.5">
+        <span class="text-sm">📍</span>
+        <span>เช็กอินหน้างาน</span>
       </button>
-      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
-        <span>🏁 ปิดงานหน้างาน</span>
+      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2 md:py-2.5 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1.5">
+        <span class="text-sm">🏁</span>
+        <span>ปิดงานหน้างาน</span>
         <span id="activeCheckinBadge" class="hidden ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white leading-none">0</span>
       </button>
-      <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1">
-        <span>📋 มอบหมายงาน</span>
+      <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2 md:py-2.5 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1.5">
+        <span class="text-sm">📋</span>
+        <span>มอบหมายงาน</span>
       </button>
     </div>
 
     <!-- ========================================================================= -->
     <!-- TAB 1: เช็กอินหน้างาน (CCTV TECHNICIAN FIELD CHECK-IN - ZERO FRICTION!) -->
     <!-- ========================================================================= -->
-    <section id="checkinSection" class="space-y-3">
+    <section id="checkinSection" class="space-y-3 md:space-y-0 md:grid md:grid-cols-12 md:gap-6 md:items-start">
       
-      <!-- GPS Status Card -->
-      <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex items-center justify-between">
-        <div class="flex items-start space-x-2.5">
-          <div class="mt-0.5 text-blue-600">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
+      <!-- Left Column on Desktop (Col 1-7): Check-in Form -->
+      <div class="space-y-3 md:col-span-7">
+        <div class="bg-white rounded-xl p-4 md:p-5 border border-slate-200 shadow-sm space-y-4">
+          
+          <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
+            <div>
+              <h2 class="text-sm md:text-base font-bold text-slate-900">เช็กอินถึงหน้างาน</h2>
+              <p class="text-[11px] md:text-xs text-slate-500">สำหรับช่างปฏิบัติงานจริงหน้างาน เลือกทีมช่างและประเภทงาน</p>
+            </div>
+            <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">พิกัดจริง</span>
           </div>
-          <div>
-            <div id="gpsLocationTitle" class="text-xs font-semibold text-slate-800">กำลังระบุตำแหน่ง GPS หน้างาน...</div>
-            <div id="gpsCoordsText" class="text-[10px] text-slate-500">เปิด GPS บนอุปกรณ์เพื่อบันทึกพิกัดที่แท้จริง</div>
-          </div>
-        </div>
-        <button type="button" onclick="requestLocation()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded border border-slate-200 transition-colors">
-          รีเฟรช
-        </button>
-      </div>
 
-      <!-- Main Check-in Form -->
-      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-4">
-        
-        <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
+          <!-- 1. ทีมช่างที่เข้าหน้างานวันนี้ (Multi-select Team Chips) -->
           <div>
-            <h2 class="text-sm font-bold text-slate-900">เช็กอินถึงหน้างาน</h2>
-            <p class="text-[11px] text-slate-500">สำหรับช่างปฏิบัติงานจริงหน้างาน เลือกทีมช่างและประเภทงาน</p>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-semibold text-slate-700">1. ทีมช่างที่เข้าหน้างานวันนี้ <span class="text-rose-500">*</span></label>
+              <button type="button" onclick="openManageTechModal()" class="text-[11px] text-blue-600 font-semibold hover:underline flex items-center space-x-0.5">
+                <span>⚙️ จัดการช่าง (+/-)</span>
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-1.5" id="checkinTechChipsContainer">
+              <!-- Rendered dynamically -->
+            </div>
           </div>
-          <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">พิกัดจริง</span>
-        </div>
 
-        <!-- 1. ทีมช่างที่เข้าหน้างานวันนี้ (Multi-select Team Chips) -->
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <label class="text-xs font-semibold text-slate-700">1. ทีมช่างที่เข้าหน้างานวันนี้ <span class="text-rose-500">*</span></label>
-            <button type="button" onclick="openManageTechModal()" class="text-[11px] text-blue-600 font-semibold hover:underline flex items-center space-x-0.5">
-              <span>⚙️ จัดการช่าง (+/-)</span>
+          <!-- 2. ประเภทงานหน้างาน (Quick 1-Tap Chips + Custom Input) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5">2. ประเภทงานหน้างาน <span class="text-rose-500">*</span></label>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-1.5" id="cctvQuickChipsContainer">
+              <!-- Preset chips rendered dynamically -->
+            </div>
+            <!-- Custom Job Input (Hidden by default, shown when "✏️ พิมพ์ระบุเอง" is selected) -->
+            <div id="customJobTypeContainer" class="hidden mt-2">
+              <input type="text" id="customJobTypeInput" placeholder="พิมพ์ระบุประเภทงาน เช่น รื้อถอนระบบเดิม, จัดตู้ Rack, ซ่อมไฟเบอร์..." class="w-full bg-slate-50 border border-blue-400 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <!-- 3. สถานที่ / ไซต์งาน / ลูกค้า -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">3. สถานที่ / ไซต์งาน / ชื่อลูกค้า <span class="text-rose-500">*</span></label>
+            <input type="text" id="fieldLocationInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32 หรือ บจก. นิวเคลียร์" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+          </div>
+
+          <!-- 4. รายละเอียดหน้างาน / อาการ -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">4. รายละเอียดหน้างาน / อาการ</label>
+            <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+          </div>
+
+          <!-- Big Touch-Friendly Action Button -->
+          <div class="pt-2 border-t border-slate-100">
+            <button type="button" onclick="submitCheckin()" id="btnCheckinSubmit" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all flex items-center justify-center space-x-2">
+              <span>📍 เช็กอินถึงหน้างาน & แชร์เข้ากลุ่ม LINE</span>
             </button>
           </div>
-          <div class="flex flex-wrap gap-1.5" id="checkinTechChipsContainer">
-            <!-- Rendered dynamically -->
+
+        </div>
+      </div>
+
+      <!-- Right Column on Desktop (Col 8-12): GPS Status Card & Today's Logs -->
+      <div class="space-y-3 md:col-span-5">
+        
+        <!-- GPS Status Card -->
+        <div class="bg-white rounded-xl p-3 md:p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div class="flex items-start space-x-2.5">
+            <div class="mt-0.5 text-blue-600">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div>
+              <div id="gpsLocationTitle" class="text-xs md:text-sm font-semibold text-slate-800">กำลังระบุตำแหน่ง GPS หน้างาน...</div>
+              <div id="gpsCoordsText" class="text-[10px] md:text-xs text-slate-500">เปิด GPS บนอุปกรณ์เพื่อบันทึกพิกัดที่แท้จริง</div>
+            </div>
           </div>
-        </div>
-
-        <!-- 2. ประเภทงานหน้างาน (Quick 1-Tap Chips + Custom Input) -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">2. ประเภทงานหน้างาน <span class="text-rose-500">*</span></label>
-          <div class="grid grid-cols-2 gap-1.5" id="cctvQuickChipsContainer">
-            <!-- Preset chips rendered dynamically -->
-          </div>
-          <!-- Custom Job Input (Hidden by default, shown when "✏️ พิมพ์ระบุเอง" is selected) -->
-          <div id="customJobTypeContainer" class="hidden mt-2">
-            <input type="text" id="customJobTypeInput" placeholder="พิมพ์ระบุประเภทงาน เช่น รื้อถอนระบบเดิม, จัดตู้ Rack, ซ่อมไฟเบอร์..." class="w-full bg-slate-50 border border-blue-400 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-          </div>
-        </div>
-
-        <!-- 3. สถานที่ / ไซต์งาน / ลูกค้า -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">3. สถานที่ / ไซต์งาน / ชื่อลูกค้า <span class="text-rose-500">*</span></label>
-          <input type="text" id="fieldLocationInput" placeholder="เช่น บ้านคุณสมชาย ซอยลาซาล 32 หรือ บจก. นิวเคลียร์" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-        </div>
-
-        <!-- 4. รายละเอียดหน้างาน / อาการ -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">4. รายละเอียดหน้างาน / อาการ</label>
-          <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
-        </div>
-
-        <!-- Big Touch-Friendly Action Button -->
-        <div class="pt-2 border-t border-slate-100">
-          <button type="button" onclick="submitCheckin()" id="btnCheckinSubmit" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all flex items-center justify-center space-x-2">
-            <span>📍 เช็กอินถึงหน้างาน & แชร์เข้ากลุ่ม LINE</span>
+          <button type="button" onclick="requestLocation()" class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg border border-slate-200 transition-colors">
+            รีเฟรช
           </button>
         </div>
 
-      </div>
-
-      <!-- Today's Activity Log Card (Collapsible) -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all">
-        <button type="button" onclick="toggleTodayLogs()" class="w-full p-3 flex items-center justify-between hover:bg-slate-50 transition-colors text-left select-none">
-          <div class="flex items-center space-x-2">
-            <span class="text-sm">📋</span>
-            <span class="text-xs font-bold text-slate-800">ประวัติการปฏิบัติงานวันนี้</span>
-            <span id="todayLogsBadge" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">0 งาน</span>
-          </div>
-          <div class="flex items-center space-x-2 text-[10px] text-slate-500 font-medium">
-            <span id="todayDateLabel">วันนี้</span>
-            <span id="todayLogsChevron" class="text-xs text-slate-400 font-bold transition-transform">▼</span>
-          </div>
-        </button>
-        <div id="todayLogsCollapseBody" class="hidden p-3 pt-0 border-t border-slate-100 space-y-2">
-          <!-- Action Toolbar for Deletion -->
-          <div class="pt-2 flex items-center justify-between text-[11px] border-b border-slate-100 pb-2">
-            <div id="logNormalToolbar" class="flex items-center space-x-1.5 w-full justify-between">
-              <span class="text-[10px] text-slate-400">จัดการข้อมูล:</span>
-              <div class="flex items-center space-x-1.5">
-                <button type="button" onclick="toggleLogSelectMode()" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors text-[10px] flex items-center space-x-1 border border-slate-200">
-                  <span>☑️ เลือกลบหลายรายการ</span>
-                </button>
-                <button type="button" onclick="clearAllTodayLogs()" class="px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium transition-colors text-[10px] flex items-center space-x-1 border border-rose-200">
-                  <span>🗑️ ล้างทั้งหมด</span>
-                </button>
+        <!-- Today's Activity Log Card (Collapsible) -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+          <button type="button" onclick="toggleTodayLogs()" class="w-full p-3 md:p-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors text-left select-none">
+            <div class="flex items-center space-x-2">
+              <span class="text-sm md:text-base">📋</span>
+              <span class="text-xs md:text-sm font-bold text-slate-800">ประวัติการปฏิบัติงานวันนี้</span>
+              <span id="todayLogsBadge" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">0 งาน</span>
+            </div>
+            <div class="flex items-center space-x-2 text-[10px] md:text-xs text-slate-500 font-medium">
+              <span id="todayDateLabel">วันนี้</span>
+              <span id="todayLogsChevron" class="text-xs text-slate-400 font-bold transition-transform">▼</span>
+            </div>
+          </button>
+          <div id="todayLogsCollapseBody" class="hidden p-3 md:p-3.5 pt-0 border-t border-slate-100 space-y-2">
+            <!-- Action Toolbar for Deletion -->
+            <div class="pt-2 flex items-center justify-between text-[11px] border-b border-slate-100 pb-2">
+              <div id="logNormalToolbar" class="flex items-center space-x-1.5 w-full justify-between">
+                <span class="text-[10px] text-slate-400">จัดการข้อมูล:</span>
+                <div class="flex items-center space-x-1.5">
+                  <button type="button" onclick="toggleLogSelectMode()" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors text-[10px] flex items-center space-x-1 border border-slate-200">
+                    <span>☑️ เลือกลบหลายรายการ</span>
+                  </button>
+                  <button type="button" onclick="clearAllTodayLogs()" class="px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium transition-colors text-[10px] flex items-center space-x-1 border border-rose-200">
+                    <span>🗑️ ล้างทั้งหมด</span>
+                  </button>
+                </div>
+              </div>
+              <div id="logSelectToolbar" class="hidden flex items-center space-x-1.5 w-full justify-between bg-amber-50 p-1.5 rounded-lg border border-amber-200">
+                <label class="flex items-center space-x-1.5 cursor-pointer text-[10px] font-bold text-amber-900 select-none">
+                  <input type="checkbox" id="selectAllLogsCheckbox" onchange="toggleSelectAllLogs(this.checked)" class="rounded text-blue-600 focus:ring-0">
+                  <span>เลือกทั้งหมด</span>
+                </label>
+                <div class="flex items-center space-x-1">
+                  <button type="button" onclick="deleteSelectedLogs()" id="btnDeleteSelectedLogs" disabled class="px-2.5 py-1 rounded bg-slate-300 text-slate-500 font-bold transition-colors text-[10px] flex items-center space-x-1 cursor-not-allowed">
+                    <span>🗑️ ลบที่เลือก (<span id="selectedLogsCount">0</span>)</span>
+                  </button>
+                  <button type="button" onclick="toggleLogSelectMode(false)" class="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-600 font-medium transition-colors text-[10px] border border-slate-200">
+                    <span>ยกเลิก</span>
+                  </button>
+                </div>
               </div>
             </div>
-            <div id="logSelectToolbar" class="hidden flex items-center space-x-1.5 w-full justify-between bg-amber-50 p-1.5 rounded-lg border border-amber-200">
-              <label class="flex items-center space-x-1.5 cursor-pointer text-[10px] font-bold text-amber-900 select-none">
-                <input type="checkbox" id="selectAllLogsCheckbox" onchange="toggleSelectAllLogs(this.checked)" class="rounded text-blue-600 focus:ring-0">
-                <span>เลือกทั้งหมด</span>
-              </label>
-              <div class="flex items-center space-x-1">
-                <button type="button" onclick="deleteSelectedLogs()" id="btnDeleteSelectedLogs" disabled class="px-2.5 py-1 rounded bg-slate-300 text-slate-500 font-bold transition-colors text-[10px] flex items-center space-x-1 cursor-not-allowed">
-                  <span>🗑️ ลบที่เลือก (<span id="selectedLogsCount">0</span>)</span>
-                </button>
-                <button type="button" onclick="toggleLogSelectMode(false)" class="px-2 py-1 rounded bg-white hover:bg-slate-100 text-slate-600 font-medium transition-colors text-[10px] border border-slate-200">
-                  <span>ยกเลิก</span>
-                </button>
-              </div>
-            </div>
-          </div>
 
-          <div id="todayLogsContainer" class="space-y-2 max-h-64 overflow-y-auto pr-0.5 pt-1">
-            <!-- Rendered dynamically -->
+            <div id="todayLogsContainer" class="space-y-2 max-h-64 md:max-h-96 overflow-y-auto pr-0.5 pt-1">
+              <!-- Rendered dynamically -->
+            </div>
           </div>
         </div>
+
       </div>
 
     </section>
@@ -256,41 +270,45 @@
         </p>
       </div>
 
-      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3.5">
+      <div class="bg-white rounded-xl p-4 md:p-6 border border-slate-200 shadow-sm space-y-4">
         
         <div class="border-b border-slate-100 pb-2.5 flex items-center justify-between">
           <div>
-            <h2 class="text-sm font-bold text-slate-900">ปิดงานหน้างานและบันทึกเวลาจบ</h2>
-            <p class="text-[11px] text-slate-500">เลือกงานหน้างานที่ต้องการปิดและสรุปผลงาน</p>
+            <h2 class="text-sm md:text-base font-bold text-slate-900">ปิดงานหน้างานและบันทึกเวลาจบ</h2>
+            <p class="text-[11px] md:text-xs text-slate-500">เลือกงานหน้างานที่ต้องการปิดและสรุปผลงาน</p>
           </div>
-          <button type="button" onclick="renderActiveCheckoutList(activeTasks)" class="text-[11px] text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded border border-slate-200">
+          <button type="button" onclick="renderActiveCheckoutList(activeTasks)" class="text-[11px] text-slate-600 font-medium bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors">
             รีเฟรช
           </button>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-2">1. เลือกงานหน้างานที่กำลังทำอยู่ <span class="text-rose-500">*</span></label>
-          <div id="activeListContainer" class="space-y-2 max-h-56 overflow-y-auto pr-0.5">
-            <!-- Active tasks rendered here -->
-          </div>
-        </div>
-
-        <!-- Outcome Selection Section -->
-        <div id="checkoutOutcomeSection" class="hidden space-y-2.5 pt-2 border-t border-slate-100">
-          <label class="block text-xs font-semibold text-slate-700">2. สรุปผลการปฏิบัติงานหน้างาน <span class="text-rose-500">*</span></label>
-          <div class="space-y-1.5 text-xs" id="checkoutOutcomesContainer">
-            <!-- Rendered dynamically -->
-          </div>
+        <div class="md:grid md:grid-cols-2 md:gap-6 space-y-3.5 md:space-y-0">
           <div>
-            <label class="block text-[11px] text-slate-500 mb-1">หมายเหตุเพิ่มเติม:</label>
-            <input type="text" id="checkoutNoteInput" placeholder="เช่น ลูกค้ารับมอบเรียบร้อย, เซ็ตดูผ่านแอป Hik-Connect ให้แล้ว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+            <label class="block text-xs font-semibold text-slate-700 mb-2">1. เลือกงานหน้างานที่กำลังทำอยู่ <span class="text-rose-500">*</span></label>
+            <div id="activeListContainer" class="space-y-2 max-h-56 md:max-h-96 overflow-y-auto pr-0.5">
+              <!-- Active tasks rendered here -->
+            </div>
           </div>
-        </div>
 
-        <div class="pt-1">
-          <button type="button" onclick="submitCheckout()" id="btnCheckoutSubmit" disabled class="w-full bg-slate-300 text-slate-500 font-bold py-3.5 px-4 rounded-xl text-xs transition-all flex items-center justify-center space-x-2 cursor-not-allowed">
-            <span>เลือกงานด้านบนเพื่อปิดงาน</span>
-          </button>
+          <div class="space-y-3.5">
+            <!-- Outcome Selection Section -->
+            <div id="checkoutOutcomeSection" class="hidden space-y-2.5">
+              <label class="block text-xs font-semibold text-slate-700">2. สรุปผลการปฏิบัติงานหน้างาน <span class="text-rose-500">*</span></label>
+              <div class="space-y-1.5 text-xs" id="checkoutOutcomesContainer">
+                <!-- Rendered dynamically -->
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-1">หมายเหตุเพิ่มเติม:</label>
+                <input type="text" id="checkoutNoteInput" placeholder="เช่น ลูกค้ารับมอบเรียบร้อย, เซ็ตดูผ่านแอป Hik-Connect ให้แล้ว" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-slate-800">
+              </div>
+            </div>
+
+            <div class="pt-1">
+              <button type="button" onclick="submitCheckout()" id="btnCheckoutSubmit" disabled class="w-full bg-slate-300 text-slate-500 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm transition-all flex items-center justify-center space-x-2 cursor-not-allowed">
+                <span>เลือกงานด้านบนเพื่อปิดงาน</span>
+              </button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -299,52 +317,52 @@
     <!-- ========================================================================= -->
     <!-- TAB 3: มอบหมายงาน - OFFICE TASK MANAGEMENT -->
     <!-- ========================================================================= -->
-    <section id="tasksSection" class="hidden space-y-3">
+    <section id="tasksSection" class="hidden space-y-3 md:space-y-4">
       
       <!-- Operations Overview Header Card -->
-      <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center space-x-2.5">
-            <div class="w-9 h-9 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center text-sm shadow-sm" id="userAvatarElem">
+      <div class="bg-white rounded-xl md:rounded-2xl p-3.5 md:p-5 border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-3 md:mb-4">
+          <div class="flex items-center space-x-2.5 md:space-x-3">
+            <div class="w-9 h-9 md:w-11 md:h-11 rounded-full bg-slate-800 text-white font-bold flex items-center justify-center text-sm md:text-base shadow-sm" id="userAvatarElem">
               FS
             </div>
             <div>
-              <div class="flex items-center space-x-1.5">
-                <span class="text-xs font-bold text-slate-900" id="currentOfficerName">งานมอบหมาย</span>
-                <span class="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 font-medium">Foresee</span>
+              <div class="flex items-center space-x-1.5 md:space-x-2">
+                <span class="text-xs md:text-sm font-bold text-slate-900" id="currentOfficerName">งานมอบหมาย</span>
+                <span class="text-[10px] md:text-xs text-blue-700 bg-blue-50 px-1.5 md:px-2 py-0.5 rounded border border-blue-200 font-medium">Foresee</span>
               </div>
-              <div class="text-[10px] text-slate-500 mt-0.5" id="taskSummaryCount">ภาระงานทั้งหมด 0 รายการ</div>
+              <div class="text-[10px] md:text-xs text-slate-500 mt-0.5" id="taskSummaryCount">ภาระงานทั้งหมด 0 รายการ</div>
             </div>
           </div>
-          <button type="button" onclick="openAssignModal()" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-medium text-xs px-2.5 py-1.5 rounded-lg shadow-sm transition-all flex items-center space-x-1">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <button type="button" onclick="openAssignModal()" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-medium text-xs md:text-sm px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg shadow-sm transition-all flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             <span>มอบหมายงาน</span>
           </button>
         </div>
 
         <!-- Metric Pills -->
-        <div class="grid grid-cols-3 gap-1.5 text-center text-[11px] pt-1 border-t border-slate-100 mb-3">
-          <div class="bg-rose-50 border border-rose-200/80 rounded-lg py-1.5 px-1 text-rose-700 font-medium flex items-center justify-center space-x-1">
+        <div class="grid grid-cols-3 gap-1.5 md:gap-3 text-center text-[11px] md:text-xs pt-2 md:pt-3 border-t border-slate-100 mb-3 md:mb-4">
+          <div class="bg-rose-50 border border-rose-200/80 rounded-lg md:rounded-xl py-1.5 md:py-2.5 px-1 md:px-3 text-rose-700 font-medium flex items-center justify-center space-x-1 md:space-x-2">
             <span>🚨 เกินกำหนด</span>
-            <span class="font-bold text-rose-800" id="statOverdue">0</span>
+            <span class="font-bold text-rose-800 text-xs md:text-base" id="statOverdue">0</span>
           </div>
-          <div class="bg-amber-50 border border-amber-200/80 rounded-lg py-1.5 px-1 text-amber-700 font-medium flex items-center justify-center space-x-1">
+          <div class="bg-amber-50 border border-amber-200/80 rounded-lg md:rounded-xl py-1.5 md:py-2.5 px-1 md:px-3 text-amber-700 font-medium flex items-center justify-center space-x-1 md:space-x-2">
             <span>⏳ กำลังทำ</span>
-            <span class="font-bold text-amber-800" id="statInProgress">0</span>
+            <span class="font-bold text-amber-800 text-xs md:text-base" id="statInProgress">0</span>
           </div>
-          <div class="bg-emerald-50 border border-emerald-200/80 rounded-lg py-1.5 px-1 text-emerald-700 font-medium flex items-center justify-center space-x-1">
+          <div class="bg-emerald-50 border border-emerald-200/80 rounded-lg md:rounded-xl py-1.5 md:py-2.5 px-1 md:px-3 text-emerald-700 font-medium flex items-center justify-center space-x-1 md:space-x-2">
             <span>✅ เสร็จ</span>
-            <span class="font-bold text-emerald-800" id="statCompleted">0</span>
+            <span class="font-bold text-emerald-800 text-xs md:text-base" id="statCompleted">0</span>
           </div>
         </div>
 
         <!-- Filter by Technician Row -->
-        <div class="pt-2 border-t border-slate-100">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">กรองดูตามผู้รับผิดชอบ:</span>
-            <button type="button" onclick="openManageTechModal()" class="text-[10px] text-blue-600 font-semibold hover:underline">⚙️ จัดการช่าง (+/-)</button>
+        <div class="pt-2 md:pt-3 border-t border-slate-100">
+          <div class="flex items-center justify-between mb-1.5 md:mb-2">
+            <span class="text-[10px] md:text-xs text-slate-400 font-semibold uppercase tracking-wider">กรองดูตามผู้รับผิดชอบ:</span>
+            <button type="button" onclick="openManageTechModal()" class="text-[10px] md:text-xs text-blue-600 font-semibold hover:underline">⚙️ จัดการช่าง (+/-)</button>
           </div>
-          <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-0.5" id="techFilterContainer">
+          <div class="flex items-center space-x-1.5 md:space-x-2 overflow-x-auto no-scrollbar pb-0.5" id="techFilterContainer">
             <!-- Filter chips injected dynamically -->
           </div>
         </div>
@@ -352,12 +370,12 @@
 
       <!-- Task List Header -->
       <div class="flex items-center justify-between px-1">
-        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide" id="taskListSectionHeader">รายการงานมอบหมาย</h3>
-        <span class="text-[11px] text-slate-500">ติดตาม/อัปเดต/ขยายเวลา</span>
+        <h3 class="text-xs md:text-sm font-bold text-slate-700 uppercase tracking-wide" id="taskListSectionHeader">รายการงานมอบหมาย</h3>
+        <span class="text-[11px] md:text-xs text-slate-500">ติดตาม/อัปเดต/ขยายเวลา</span>
       </div>
 
-      <!-- Task Card Rows Container -->
-      <div id="taskListContainer" class="space-y-3">
+      <!-- Task Card Rows Container (Grid on Desktop) -->
+      <div id="taskListContainer" class="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
         <!-- Rendered dynamically -->
       </div>
     </section>
@@ -368,7 +386,7 @@
   <!-- MODAL: มอบหมายงานใหม่ -->
   <!-- ========================================================================= -->
   <div id="assignModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3.5 z-50 overflow-y-auto modal-scroll-container">
-    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto">
+    <div class="bg-white rounded-2xl p-5 md:p-6 max-w-sm md:max-w-2xl w-full shadow-2xl border border-slate-100 my-auto">
       
       <div class="flex items-start justify-between mb-3.5">
         <div class="flex items-center space-x-2.5">
@@ -448,7 +466,7 @@
   <!-- MODAL: อัปเดตความคืบหน้างาน (PROGRESS UPDATE) -->
   <!-- ========================================================================= -->
   <div id="updateProgressModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
-    <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl border border-slate-100 my-auto">
+    <div class="bg-white rounded-2xl p-5 md:p-6 max-w-xs md:max-w-md w-full shadow-2xl border border-slate-100 my-auto">
       
       <div class="flex items-start justify-between mb-3">
         <div class="flex items-center space-x-2">
@@ -509,7 +527,7 @@
   <!-- MODAL: ขยายระยะเวลางาน -->
   <!-- ========================================================================= -->
   <div id="extendDeadlineModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
-    <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl border border-slate-100 my-auto">
+    <div class="bg-white rounded-2xl p-5 md:p-6 max-w-xs md:max-w-md w-full shadow-2xl border border-slate-100 my-auto">
       
       <div class="flex items-start justify-between mb-3">
         <div class="flex items-center space-x-2">
@@ -562,7 +580,7 @@
   <!-- MODAL: แก้ไขรายการงาน -->
   <!-- ========================================================================= -->
   <div id="editTaskModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3.5 z-50 overflow-y-auto modal-scroll-container">
-    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto">
+    <div class="bg-white rounded-2xl p-5 md:p-6 max-w-sm md:max-w-xl w-full shadow-2xl border border-slate-100 my-auto">
       
       <div class="flex items-start justify-between mb-3.5">
         <div class="flex items-center space-x-2">
@@ -685,7 +703,7 @@
   <!-- MODAL: MANAGE TECHNICIANS (ADD / REMOVE) -->
   <!-- ========================================================================= -->
   <div id="manageTechModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 modal-scroll-container">
-    <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl border border-slate-100 my-auto space-y-3.5">
+    <div class="bg-white rounded-2xl p-5 md:p-6 max-w-xs md:max-w-md w-full shadow-2xl border border-slate-100 my-auto space-y-3.5">
       
       <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <div class="flex items-center space-x-2">
@@ -751,7 +769,7 @@
   <!-- MODAL: TASK ALREADY CLOSED (งานนี้ปิดเรียบร้อยแล้ว) -->
   <!-- ========================================================================= -->
   <div id="alreadyClosedModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 modal-scroll-container">
-    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto text-center space-y-3.5">
+    <div class="bg-white rounded-2xl p-5 md:p-6 max-w-sm md:max-w-md w-full shadow-2xl border border-slate-100 my-auto text-center space-y-3.5">
       <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner font-bold">
         ✓
       </div>
@@ -778,7 +796,7 @@
   <!-- MODAL: JOB DETAIL MODAL (หน้ารายละเอียดสรุปผลงานฉบับเต็ม) -->
   <!-- ========================================================================= -->
   <div id="jobDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 modal-scroll-container">
-    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto space-y-4">
+    <div class="bg-white rounded-2xl p-5 md:p-6 max-w-sm md:max-w-lg w-full shadow-2xl border border-slate-100 my-auto space-y-4">
       
       <!-- Header -->
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -865,7 +883,7 @@
   <!-- MODAL: TASK ACTION MODAL (เด้งป๊อปอัปเมื่อกดเปิดดูงานจาก LINE) -->
   <!-- ========================================================================= -->
   <div id="taskActionModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3.5 z-50 overflow-y-auto modal-scroll-container">
-    <div class="bg-white rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-slate-100 my-auto space-y-3.5">
+    <div class="bg-white rounded-2xl p-5 md:p-6 max-w-sm md:max-w-lg w-full shadow-2xl border border-slate-100 my-auto space-y-3.5">
       
       <!-- Header -->
       <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
@@ -2928,7 +2946,7 @@
 
       if (filteredTasks.length === 0) {
         container.innerHTML = `
-          <div class="text-center py-8 text-slate-400 text-xs bg-white rounded-xl border border-dashed border-slate-200">
+          <div class="col-span-full text-center py-10 md:py-14 text-slate-400 text-xs md:text-sm bg-white rounded-xl md:rounded-2xl border border-dashed border-slate-200">
             ไม่พบงานที่มอบหมายให้ ${selectedTechFilter}
           </div>
         `;
@@ -2946,60 +2964,62 @@
         else if (isOver) badgeBg = "bg-rose-50 text-rose-700 border-rose-200";
 
         const card = document.createElement("div");
-        card.className = "bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3 transition-all";
+        card.className = "bg-white rounded-xl md:rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3 transition-all hover:shadow-md flex flex-col justify-between";
         card.innerHTML = `
-          <div class="flex items-center justify-between text-xs">
-            <div class="flex items-center space-x-1.5 flex-wrap">
-              <span class="w-5 h-5 rounded bg-slate-100 text-slate-600 font-mono font-bold flex items-center justify-center text-[10px]">${index + 1}</span>
-              <span class="text-[11px] text-slate-500 font-medium">ช่าง:</span>
-              ${techs.map(tName => `
-                <span class="text-[10px] bg-slate-100 text-slate-800 font-semibold px-2 py-0.5 rounded border border-slate-200">${tName}</span>
-              `).join('')}
-            </div>
-            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg} flex-shrink-0">${task.status}</span>
-          </div>
-
-          <div class="cursor-pointer group" onclick="openTaskActionModal('${task.id}')">
-            <h4 class="text-sm font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition-colors flex items-center justify-between">
-              <span>${task.title}</span>
-              <span class="text-[10px] text-blue-600 font-semibold group-hover:underline flex items-center space-x-0.5 flex-shrink-0 ml-2">
-                <span>เปิดดู</span>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </span>
-            </h4>
-            ${task.desc ? `<p class="text-xs text-slate-500 mt-0.5 leading-relaxed">${task.desc}</p>` : ''}
-          </div>
-
-          <div class="p-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between text-[11px] gap-2">
-            <div class="flex items-center space-x-1.5 text-slate-600 flex-wrap">
-              <svg class="w-3.5 h-3.5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <span>กำหนดส่ง: <strong class="text-slate-800">${task.deadline}</strong></span>
-              ${task.oldDeadline && task.oldDeadline !== '-' && task.oldDeadline !== task.deadline ? `
-                <span class="text-[10px] text-amber-600 font-normal line-through ml-1">(เดิม ${task.oldDeadline})</span>
-              ` : ''}
-              ${getDeadlineCountdownBadge(task.deadline, isDone)}
-            </div>
-            <div class="font-semibold text-blue-600 flex-shrink-0">${task.progress || 0}%</div>
-          </div>
-
-          ${task.reason && task.reason !== '-' ? `
-            <div class="p-2 bg-amber-50/70 rounded-lg border border-amber-200/60 text-[11px] text-amber-900">
-              <div class="font-semibold flex items-center space-x-1">
-                <span>⏰ หมายเหตุการขยายเวลา:</span>
+          <div>
+            <div class="flex items-center justify-between text-xs mb-2.5">
+              <div class="flex items-center space-x-1.5 flex-wrap">
+                <span class="w-5 h-5 rounded bg-slate-100 text-slate-600 font-mono font-bold flex items-center justify-center text-[10px]">${index + 1}</span>
+                <span class="text-[11px] text-slate-500 font-medium">ช่าง:</span>
+                ${techs.map(tName => `
+                  <span class="text-[10px] bg-slate-100 text-slate-800 font-semibold px-2 py-0.5 rounded border border-slate-200">${tName}</span>
+                `).join('')}
               </div>
-              <p class="text-[11px] text-amber-800 mt-0.5 whitespace-pre-line leading-relaxed">${task.reason}</p>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg} flex-shrink-0">${task.status}</span>
             </div>
-          ` : ''}
 
-          <div class="p-2.5 bg-slate-100/70 rounded-lg border border-slate-200/60 flex items-start space-x-2 text-xs">
-            <svg class="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>
-            <div class="flex-1">
-              <div class="text-slate-800 font-medium leading-snug">${task.latestUpdate || 'ยังไม่มีการบันทึกอัปเดต'}</div>
-              ${task.updateBy && task.updateBy !== '-' ? `<div class="text-[10px] text-slate-400 mt-0.5">โดย ${task.updateBy}${task.updateTime && task.updateTime !== 'undefined' ? ` (${task.updateTime})` : ''}</div>` : ''}
+            <div class="cursor-pointer group mb-2.5" onclick="openTaskActionModal('${task.id}')">
+              <h4 class="text-sm font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition-colors flex items-center justify-between">
+                <span>${task.title}</span>
+                <span class="text-[10px] text-blue-600 font-semibold group-hover:underline flex items-center space-x-0.5 flex-shrink-0 ml-2">
+                  <span>เปิดดู</span>
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </span>
+              </h4>
+              ${task.desc ? `<p class="text-xs text-slate-500 mt-1 leading-relaxed">${task.desc}</p>` : ''}
+            </div>
+
+            <div class="p-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between text-[11px] gap-2 mb-2">
+              <div class="flex items-center space-x-1.5 text-slate-600 flex-wrap">
+                <svg class="w-3.5 h-3.5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>กำหนดส่ง: <strong class="text-slate-800">${task.deadline}</strong></span>
+                ${task.oldDeadline && task.oldDeadline !== '-' && task.oldDeadline !== task.deadline ? `
+                  <span class="text-[10px] text-amber-600 font-normal line-through ml-1">(เดิม ${task.oldDeadline})</span>
+                ` : ''}
+                ${getDeadlineCountdownBadge(task.deadline, isDone)}
+              </div>
+              <div class="font-semibold text-blue-600 flex-shrink-0">${task.progress || 0}%</div>
+            </div>
+
+            ${task.reason && task.reason !== '-' ? `
+              <div class="p-2 bg-amber-50/70 rounded-lg border border-amber-200/60 text-[11px] text-amber-900 mb-2">
+                <div class="font-semibold flex items-center space-x-1">
+                  <span>⏰ หมายเหตุการขยายเวลา:</span>
+                </div>
+                <p class="text-[11px] text-amber-800 mt-0.5 whitespace-pre-line leading-relaxed">${task.reason}</p>
+              </div>
+            ` : ''}
+
+            <div class="p-2.5 bg-slate-100/70 rounded-lg border border-slate-200/60 flex items-start space-x-2 text-xs mb-2">
+              <svg class="w-3.5 h-3.5 text-indigo-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>
+              <div class="flex-1">
+                <div class="text-slate-800 font-medium leading-snug">${task.latestUpdate || 'ยังไม่มีการบันทึกอัปเดต'}</div>
+                ${task.updateBy && task.updateBy !== '-' ? `<div class="text-[10px] text-slate-400 mt-0.5">โดย ${task.updateBy}${task.updateTime && task.updateTime !== 'undefined' ? ` (${task.updateTime})` : ''}</div>` : ''}
+              </div>
             </div>
           </div>
 
-          <div class="flex flex-wrap items-center justify-end gap-1.5 pt-1 border-t border-slate-100">
+          <div class="flex flex-wrap items-center justify-end gap-1.5 pt-2 md:pt-3 border-t border-slate-100 mt-auto">
             <button type="button" onclick="openTaskActionModal('${task.id}')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
               <span>ดูงาน</span>
@@ -3202,9 +3222,10 @@
             ${assignRows.length > 1 ? `<button type="button" onclick="removeAssignRow(${idx})" class="text-rose-500 hover:text-rose-700">ลบแถวนี้</button>` : ''}
           </div>
 
-          <input type="text" value="${row.title}" oninput="assignRows[${idx}].title = this.value" placeholder="พิมพ์ชื่องาน CCTV เช่น ติดตั้งกล้องวงจรปิด 4 จุด..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
-
-          <input type="text" value="${row.desc}" oninput="assignRows[${idx}].desc = this.value" placeholder="สถานที่ / รายละเอียดเพิ่มเติม (เช่น ซอยลาซาล 32)..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <input type="text" value="${row.title}" oninput="assignRows[${idx}].title = this.value" placeholder="พิมพ์ชื่องาน CCTV เช่น ติดตั้งกล้องวงจรปิด 4 จุด..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
+            <input type="text" value="${row.desc}" oninput="assignRows[${idx}].desc = this.value" placeholder="สถานที่ / รายละเอียดเพิ่มเติม (เช่น ซอยลาซาล 32)..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-800">
+          </div>
 
           <div class="grid grid-cols-2 gap-2 text-xs">
             <div>
