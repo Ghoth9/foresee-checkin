@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026.10.02.v23">
   <script>
     // Enforce instant cache-bust so mobile LINE in-app browser always runs newest version
-    const FORESEE_APP_VERSION = "2026.10.02.v23";
+    const FORESEE_APP_VERSION = "2026.10.02.v24";
     (function enforceLatestVersion() {
       try {
         const url = new URL(window.location.href);
@@ -29,12 +29,14 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Prompt:ital,wght@0,400;0,500;0,600&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Sarabun', 'Prompt', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
       background-color: #F8FAFC;
+      font-size: 15px;
+      line-height: 1.6;
     }
     /* Desktop Atmospheric Background - Premium Ambient Lighting & Depth */
     @media (min-width: 768px) {
@@ -47,7 +49,7 @@
       }
     }
     input, select, textarea, button {
-      font-family: 'Prompt', sans-serif;
+      font-family: 'Sarabun', 'Prompt', sans-serif;
     }
     body.modal-open {
       overflow: hidden !important;
@@ -1211,7 +1213,7 @@
 
     function getDeadlineCountdownBadge(deadlineStr, isDone) {
       if (isDone) {
-        return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+        return `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 whitespace-nowrap flex-shrink-0">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           <span>ปิดงานแล้ว</span>
         </span>`;
@@ -1226,26 +1228,26 @@
 
       if (diffDays < 0) {
         const overdue = Math.abs(diffDays);
-        return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+        return `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap flex-shrink-0">
           <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
           <span>เกินกำหนด ${overdue} วัน</span>
         </span>`;
       } else if (diffDays === 0) {
-        return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+        return `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap flex-shrink-0">
           <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
           <span>ครบกำหนดวันนี้</span>
         </span>`;
       } else if (diffDays === 1) {
-        return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+        return `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap flex-shrink-0">
           <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
           <span>ครบกำหนดพรุ่งนี้</span>
         </span>`;
       } else if (diffDays <= 3) {
-        return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+        return `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap flex-shrink-0">
           <span>เหลืออีก ${diffDays} วัน</span>
         </span>`;
       } else {
-        return `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+        return `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap flex-shrink-0">
           <span>เหลืออีก ${diffDays} วัน</span>
         </span>`;
       }
@@ -3122,17 +3124,17 @@
       if (taskViewMode === "list" && window.innerWidth >= 768) {
         let tableHtml = `
           <div class="overflow-x-auto bg-white rounded-xl border border-slate-200/90 shadow-2xs">
-            <table class="w-full text-left text-xs border-collapse">
-              <thead class="bg-slate-50/80 text-[11px] font-semibold text-slate-500 border-b border-slate-200">
+            <table class="w-full text-left text-sm border-collapse min-w-[1020px]">
+              <thead class="bg-slate-50/90 text-xs font-bold text-slate-600 border-b border-slate-200">
                 <tr>
-                  <th class="py-2.5 px-3 w-10 text-center font-mono">#</th>
-                  <th class="py-2.5 px-3 w-28">สถานะ</th>
-                  <th class="py-2.5 px-4 min-w-[240px]">ชื่องานปฏิบัติการ & ไซต์งาน</th>
-                  <th class="py-2.5 px-3 w-36">ช่างผู้รับผิดชอบ</th>
-                  <th class="py-2.5 px-3 w-44">กำหนดส่งมอบ</th>
-                  <th class="py-2.5 px-3 w-32">ความคืบหน้า</th>
-                  <th class="py-2.5 px-3 w-48">อัปเดตล่าสุด</th>
-                  <th class="py-2.5 px-3 w-36 text-right pr-4">จัดการ</th>
+                  <th class="py-3 px-3 w-12 text-center font-mono">#</th>
+                  <th class="py-3 px-4 w-32">สถานะ</th>
+                  <th class="py-3 px-4 min-w-[260px]">ชื่องานปฏิบัติการ & ไซต์งาน</th>
+                  <th class="py-3 px-4 min-w-[160px]">ช่างผู้รับผิดชอบ</th>
+                  <th class="py-3 px-4 min-w-[220px]">กำหนดส่งมอบ</th>
+                  <th class="py-3 px-4 min-w-[140px]">ความคืบหน้า</th>
+                  <th class="py-3 px-4 min-w-[220px]">อัปเดตล่าสุด</th>
+                  <th class="py-3 px-4 w-44 text-right pr-5">จัดการ</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
@@ -3143,66 +3145,66 @@
           const isOver = !isDone && task.deadline < today;
           const techs = getTaskTechs(task);
 
-          let badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
-          if (isDone) badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200";
-          else if (isOver) badgeBg = "bg-rose-50 text-rose-700 border-rose-200";
+          let badgeBg = "bg-amber-50 text-amber-800 border-amber-200";
+          if (isDone) badgeBg = "bg-emerald-50 text-emerald-800 border-emerald-200";
+          else if (isOver) badgeBg = "bg-rose-50 text-rose-800 border-rose-200";
 
           tableHtml += `
             <tr class="hover:bg-slate-50/70 transition-colors group">
-              <td class="py-2.5 px-3 text-center font-mono text-[11px] text-slate-400 font-medium">${index + 1}</td>
-              <td class="py-2.5 px-3">
-                <span class="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg}">
+              <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-400 font-semibold">${index + 1}</td>
+              <td class="py-3.5 px-4 whitespace-nowrap">
+                <span class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeBg}">
                   ${task.status}
                 </span>
               </td>
-              <td class="py-2.5 px-4">
+              <td class="py-3.5 px-4">
                 <div class="cursor-pointer" onclick="openTaskActionModal('${task.id}')">
-                  <div class="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">${task.title}</div>
-                  ${task.desc && task.desc !== '-' ? `<div class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
+                  <div class="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">${task.title}</div>
+                  ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
                 </div>
               </td>
-              <td class="py-2.5 px-3">
+              <td class="py-3.5 px-4">
                 <div class="flex flex-wrap gap-1">
-                  ${techs.map(tName => `<span class="text-[10px] bg-slate-100 text-slate-700 font-medium px-1.5 py-0.5 rounded">${tName}</span>`).join('')}
+                  ${techs.map(tName => `<span class="text-xs bg-slate-100 text-slate-800 font-medium px-2 py-0.5 rounded border border-slate-200">${tName}</span>`).join('')}
                 </div>
               </td>
-              <td class="py-2.5 px-3">
-                <div class="flex items-center space-x-1.5 font-mono text-[11px] text-slate-700">
-                  <span>${task.deadline}</span>
-                  ${getDeadlineCountdownBadge(task.deadline, isDone)}
+              <td class="py-3.5 px-4 whitespace-nowrap">
+                <div class="flex items-center space-x-2 font-mono text-xs text-slate-800">
+                  <span class="font-semibold">${task.deadline}</span>
+                  <span class="whitespace-nowrap flex-shrink-0">${getDeadlineCountdownBadge(task.deadline, isDone)}</span>
                 </div>
                 ${task.oldDeadline && task.oldDeadline !== '-' && task.oldDeadline !== task.deadline ? `
-                  <div class="text-[10px] text-amber-600 font-normal line-through font-mono mt-0.5">(เดิม ${task.oldDeadline})</div>
+                  <div class="text-xs text-amber-700 font-normal line-through font-mono mt-0.5">(เดิม ${task.oldDeadline})</div>
                 ` : ''}
               </td>
-              <td class="py-2.5 px-3">
-                <div class="flex items-center space-x-2">
-                  <div class="flex-1 bg-slate-100 rounded-full h-1 overflow-hidden">
-                    <div class="h-1 ${isDone ? 'bg-emerald-500' : 'bg-slate-900'} rounded-full transition-all" style="width: ${task.progress || 0}%"></div>
+              <td class="py-3.5 px-4 whitespace-nowrap">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div class="h-1.5 ${isDone ? 'bg-emerald-500' : 'bg-slate-900'} rounded-full transition-all" style="width: ${task.progress || 0}%"></div>
                   </div>
-                  <span class="font-mono text-[11px] font-medium text-slate-700 w-8 text-right">${task.progress || 0}%</span>
+                  <span class="font-mono text-xs font-bold text-slate-800">${task.progress || 0}%</span>
                 </div>
               </td>
-              <td class="py-2.5 px-3">
-                <div class="text-[11px] text-slate-700 line-clamp-1">${task.latestUpdate || 'ยังไม่มีอัปเดต'}</div>
-                ${task.updateBy && task.updateBy !== '-' ? `<div class="text-[10px] text-slate-400 mt-0.5 font-mono">โดย ${task.updateBy}${task.updateTime && task.updateTime !== 'undefined' ? ` • ${task.updateTime}` : ''}</div>` : ''}
+              <td class="py-3.5 px-4">
+                <div class="text-xs text-slate-800 font-medium line-clamp-1">${task.latestUpdate || 'ยังไม่มีอัปเดต'}</div>
+                ${task.updateBy && task.updateBy !== '-' ? `<div class="text-xs text-slate-500 mt-0.5 font-mono">โดย ${task.updateBy}${task.updateTime && task.updateTime !== 'undefined' ? ` • ${task.updateTime}` : ''}</div>` : ''}
               </td>
-              <td class="py-2.5 px-3 text-right pr-4">
-                <div class="flex items-center justify-end space-x-1">
-                  <button type="button" onclick="openTaskActionModal('${task.id}')" class="px-2 py-1 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded text-xs font-medium transition-colors" title="ดูรายละเอียด">
+              <td class="py-3.5 px-4 text-right pr-5 whitespace-nowrap">
+                <div class="flex items-center justify-end space-x-1.5">
+                  <button type="button" onclick="openTaskActionModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg text-xs font-semibold border border-slate-200 transition-colors" title="ดูรายละเอียด">
                     ดูงาน
                   </button>
-                  <button type="button" onclick="openUpdateProgressModal('${task.id}')" class="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs font-medium transition-colors" title="อัปเดตงาน">
+                  <button type="button" onclick="openUpdateProgressModal('${task.id}')" class="px-2.5 py-1 text-blue-700 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-blue-200 transition-colors" title="อัปเดตงาน">
                     อัปเดต
                   </button>
-                  <button type="button" onclick="openExtendModal('${task.id}')" class="px-2 py-1 text-amber-700 hover:bg-amber-50 rounded text-xs font-medium transition-colors" title="ขยายเวลา">
+                  <button type="button" onclick="openExtendModal('${task.id}')" class="px-2.5 py-1 text-amber-800 hover:bg-amber-50 rounded-lg text-xs font-semibold border border-amber-200 transition-colors" title="ขยายเวลา">
                     ขยาย
                   </button>
-                  <button type="button" onclick="openEditTaskModal('${task.id}')" class="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors" title="แก้ไข">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  <button type="button" onclick="openEditTaskModal('${task.id}')" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="แก้ไข">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   </button>
-                  <button type="button" onclick="shareExistingTask('${task.id}')" class="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors" title="แชร์เข้า LINE">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                  <button type="button" onclick="shareExistingTask('${task.id}')" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="แชร์เข้า LINE">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                   </button>
                 </div>
               </td>
@@ -4267,7 +4269,12 @@
         return;
       }
 
-      showStatusModal("loading", "กำลังเตรียมส่งการ์ด...", "กำลังเปิดหน้าต่างเลือกห้องแชทใน LINE");
+      // Immediately close any open modals so LINE's native shareTargetPicker is never obscured
+      closeTaskActionModal();
+      closeAssignModal();
+      closeUpdateProgressModal();
+      closeExtendModal();
+      closeStatusModal();
 
       try {
         await liff.ready;
@@ -4282,16 +4289,19 @@
           return;
         }
 
+        // Call shareTargetPicker with a completely clear, unobstructed screen
         const res = await liff.shareTargetPicker([flexMessage]);
         if (res) {
           showStatusModal("success", "ส่งเข้ากลุ่มสำเร็จ!", "ระบบส่งการ์ดข้อมูลไปยังห้องแชทที่เลือกเรียบร้อยแล้ว");
           setTimeout(() => {
+            closeStatusModal();
             if (liff.isInClient && liff.isInClient()) {
               liff.closeWindow();
             }
-          }, 1500);
+          }, 2000);
         } else {
-          showStatusModal("info", "ยกเลิกการแชร์", "ข้อมูลถูกบันทึกแล้ว แต่ไม่ได้ส่งการ์ดเข้ากลุ่ม");
+          // User closed/cancelled the picker without sending
+          closeStatusModal();
         }
       } catch (err) {
         console.error("LIFF Share Error:", err);
