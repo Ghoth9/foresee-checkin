@@ -156,27 +156,46 @@
             <input type="text" id="fieldNoteInput" placeholder="เช่น ติดตั้ง 4 ตัว เดินท่อร้อยสาย, กล้องดับ 2 ตัว" class="w-full bg-white border-2 border-slate-300 hover:border-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 rounded-xl px-4 py-3 text-xs md:text-sm text-slate-950 font-medium placeholder:text-slate-400 transition-all shadow-2xs">
           </div>
 
-          <!-- 5. แนบรูปถ่ายหน้างาน สูงสุด 5 รูป (FEATURE 2) -->
-          <div class="space-y-2">
+          <!-- 5. แนบรูปถ่ายหน้างาน สูงสุด 5 รูป -->
+          <div class="bg-gradient-to-b from-slate-50 to-blue-50/20 border-2 border-slate-200/90 hover:border-blue-300 rounded-2xl p-4 transition-all space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-1.5">
-                <span>📸 แนบรูปถ่ายหน้างาน (สูงสุด 5 รูป)</span>
-              </label>
-              <span id="checkinPhotoCountBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300">0/5 รูป</span>
+              <div class="flex items-center space-x-2">
+                <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold shadow-2xs">
+                  📸
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-900">แนบรูปถ่ายหน้างาน</label>
+                  <p class="text-[10px] text-slate-500">ถ่ายรูปจุดติดตั้ง หรือสภาพหน้างานจริง</p>
+                </div>
+              </div>
+              <span id="checkinPhotoCountBadge" class="text-xs font-bold font-mono px-3 py-1 rounded-full bg-white text-slate-700 border border-slate-300 shadow-2xs">
+                0/5 รูป
+              </span>
             </div>
 
-            <!-- Upload input and preview container -->
-            <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
-              <label class="w-18 h-18 rounded-xl border-2 border-dashed border-slate-400 hover:border-blue-600 hover:bg-blue-50/50 flex flex-col items-center justify-center cursor-pointer transition-all flex-shrink-0 bg-slate-50">
-                <span class="text-2xl">📷</span>
-                <span class="text-[10px] font-bold text-slate-800 mt-0.5">เพิ่มรูป</span>
+            <!-- Upload Area & Previews -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <label class="group relative flex-shrink-0 border-2 border-dashed border-blue-400 hover:border-blue-600 bg-white hover:bg-blue-50/50 rounded-xl p-3 sm:px-4 sm:py-3.5 flex items-center justify-center space-x-2.5 cursor-pointer transition-all shadow-2xs active:scale-[0.98]">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 group-hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <div class="text-left">
+                  <div class="text-xs font-bold text-blue-700 group-hover:text-blue-800">+ เพิ่มรูปภาพ</div>
+                  <div class="text-[10px] text-slate-500">แตะถ่ายรูป / แนบรูปภาพ</div>
+                </div>
                 <input type="file" accept="image/*" multiple onchange="window.handlePhotoUpload(event)" class="hidden">
               </label>
-              <div id="checkinPhotoPreviewsContainer" class="flex items-center space-x-2">
-                <!-- Previews injected here -->
+
+              <!-- Thumbnail previews container -->
+              <div id="checkinPhotoPreviewsContainer" class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1 flex-1 min-h-[64px]">
+                <div class="text-[11px] text-slate-400 italic px-2">ยังไม่มีรูปถ่ายที่แนบ</div>
               </div>
             </div>
-            <p class="text-[11px] text-slate-500 font-medium">รูปภาพจะถูกย่อขนาดให้อัตโนมัติ (ไม่เกิน 250KB) เพื่อให้ส่งเข้า LINE ได้รวดเร็ว</p>
+
+            <div class="flex items-center space-x-1.5 text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
+              <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>ระบบจะย่อขนาดไฟล์รูปให้อัตโนมัติ (ไม่เกิน 250KB) เพื่อให้ส่งเข้ากลุ่ม LINE ได้รวดเร็ว</span>
+            </div>
           </div>
 
           <!-- Submit Button -->
@@ -187,13 +206,19 @@
           </div>
         </div>
 
-        <!-- Today's Activity Log Card -->
-        <div class="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden">
-          <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70">
+        <!-- Today's Activity Log Card (Collapsible) -->
+        <div class="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden transition-all">
+          <div onclick="window.toggleTodayLogsCollapse()" class="p-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 cursor-pointer select-none transition-colors border-b border-slate-200">
             <div class="flex items-center space-x-2">
               <span class="text-base">📋</span>
               <span class="text-xs md:text-sm font-extrabold text-slate-950">ประวัติการปฏิบัติงานวันนี้</span>
               <span id="todayLogsBadge" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">0 งาน</span>
+            </div>
+            <div class="flex items-center space-x-1.5 text-xs text-slate-600 font-semibold">
+              <span id="todayLogsToggleText">ย่อ/ขยาย</span>
+              <svg id="todayLogsToggleChevron" class="w-4 h-4 text-slate-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
             </div>
           </div>
           <div id="todayLogsContainer" class="p-3.5 space-y-2.5 max-h-64 overflow-y-auto">
@@ -559,42 +584,170 @@
     </div>
   </div>
 
-  <!-- 2. EDIT TASK MODAL -->
-  <div id="editTaskModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
-    <div class="bg-white rounded-2xl max-w-md w-full p-4 md:p-6 shadow-2xl border border-slate-200 my-8 space-y-4 animate-modal-in">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-        <h2 class="text-sm font-bold text-slate-900">แก้ไขรายละเอียดงาน</h2>
-        <button type="button" onclick="closeEditTaskModal()" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">ชื่องาน & ไซต์งาน</label>
-          <input type="text" id="editTaskTitleInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:bg-white focus:outline-none">
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">รายละเอียดงานเพิ่มเติม</label>
-          <textarea id="editTaskDescInput" rows="2" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:bg-white focus:outline-none"></textarea>
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">ช่างผู้รับผิดชอบ</label>
-          <div class="flex flex-wrap gap-1.5" id="editTechChipsContainer"></div>
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1.5">สถานะงาน</label>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button type="button" onclick="setEditModalStatus('กำลังทำ')" id="editStatusPill-กำลังทำ" class="edit-status-pill py-2 px-2 rounded-lg border text-xs font-semibold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200">กำลังทำ</button>
-            <button type="button" onclick="setEditModalStatus('รอดำเนินการ')" id="editStatusPill-รอดำเนินการ" class="edit-status-pill py-2 px-2 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">รอดำเนินการ</button>
-            <button type="button" onclick="setEditModalStatus('รออะไหล่')" id="editStatusPill-รออะไหล่" class="edit-status-pill py-2 px-2 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">รออะไหล่</button>
-            <button type="button" onclick="setEditModalStatus('เสร็จสิ้น')" id="editStatusPill-เสร็จสิ้น" class="edit-status-pill py-2 px-2 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200">เสร็จสิ้น</button>
+  <!-- 2. TASK DETAIL & EDIT MODAL (Comprehensive Full View & Edit) -->
+  <div id="taskDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-4 md:p-6 shadow-2xl border border-slate-200 my-8 space-y-4 max-h-[92vh] overflow-y-auto animate-modal-in">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <span id="detailTaskIdBadge" class="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 text-white shadow-2xs">TASK-000</span>
+          <div>
+            <h2 class="text-sm md:text-base font-bold text-slate-900">รายละเอียด & แก้ไขข้อมูลงาน</h2>
+            <p class="text-[11px] text-slate-500">ตรวจสอบ แก้ไขข้อมูลงาน ลูกค้า ช่างผู้รับผิดชอบ และกำหนดส่ง</p>
           </div>
         </div>
+        <button type="button" onclick="closeTaskDetailModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
       </div>
 
-      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
-        <button type="button" onclick="closeEditTaskModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-1.5 px-3 rounded-lg text-xs">ยกเลิก</button>
-        <button type="button" onclick="saveEditedTask()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3.5 rounded-lg text-xs shadow-xs">บันทึกการแก้ไข</button>
+      <div class="space-y-3.5 text-xs">
+        
+        <!-- Status & Priority Pickers -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <!-- Status -->
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90">
+            <label class="block font-bold text-slate-800 mb-1.5">สถานะงาน</label>
+            <div class="grid grid-cols-3 gap-1">
+              <button type="button" id="detailStatus-กำลังทำ" onclick="setDetailModalStatus('กำลังทำ')" class="py-1.5 px-1 rounded-lg border text-[11px] font-semibold text-center transition-all bg-blue-600 text-white border-blue-600">กำลังทำ</button>
+              <button type="button" id="detailStatus-เกินกำหนด" onclick="setDetailModalStatus('เกินกำหนด')" class="py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white text-slate-700 border-slate-200">เกินกำหนด</button>
+              <button type="button" id="detailStatus-เสร็จสิ้น" onclick="setDetailModalStatus('เสร็จสิ้น')" class="py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white text-slate-700 border-slate-200">เสร็จสิ้น</button>
+            </div>
+          </div>
+
+          <!-- Priority -->
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90">
+            <label class="block font-bold text-slate-800 mb-1.5">ความเร่งด่วน</label>
+            <div class="grid grid-cols-3 gap-1">
+              <button type="button" id="detailPriority-ปกติ" onclick="setDetailModalPriority('ปกติ')" class="py-1.5 px-1 rounded-lg border text-[11px] font-semibold text-center transition-all bg-emerald-600 text-white border-emerald-600">ปกติ</button>
+              <button type="button" id="detailPriority-ด่วน" onclick="setDetailModalPriority('ด่วน')" class="py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white text-slate-700 border-slate-200">ด่วน</button>
+              <button type="button" id="detailPriority-ด่วนที่สุด" onclick="setDetailModalPriority('ด่วนที่สุด')" class="py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white text-slate-700 border-slate-200">ด่วนที่สุด</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category & Title -->
+        <div class="space-y-2">
+          <div>
+            <label class="block font-bold text-slate-800 mb-1">ประเภทงาน</label>
+            <select id="detailCategorySelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">
+              <option value="ติดตั้งงานใหม่">1. ติดตั้งงานใหม่</option>
+              <option value="งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)">2. งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)</option>
+              <option value="งานเซอร์วิส (มีค่าใช้จ่าย)">3. งานเซอร์วิส (มีค่าใช้จ่าย)</option>
+              <option value="งาน PM (Preventive Maintenance)">4. งาน PM (Preventive Maintenance)</option>
+              <option value="สำรวจประเมินหน้างาน">5. สำรวจประเมินหน้างาน</option>
+              <option value="อื่นๆ">6. อื่นๆ</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-800 mb-1">ชื่องาน / หัวข้องาน</label>
+            <input type="text" id="detailTitleInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-800 mb-1">รายละเอียดของงาน / ข้อมูลหน้างาน</label>
+            <textarea id="detailDescInput" rows="2" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-600"></textarea>
+          </div>
+        </div>
+
+        <!-- Location & GPS -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-800">สถานที่หน้างาน / พิกัด GPS</label>
+            <a id="detailMapLink" href="#" target="_blank" class="hidden text-[11px] text-blue-600 hover:underline font-semibold flex items-center space-x-1">
+              <span>🗺️ เปิด Google Maps</span>
+            </a>
+          </div>
+          <input type="text" id="detailLocationInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-600">
+        </div>
+
+        <!-- Customer Card -->
+        <div class="bg-amber-50/60 border border-amber-300/80 rounded-xl p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-amber-950 text-xs">👤 ข้อมูลลูกค้า</span>
+            <a id="detailCustomerPhoneLink" href="#" class="hidden text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
+              📞 โทรออก
+            </a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-0.5">ชื่อลูกค้า</label>
+              <input type="text" id="detailCustNameInput" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-0.5">เบอร์โทรศัพท์</label>
+              <input type="tel" id="detailCustPhoneInput" oninput="window.updateDetailPhoneLink(this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-0.5">ที่อยู่ลูกค้า</label>
+            <input type="text" id="detailCustAddressInput" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] text-slate-600 mb-0.5">Email</label>
+              <input type="email" id="detailCustEmailInput" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-600 mb-0.5">ID Line หรือ อื่นๆ</label>
+              <input type="text" id="detailCustLineInput" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-amber-600">
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigned Technicians -->
+        <div>
+          <label class="block font-bold text-slate-800 mb-1.5">ทีมช่างผู้รับผิดชอบงาน</label>
+          <div class="flex flex-wrap gap-1.5" id="detailTechChipsContainer">
+            <!-- Chips rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Dates & Progress -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/90">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">วันที่เริ่มงาน</label>
+            <input type="date" id="detailStartDateInput" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none focus:border-blue-600">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">กำหนดส่งงาน</label>
+            <input type="date" id="detailDeadlineInput" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none focus:border-blue-600">
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[11px] font-bold text-slate-700">ความคืบหน้า</label>
+              <span id="detailProgressText" class="font-mono font-bold text-blue-700">0%</span>
+            </div>
+            <input type="range" id="detailProgressRange" min="0" max="100" step="5" oninput="document.getElementById('detailProgressText').innerText = this.value + '%'" class="w-full accent-blue-600 cursor-pointer">
+          </div>
+        </div>
+
+        <!-- Latest Update note -->
+        <div>
+          <label class="block font-bold text-slate-800 mb-1">ข้อความอัปเดตล่าสุด / บันทึกเพิ่มเติม</label>
+          <input type="text" id="detailLatestUpdateInput" placeholder="เช่น ทีมช่างเข้าหน้างานแล้ว รอติดตั้งกล้อง..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none">
+        </div>
+
       </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+        <button type="button" onclick="window.deleteCurrentDetailTask()" class="text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1 border border-rose-200 active:scale-95">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span>ลบงานนี้</span>
+        </button>
+        <div class="flex items-center space-x-2">
+          <button type="button" onclick="closeTaskDetailModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl text-xs transition-colors">
+            ยกเลิก
+          </button>
+          <button type="button" onclick="saveTaskDetailChanges()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-xl text-xs shadow-sm transition-all flex items-center space-x-1.5 active:scale-95">
+            <span>💾 บันทึกการแก้ไข</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 

@@ -137,23 +137,31 @@ export function renderPhotoPreviews() {
 
   if (countBadge) {
     countBadge.innerText = `${checkinPhotos.length}/5 รูป`;
-    if (checkinPhotos.length > 0) {
-      countBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700";
+    if (checkinPhotos.length === 5) {
+      countBadge.className = "text-xs font-bold font-mono px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs";
+    } else if (checkinPhotos.length > 0) {
+      countBadge.className = "text-xs font-bold font-mono px-3 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-300 shadow-2xs";
     } else {
-      countBadge.className = "text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500";
+      countBadge.className = "text-xs font-bold font-mono px-3 py-1 rounded-full bg-white text-slate-700 border border-slate-300 shadow-2xs";
     }
+  }
+
+  if (checkinPhotos.length === 0) {
+    container.innerHTML = `<div class="text-[11px] text-slate-400 italic px-2">ยังไม่มีรูปถ่ายที่แนบ</div>`;
+    return;
   }
 
   container.innerHTML = "";
   checkinPhotos.forEach((photo, idx) => {
     const thumb = document.createElement("div");
-    thumb.className = "relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 group flex-shrink-0";
+    thumb.className = "relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white ring-1 ring-slate-200 shadow-xs group flex-shrink-0 animate-pop-in";
     thumb.innerHTML = `
       <img src="${photo.dataUrl}" class="w-full h-full object-cover" alt="photo ${idx + 1}">
-      <button type="button" onclick="window.removeCheckinPhoto(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow-xs hover:bg-rose-700">
-        ×
+      <span class="absolute top-1 left-1 bg-slate-900/80 text-white font-mono font-bold text-[9px] px-1.5 py-0.2 rounded-md">#${idx + 1}</span>
+      <button type="button" onclick="window.removeCheckinPhoto(${idx})" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full text-xs font-bold flex items-center justify-center shadow-xs transition-transform active:scale-90" title="ลบรูปนี้">
+        ✕
       </button>
-      <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2">
+      <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950/80 to-transparent text-[9px] text-white text-center py-0.5 font-mono">
         ${photo.sizeKb}KB
       </div>
     `;

@@ -186,15 +186,15 @@ export function renderTasksList(tasksList) {
       else if (task.status === "กำลังทำ") badgeBg = "bg-blue-100 text-blue-900 border-blue-300 font-bold";
 
       tableHtml += `
-        <tr class="hover:bg-slate-50 transition-colors group">
+        <tr class="hover:bg-blue-50/50 transition-colors group cursor-pointer" onclick="window.openTaskDetailModal('${task.id}')">
           <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-500 font-semibold">${index + 1}</td>
           <td class="py-3 px-3 whitespace-nowrap">
-            <span class="inline-flex items-center text-xs font-bold px-2 py-0.5 rounded-full border ${badgeBg}">
+            <span class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeBg}">
               ${task.status}
             </span>
           </td>
           <td class="py-3 px-3">
-            <div class="cursor-pointer" onclick="window.openTaskActionModal('${task.id}')">
+            <div>
               <div class="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">${task.title}</div>
               ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
               ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 line-clamp-1 mt-0.5">💬 ${task.latestUpdate}</div>` : ''}
@@ -202,7 +202,7 @@ export function renderTasksList(tasksList) {
           </td>
           <td class="py-3 px-3">
             <div class="flex flex-wrap gap-1">
-              ${techs.map(tName => `<span class="text-xs bg-slate-100 text-slate-800 font-medium px-1.5 py-0.5 rounded border border-slate-200">${tName}</span>`).join('')}
+              ${techs.map(tName => `<span class="text-xs bg-slate-100 text-slate-800 font-medium px-2 py-0.5 rounded-md border border-slate-200">${tName}</span>`).join('')}
             </div>
           </td>
           <td class="py-3 px-3 whitespace-nowrap">
@@ -218,17 +218,10 @@ export function renderTasksList(tasksList) {
             </div>
           </td>
           <td class="py-3 px-3 text-right pr-4 whitespace-nowrap">
-            <div class="flex items-center justify-end space-x-1">
-              <button type="button" onclick="window.openProgressModalForTask('${task.id}')" class="px-2 py-1 text-blue-700 hover:bg-blue-50 rounded-md text-xs font-semibold border border-blue-200 transition-colors" title="อัปเดตงาน">
-                อัปเดต
-              </button>
-              <button type="button" onclick="window.openExtendModal('${task.id}')" class="px-2 py-1 text-amber-800 hover:bg-amber-50 rounded-md text-xs font-semibold border border-amber-200 transition-colors" title="ขยายเวลา">
-                ขยาย
-              </button>
-              <button type="button" onclick="window.openEditTaskModal('${task.id}')" class="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors" title="แก้ไข">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-              </button>
-            </div>
+            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95" title="คลิกเพื่อดูรายละเอียดและแก้ไขงาน">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <span>ดู/แก้ไข</span>
+            </button>
           </td>
         </tr>
       `;
@@ -255,14 +248,15 @@ export function renderTasksList(tasksList) {
       else if (isOver) badgeBg = "bg-rose-50 text-rose-700 border-rose-200";
 
       const card = document.createElement("div");
-      card.className = "group bg-white rounded-xl p-4 border border-slate-200/90 hover:border-slate-300 hover:shadow-xs transition-all flex flex-col justify-between space-y-3";
+      card.className = "group bg-white rounded-xl p-4 border border-slate-200/90 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between space-y-3 cursor-pointer";
+      card.onclick = () => window.openTaskDetailModal(task.id);
       card.innerHTML = `
         <div>
           <div class="flex items-center justify-between text-xs mb-2">
             <span class="text-[10px] font-mono text-slate-400 font-bold">#${index + 1} (${task.id})</span>
             <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg}">${task.status}</span>
           </div>
-          <div class="cursor-pointer group" onclick="window.openTaskActionModal('${task.id}')">
+          <div>
             <h3 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">${task.title}</h3>
             ${task.desc && task.desc !== '-' ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2">${task.desc}</p>` : ''}
           </div>
@@ -283,15 +277,10 @@ export function renderTasksList(tasksList) {
             </div>
             <span class="text-xs font-mono font-bold text-slate-700">${task.progress || 0}%</span>
           </div>
-          <div class="flex items-center justify-end space-x-1 pt-1">
-            <button type="button" onclick="window.openProgressModalForTask('${task.id}')" class="px-2.5 py-1 text-blue-700 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-blue-200">
-              อัปเดต
-            </button>
-            <button type="button" onclick="window.openExtendModal('${task.id}')" class="px-2.5 py-1 text-amber-800 hover:bg-amber-50 rounded-lg text-xs font-semibold border border-amber-200">
-              ขยายเวลา
-            </button>
-            <button type="button" onclick="window.openEditTaskModal('${task.id}')" class="p-1 text-slate-400 hover:text-slate-700 rounded">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          <div class="pt-1">
+            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="w-full py-1.5 text-center text-xs font-semibold bg-slate-50 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-700 border border-slate-200 group-hover:border-blue-200 rounded-lg transition-all flex items-center justify-center space-x-1.5 shadow-2xs">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <span>ดูรายละเอียดและแก้ไขงาน</span>
             </button>
           </div>
         </div>
@@ -524,105 +513,260 @@ export async function submitAssignForm({ tasksList, onComplete }) {
 }
 
 // -------------------------------------------------------------
-// EDIT TASK MODAL
+// TASK DETAIL & FULL EDIT MODAL (POP-UP)
 // -------------------------------------------------------------
-export function openEditTaskModal(taskId, tasksList, allTechnicians) {
-  currentEditingTaskId = taskId;
+let currentDetailTaskId = null;
+let currentDetailStatus = "กำลังทำ";
+let currentDetailPriority = "ปกติ";
+let currentDetailTechs = [];
+
+export function openTaskDetailModal(taskId, tasksList, allTechnicians) {
+  currentDetailTaskId = taskId;
   const task = tasksList.find(t => t.id === taskId);
   if (!task) return;
 
-  const titleInput = document.getElementById("editTaskTitleInput");
-  const descInput = document.getElementById("editTaskDescInput");
-  if (titleInput) titleInput.value = task.title;
+  const idBadge = document.getElementById("detailTaskIdBadge");
+  if (idBadge) idBadge.innerText = task.id;
+
+  // Status & Priority
+  currentDetailStatus = task.status || "กำลังทำ";
+  currentDetailPriority = task.priority || "ปกติ";
+  setDetailModalStatus(currentDetailStatus);
+  setDetailModalPriority(currentDetailPriority);
+
+  // Category
+  const catSelect = document.getElementById("detailCategorySelect");
+  if (catSelect) catSelect.value = task.category || "ติดตั้งงานใหม่";
+
+  // Title & Desc
+  const titleInput = document.getElementById("detailTitleInput");
+  const descInput = document.getElementById("detailDescInput");
+  if (titleInput) titleInput.value = task.title || "";
   if (descInput) descInput.value = task.desc || "";
 
-  editingTechs = [...getTaskTechs(task)];
-  renderEditTechChips(allTechnicians);
+  // Location & Map Link
+  const locInput = document.getElementById("detailLocationInput");
+  const mapLink = document.getElementById("detailMapLink");
+  const locVal = task.location || (task.customer && task.customer.address) || "";
+  if (locInput) locInput.value = locVal;
+  if (mapLink) {
+    if (locVal && (locVal.includes(",") || locVal.length > 5)) {
+      mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locVal)}`;
+      mapLink.classList.remove("hidden");
+    } else {
+      mapLink.classList.add("hidden");
+    }
+  }
 
-  setEditModalStatus(task.status || "กำลังทำ");
+  // Customer Card
+  const cust = task.customer || {};
+  const custName = document.getElementById("detailCustNameInput");
+  const custPhone = document.getElementById("detailCustPhoneInput");
+  const custAddress = document.getElementById("detailCustAddressInput");
+  const custEmail = document.getElementById("detailCustEmailInput");
+  const custLine = document.getElementById("detailCustLineInput");
 
-  editingStartDate = task.startDate;
-  editingDeadlineDate = task.deadline;
-  const startText = document.getElementById("editStartDateText");
-  const deadText = document.getElementById("editDeadlineDateText");
-  if (startText) startText.innerText = formatThaiDateDisplay(task.startDate);
-  if (deadText) deadText.innerText = formatThaiDateDisplay(task.deadline);
+  if (custName) custName.value = cust.name || "";
+  if (custPhone) custPhone.value = cust.phone || "";
+  if (custAddress) custAddress.value = cust.address || locVal || "";
+  if (custEmail) custEmail.value = cust.email || "";
+  if (custLine) custLine.value = cust.lineId || "";
+  updateDetailPhoneLink(cust.phone || "");
 
-  const modal = document.getElementById("editTaskModal");
+  // Technicians
+  currentDetailTechs = [...getTaskTechs(task)];
+  renderDetailTechChips(allTechnicians);
+
+  // Dates
+  const startInput = document.getElementById("detailStartDateInput");
+  const deadInput = document.getElementById("detailDeadlineInput");
+  if (startInput) startInput.value = task.startDate || getTodayYMD();
+  if (deadInput) deadInput.value = task.deadline || getSevenDaysLaterYMD();
+
+  // Progress
+  const progRange = document.getElementById("detailProgressRange");
+  const progText = document.getElementById("detailProgressText");
+  const progVal = task.progress || 0;
+  if (progRange) progRange.value = progVal;
+  if (progText) progText.innerText = `${progVal}%`;
+
+  // Latest update
+  const latestInput = document.getElementById("detailLatestUpdateInput");
+  if (latestInput) latestInput.value = task.latestUpdate && task.latestUpdate !== "ยังไม่มีอัปเดต" ? task.latestUpdate : "";
+
+  const modal = document.getElementById("taskDetailModal");
   if (modal) modal.classList.remove("hidden");
 }
 
-export function closeEditTaskModal() {
-  const modal = document.getElementById("editTaskModal");
+export function closeTaskDetailModal() {
+  const modal = document.getElementById("taskDetailModal");
   if (modal) modal.classList.add("hidden");
 }
 
-export function setEditModalStatus(st) {
-  editModalStatus = st;
+
+export function setDetailModalStatus(st) {
+  currentDetailStatus = st;
   const statuses = [
-    { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200" },
-    { key: "รอดำเนินการ", activeClass: "bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-200" },
-    { key: "รออะไหล่", activeClass: "bg-purple-600 text-white border-purple-600 shadow-xs ring-2 ring-purple-200" },
-    { key: "เสร็จสิ้น", activeClass: "bg-emerald-600 text-white border-emerald-600 shadow-xs ring-2 ring-emerald-200" }
+    { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 font-bold shadow-xs" },
+    { key: "เกินกำหนด", activeClass: "bg-rose-600 text-white border-rose-600 font-bold shadow-xs" },
+    { key: "เสร็จสิ้น", activeClass: "bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs" }
   ];
   statuses.forEach(s => {
-    const btn = document.getElementById(`editStatusPill-${s.key}`);
+    const btn = document.getElementById(`detailStatus-${s.key}`);
     if (btn) {
       if (s.key === st) {
-        btn.className = `edit-status-pill py-2 px-2 rounded-lg border text-xs font-semibold text-center transition-all ${s.activeClass}`;
+        btn.className = `py-1.5 px-1 rounded-lg border text-[11px] text-center transition-all ${s.activeClass}`;
       } else {
-        btn.className = "edit-status-pill py-2 px-2 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200";
+        btn.className = "py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white hover:bg-slate-100 text-slate-700 border-slate-200";
       }
     }
   });
 }
 
-export function renderEditTechChips(allTechnicians) {
-  const container = document.getElementById("editTechChipsContainer");
+export function setDetailModalPriority(p) {
+  currentDetailPriority = p;
+  const priorities = [
+    { key: "ปกติ", activeClass: "bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs" },
+    { key: "ด่วน", activeClass: "bg-amber-600 text-white border-amber-600 font-bold shadow-xs" },
+    { key: "ด่วนที่สุด", activeClass: "bg-rose-600 text-white border-rose-600 font-bold shadow-xs" }
+  ];
+  priorities.forEach(item => {
+    const btn = document.getElementById(`detailPriority-${item.key}`);
+    if (btn) {
+      if (item.key === p) {
+        btn.className = `py-1.5 px-1 rounded-lg border text-[11px] text-center transition-all ${item.activeClass}`;
+      } else {
+        btn.className = "py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white hover:bg-slate-100 text-slate-700 border-slate-200";
+      }
+    }
+  });
+}
+
+export function updateDetailPhoneLink(phone) {
+  const btn = document.getElementById("detailCustomerPhoneLink");
+  if (!btn) return;
+  const cleanPhone = (phone || "").replace(/[^0-9+]/g, "");
+  if (cleanPhone.length >= 8) {
+    btn.href = `tel:${cleanPhone}`;
+    btn.classList.remove("hidden");
+  } else {
+    btn.classList.add("hidden");
+  }
+}
+
+export function renderDetailTechChips(allTechnicians) {
+  const container = document.getElementById("detailTechChipsContainer");
   if (!container) return;
   container.innerHTML = "";
 
-  allTechnicians.forEach(tName => {
-    const isSelected = editingTechs.includes(tName);
+  (allTechnicians || []).forEach(tName => {
+    const isSelected = currentDetailTechs.includes(tName);
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
-      isSelected ? "bg-slate-900 text-white font-semibold" : "bg-white border border-slate-200 text-slate-600"
+    btn.className = `px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+      isSelected
+        ? "bg-slate-900 text-white shadow-2xs"
+        : "bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100"
     }`;
     btn.innerHTML = `${isSelected ? '✓ ' : ''}${tName}`;
     btn.onclick = () => {
-      if (editingTechs.includes(tName)) {
-        if (editingTechs.length > 1) editingTechs = editingTechs.filter(t => t !== tName);
+      if (currentDetailTechs.includes(tName)) {
+        if (currentDetailTechs.length > 1) {
+          currentDetailTechs = currentDetailTechs.filter(t => t !== tName);
+        } else {
+          alert("ต้องมีช่างผู้รับผิดชอบงานอย่างน้อย 1 คน");
+        }
       } else {
-        editingTechs.push(tName);
+        currentDetailTechs.push(tName);
       }
-      renderEditTechChips(allTechnicians);
+      renderDetailTechChips(allTechnicians);
     };
     container.appendChild(btn);
   });
 }
 
-export function saveEditedTask(tasksList, onComplete) {
-  const titleInput = document.getElementById("editTaskTitleInput");
-  const descInput = document.getElementById("editTaskDescInput");
-  const title = titleInput ? titleInput.value.trim() : "";
-  if (!title) {
+export function saveTaskDetailChanges(tasksList, onComplete) {
+  const task = tasksList.find(t => t.id === currentDetailTaskId);
+  if (!task) return;
+
+  const titleInput = document.getElementById("detailTitleInput");
+  const descInput = document.getElementById("detailDescInput");
+  const catSelect = document.getElementById("detailCategorySelect");
+  const locInput = document.getElementById("detailLocationInput");
+  const startInput = document.getElementById("detailStartDateInput");
+  const deadInput = document.getElementById("detailDeadlineInput");
+  const progRange = document.getElementById("detailProgressRange");
+  const latestInput = document.getElementById("detailLatestUpdateInput");
+
+  const custName = document.getElementById("detailCustNameInput");
+  const custPhone = document.getElementById("detailCustPhoneInput");
+  const custAddress = document.getElementById("detailCustAddressInput");
+  const custEmail = document.getElementById("detailCustEmailInput");
+  const custLine = document.getElementById("detailCustLineInput");
+
+  const newTitle = titleInput ? titleInput.value.trim() : task.title;
+  if (!newTitle) {
     alert("กรุณากรอกชื่องาน");
     return;
   }
 
-  const task = tasksList.find(t => t.id === currentEditingTaskId);
-  if (!task) return;
+  task.title = newTitle;
+  task.desc = descInput ? descInput.value.trim() : task.desc;
+  task.category = catSelect ? catSelect.value : task.category;
+  task.location = locInput ? locInput.value.trim() : task.location;
+  task.status = currentDetailStatus;
+  task.priority = currentDetailPriority;
+  task.techs = [...currentDetailTechs];
+  task.startDate = startInput ? startInput.value : task.startDate;
+  task.deadline = deadInput ? deadInput.value : task.deadline;
+  task.progress = progRange ? parseInt(progRange.value, 10) : task.progress;
 
-  task.title = title;
-  task.desc = descInput ? descInput.value.trim() : "";
-  task.techs = [...editingTechs];
-  task.status = editModalStatus;
+  if (latestInput && latestInput.value.trim()) {
+    task.latestUpdate = latestInput.value.trim();
+  }
 
-  closeEditTaskModal();
+  task.customer = {
+    name: custName ? custName.value.trim() : (task.customer?.name || ""),
+    phone: custPhone ? custPhone.value.trim() : (task.customer?.phone || ""),
+    address: custAddress ? custAddress.value.trim() : (task.customer?.address || task.location || ""),
+    email: custEmail ? custEmail.value.trim() : (task.customer?.email || "-"),
+    lineId: custLine ? custLine.value.trim() : (task.customer?.lineId || "-")
+  };
+
+  closeTaskDetailModal();
   localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+
+  // Sync to Sheet
+  saveTaskApi(task);
+
   if (onComplete) onComplete(task);
 }
+
+export function deleteCurrentDetailTask(tasksList, onComplete) {
+  const task = tasksList.find(t => t.id === currentDetailTaskId);
+  if (!task) return;
+
+  if (confirm(`คุณต้องการลบงาน "${task.title}" (${task.id}) ออกจากระบบหรือไม่?`)) {
+    const idx = tasksList.findIndex(t => t.id === currentDetailTaskId);
+    if (idx !== -1) {
+      tasksList.splice(idx, 1);
+    }
+    closeTaskDetailModal();
+    localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+
+    // Sync deletion to Sheet
+    deleteTaskApi(task.id);
+
+    if (onComplete) onComplete();
+  }
+}
+
+// Aliases for backwards compatibility
+export const openEditTaskModal = openTaskDetailModal;
+export const closeEditTaskModal = closeTaskDetailModal;
+export const setEditModalStatus = setDetailModalStatus;
+export const saveEditedTask = saveTaskDetailChanges;
+
 
 // -------------------------------------------------------------
 // EXTEND DEADLINE MODAL

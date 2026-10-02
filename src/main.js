@@ -42,6 +42,13 @@ import {
   closeEditTaskModal,
   setEditModalStatus,
   saveEditedTask,
+  openTaskDetailModal,
+  closeTaskDetailModal,
+  setDetailModalStatus,
+  setDetailModalPriority,
+  updateDetailPhoneLink,
+  saveTaskDetailChanges,
+  deleteCurrentDetailTask,
   openExtendModal,
   closeExtendModal,
   submitExtendDeadline
@@ -406,6 +413,16 @@ export function renderTodayLogs() {
   }).join('');
 }
 
+export function toggleTodayLogsCollapse() {
+  const container = document.getElementById("todayLogsContainer");
+  const chevron = document.getElementById("todayLogsToggleChevron");
+  if (!container) return;
+  const isHidden = container.classList.toggle("hidden");
+  if (chevron) {
+    chevron.style.transform = isHidden ? "rotate(-90deg)" : "rotate(0deg)";
+  }
+}
+
 // -------------------------------------------------------------
 // INITIAL SYNC & BOOTSTRAP
 // -------------------------------------------------------------
@@ -622,6 +639,7 @@ window.openManageTechModal = openManageTechModal;
 window.closeManageTechModal = closeManageTechModal;
 window.confirmAddTech = confirmAddTech;
 window.deleteTech = deleteTech;
+window.toggleTodayLogsCollapse = toggleTodayLogsCollapse;
 
 window.openAssignModal = () => openAssignModal(allTechnicians);
 window.closeAssignModal = closeAssignModal;
@@ -651,10 +669,24 @@ window.submitAssignModal = () => submitAssignForm({
   }
 });
 
-window.openEditTaskModal = (taskId) => openEditTaskModal(taskId, tasksList, allTechnicians);
-window.closeEditTaskModal = closeEditTaskModal;
-window.setEditModalStatus = setEditModalStatus;
-window.saveEditedTask = () => saveEditedTask(tasksList, () => renderTasksList(tasksList));
+window.openTaskDetailModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
+window.closeTaskDetailModal = closeTaskDetailModal;
+window.setDetailModalStatus = setDetailModalStatus;
+window.setDetailModalPriority = setDetailModalPriority;
+window.updateDetailPhoneLink = updateDetailPhoneLink;
+window.saveTaskDetailChanges = () => saveTaskDetailChanges(tasksList, () => {
+  renderTasksList(tasksList);
+  alert("บันทึกการแก้ไขข้อมูลงานเรียบร้อยแล้ว!");
+});
+window.deleteCurrentDetailTask = () => deleteCurrentDetailTask(tasksList, () => {
+  renderTasksList(tasksList);
+  alert("ลบงานออกจากระบบเรียบร้อยแล้ว!");
+});
+
+window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
+window.closeEditTaskModal = closeTaskDetailModal;
+window.setEditModalStatus = setDetailModalStatus;
+window.saveEditedTask = () => saveTaskDetailChanges(tasksList, () => renderTasksList(tasksList));
 
 window.openExtendModal = (taskId) => openExtendModal(taskId, tasksList);
 window.closeExtendModal = closeExtendModal;
