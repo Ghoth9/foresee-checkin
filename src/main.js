@@ -534,7 +534,12 @@ export function renderTodayLogs() {
       <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50/80 text-xs space-y-1">
         <div class="flex items-center justify-between">
           <span class="text-[10px] font-bold px-1.5 py-0.2 rounded ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} font-mono">${log.id}</span>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">${log.status}</span>
+          <div class="flex items-center space-x-1.5">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">${log.status}</span>
+            <button type="button" onclick="event.stopPropagation(); window.deleteTodayLog('${log.id}')" class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1 rounded transition-colors active:scale-95" title="ลบประวัตินี้">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
         </div>
         <div class="font-bold text-slate-900 truncate">${log.task}</div>
         <div class="text-[11px] text-slate-500 flex items-center justify-between pt-1 border-t border-slate-200/60">
@@ -544,6 +549,25 @@ export function renderTodayLogs() {
       </div>
     `;
   }).join('');
+}
+
+export function deleteTodayLog(id) {
+  showAppConfirm({
+    title: "ยืนยันการลบประวัติ",
+    message: `คุณต้องการลบประวัติงาน "${id}" ออกจากรายการหรือไม่?`,
+    confirmText: "ลบ",
+    cancelText: "ยกเลิก",
+    isDanger: true,
+    onConfirm: () => {
+      dailyLogs = dailyLogs.filter(l => l.id !== id);
+      activeTasks = activeTasks.filter(a => a.id !== id);
+      localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
+      localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+      renderTodayLogs();
+      renderActiveCheckoutList();
+      deleteCheckinApi(id);
+    }
+  });
 }
 
 export function toggleTodayLogsCollapse() {
@@ -664,6 +688,28 @@ async function bootstrapApp() {
       });
       localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
     }
+
+    // 3. Daily Logs (ALWAYS SYNC FROM GOOGLE SHEET AS SINGLE SOURCE OF TRUTH)
+    const allSheetCheckins = [
+      ...(gasData.activeCheckins || []).map(a => ({
+        id: a.id,
+        task: a.task,
+        techs: [a.tech],
+        checkinTime: formatGasTime(a.time),
+        checkoutTime: a.outTime && a.outTime !== '-' ? formatGasTime(a.outTime) : null,
+        status: a.status === "กำลังปฏิบัติงาน" ? "กำลังทำ" : "เสร็จสิ้น"
+      })),
+      ...(gasData.closedCheckins || []).map(c => ({
+        id: c.id,
+        task: c.task,
+        techs: [c.tech],
+        checkinTime: formatGasTime(c.time),
+        checkoutTime: formatGasTime(c.outTime),
+        status: "เสร็จสิ้น"
+      }))
+    ];
+    dailyLogs = allSheetCheckins;
+    localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
   }
 
   // 5. Re-render views for current tab without resetting tab
@@ -919,6 +965,7 @@ window.deleteCurrentDetailTask = () => deleteCurrentDetailTask(tasksList, (delet
 
 window.deleteActiveCheckin = deleteActiveCheckin;
 window.clearAllActiveCheckins = clearAllActiveCheckins;
+window.deleteTodayLog = deleteTodayLog;
 
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;
