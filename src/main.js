@@ -29,6 +29,7 @@ import {
   setTaskViewMode,
   setStatusFilter,
   setTechFilter,
+  setTaskSearchQuery,
   renderTechFilterChips,
   renderTasksList,
   openAssignModal,
@@ -317,9 +318,9 @@ export function selectJobType(type) {
     const btn = document.getElementById(`jobTypeBtn-${t}`);
     if (btn) {
       if (t === type) {
-        btn.className = "py-2 px-2.5 rounded-lg border text-xs font-bold text-center transition-all bg-blue-50 border-blue-400 text-blue-800 shadow-2xs";
+        btn.className = "py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-sm";
       } else {
-        btn.className = "py-2 px-2.5 rounded-lg border text-xs font-medium text-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
+        btn.className = "py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300";
       }
     }
   });
@@ -929,6 +930,7 @@ window.setTaskViewMode = (mode) => setTaskViewMode(mode, tasksList);
 window.setStatusFilter = (st) => setStatusFilter(st, tasksList);
 window.setTaskTechFilter = (tech) => setTechFilter(tech, tasksList, allTechnicians);
 window.handleTaskSearch = (query) => {
+  setTaskSearchQuery(query);
   renderTasksList(tasksList);
 };
 

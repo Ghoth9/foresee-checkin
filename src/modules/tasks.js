@@ -101,6 +101,10 @@ export function renderTechFilterChips(tasksList, allTechnicians = []) {
   }).join('');
 }
 
+export function setTaskSearchQuery(q) {
+  taskSearchQuery = q || "";
+}
+
 export function renderTasksList(tasksList) {
   const container = document.getElementById("tasksListContainer");
   if (!container) return;
@@ -161,12 +165,30 @@ export function renderTasksList(tasksList) {
     return 0;
   });
 
+
+  if (tasksList.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 p-8 shadow-xs">
+        <div class="w-14 h-14 mx-auto mb-3.5 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl">📋</div>
+        <h3 class="text-base font-bold text-slate-900">ยังไม่มีรายการงานในระบบ</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">เริ่มต้นมอบหมายงานแรกให้ทีมช่าง โดยกดปุ่มด้านล่างเพื่อระบุไซต์งานและช่างผู้รับผิดชอบ</p>
+        <button type="button" onclick="openAssignModal()" class="mt-4 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm transition-all inline-flex items-center space-x-1.5 active:scale-95">
+          <span>+ มอบหมายงานใหม่</span>
+        </button>
+      </div>
+    `;
+    return;
+  }
+
   if (filteredTasks.length === 0) {
     container.innerHTML = `
-      <div class="text-center py-10 bg-white rounded-xl border border-slate-200 p-6">
-        <div class="text-3xl mb-2">📋</div>
+      <div class="text-center py-10 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+        <div class="text-3xl mb-2">🔍</div>
         <div class="text-sm font-bold text-slate-800">ไม่พบงานที่ตรงกับเงื่อนไข</div>
-        <p class="text-xs text-slate-500 mt-1">ลองเปลี่ยนตัวกรอง หรือค้นหาด้วยคำอื่น</p>
+        <p class="text-xs text-slate-500 mt-1">ตัวกรองปัจจุบัน: สถานะ "${currentStatusFilter}"${currentTechFilter !== 'ทั้งหมด' ? ` / ${currentTechFilter}` : ''}</p>
+        <button type="button" onclick="window.setStatusFilter('ทั้งหมด'); window.setTaskTechFilter('ทั้งหมด');" class="mt-3 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition-colors">
+          ล้างตัวกรองทั้งหมด
+        </button>
       </div>
     `;
     return;
