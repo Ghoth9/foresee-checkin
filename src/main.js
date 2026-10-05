@@ -228,7 +228,7 @@ export function renderManageTechList() {
         <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-[10px]">${idx + 1}</span>
         <span class="font-bold text-slate-800">${name}</span>
       </div>
-      <button type="button" onclick="window.deleteTech('${name}')" title="ลบรายชื่อช่างนี้" class="text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-colors flex items-center space-x-1 text-[11px] font-semibold border border-rose-200 active:scale-95">
+      <button type="button" onclick="window.deleteTech('${name}')" title="ลบรายชื่อผู้ปฏิบัติงานนี้" class="text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-colors flex items-center space-x-1 text-[11px] font-semibold border border-rose-200 active:scale-95">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         <span>ลบ</span>
       </button>
@@ -265,8 +265,8 @@ export async function confirmAddTech() {
 
   showAppAlert({
     type: "success",
-    title: "เพิ่มช่างสำเร็จ",
-    message: `เพิ่ม "${name}" เข้าสู่ระบบทีมช่างเรียบร้อยแล้ว`
+    title: "เพิ่มผู้ปฏิบัติงานสำเร็จ",
+    message: `เพิ่ม "${name}" เข้าสู่ระบบทีมผู้ปฏิบัติงานเรียบร้อยแล้ว`
   });
 }
 
@@ -275,15 +275,15 @@ export async function deleteTech(name) {
     showAppAlert({
       type: "warning",
       title: "ไม่สามารถลบได้",
-      message: "ต้องมีรายชื่อช่างอย่างน้อย 1 คนในระบบ"
+      message: "ต้องมีรายชื่อผู้ปฏิบัติงานอย่างน้อย 1 คนในระบบ"
     });
     return;
   }
 
   showAppConfirm({
-    title: "ยืนยันการลบรายชื่อช่าง",
-    message: `คุณต้องการลบ "${name}" ออกจากระบบทีมช่างหรือไม่?`,
-    confirmText: "ลบช่างคนนี้",
+    title: "ยืนยันการลบรายชื่อผู้ปฏิบัติงาน",
+    message: `คุณต้องการลบ "${name}" ออกจากระบบทีมผู้ปฏิบัติงานหรือไม่?`,
+    confirmText: "ลบผู้ปฏิบัติงานคนนี้",
     cancelText: "ยกเลิก",
     isDanger: true,
     onConfirm: () => {
@@ -304,7 +304,7 @@ export async function deleteTech(name) {
 
       showAppAlert({
         type: "success",
-        title: "ลบช่างเรียบร้อย",
+        title: "ลบผู้ปฏิบัติงานเรียบร้อย",
         message: `ลบ "${name}" ออกจากระบบแล้ว`
       });
     }
@@ -312,18 +312,47 @@ export async function deleteTech(name) {
 }
 
 export function selectJobType(type) {
-  selectedJobType = type;
+  const standardTypes = [
+    "ติดตั้งงานใหม่",
+    "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)",
+    "งานเซอร์วิส (มีค่าใช้จ่าย)",
+    "งาน PM (Preventive Maintenance)",
+    "เข้าตรวจสอบหน้างาน / สำรวจ",
+    "custom"
+  ];
+
+  let targetType = type || "ติดตั้งงานใหม่";
+
+  // Alias / fuzzy matching
+  if (targetType === "ติดตั้งกล้องวงจรปิด") {
+    targetType = "ติดตั้งงานใหม่";
+  } else if (targetType.includes("มีค่าใช้จ่าย")) {
+    targetType = "งานเซอร์วิส (มีค่าใช้จ่าย)";
+  } else if (targetType.includes("ซ่อม") || targetType.includes("ปรับมุม") || targetType.includes("เซอร์วิส") || targetType.includes("ประกัน")) {
+    targetType = "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)";
+  } else if (targetType.toUpperCase().includes("PM") || targetType.includes("บำรุง")) {
+    targetType = "งาน PM (Preventive Maintenance)";
+  } else if (targetType.includes("สำรวจ") || targetType.includes("ตรวจสอบ")) {
+    targetType = "เข้าตรวจสอบหน้างาน / สำรวจ";
+  } else if (!standardTypes.includes(targetType)) {
+    const customInput = document.getElementById("customJobTypeInput");
+    if (customInput && targetType !== "custom") {
+      customInput.value = targetType.replace(/^อื่นๆ:?\s*/, "");
+    }
+    targetType = "custom";
+  }
+
+  selectedJobType = targetType;
   const customContainer = document.getElementById("customJobTypeContainer");
   if (customContainer) {
-    if (type === "custom") customContainer.classList.remove("hidden");
+    if (targetType === "custom") customContainer.classList.remove("hidden");
     else customContainer.classList.add("hidden");
   }
 
-  const types = ["ติดตั้งกล้องวงจรปิด", "ตรวจเช็คซ่อม / ปรับมุมกล้อง", "เปลี่ยนอุปกรณ์ / NVR / Switch", "custom"];
-  types.forEach(t => {
+  standardTypes.forEach(t => {
     const btn = document.getElementById(`jobTypeBtn-${t}`);
     if (btn) {
-      if (t === type) {
+      if (t === targetType) {
         btn.className = "py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-sm";
       } else {
         btn.className = "py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300";
@@ -459,7 +488,7 @@ export function renderActiveCheckoutList() {
 
   container.innerHTML = activeTasks.map(item => {
     const isSelected = selectedActiveCheckoutId === item.id;
-    const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ช่างทั่วไป");
+    const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ผู้ปฏิบัติงานทั่วไป");
     const displayTaskId = item.taskId ? `${item.taskId} (${item.id})` : item.id;
     const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
     const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
@@ -500,7 +529,7 @@ export function renderActiveCheckoutList() {
           </div>
         ` : ''}
         <div class="text-slate-600 mt-2 flex items-center justify-between font-medium pt-1.5 border-t border-slate-100">
-          <span>👷 ช่าง: <strong class="text-slate-900">${techList}</strong></span>
+          <span>👷 ผู้ปฏิบัติงาน: <strong class="text-slate-900">${techList}</strong></span>
           <span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>
         </div>
       </div>
@@ -669,7 +698,7 @@ export function renderTodayLogs() {
         </div>
         <div class="font-bold text-slate-900 truncate">${log.task}</div>
         <div class="text-[11px] text-slate-500 flex items-center justify-between pt-1 border-t border-slate-200/60">
-          <span>ช่าง: ${techs}</span>
+          <span>ผู้ปฏิบัติงาน: ${techs}</span>
           <span>${formatDisplayTime(log.checkinTime)} น.${log.checkoutTime ? ` - ${formatDisplayTime(log.checkoutTime)} น.` : ''}</span>
         </div>
       </div>
@@ -835,7 +864,7 @@ export async function refreshFromSupabase(force = false) {
         id: a.id,
         taskId: a.taskId || null,
         task: a.task,
-        techs: Array.isArray(a.techs) && a.techs.length > 0 ? a.techs : (a.tech ? [a.tech] : ["ช่างทั่วไป"]),
+        techs: Array.isArray(a.techs) && a.techs.length > 0 ? a.techs : (a.tech ? [a.tech] : ["ผู้ปฏิบัติงานทั่วไป"]),
         time: formatGasTime(a.time) || "09:00",
         date: formatGasDate(a.date),
         progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0),
@@ -851,7 +880,7 @@ export async function refreshFromSupabase(force = false) {
           id: t.id,
           taskId: t.id,
           task: t.title,
-          techs: Array.isArray(t.techs) ? t.techs : (t.assignee ? t.assignee.split(", ") : ["ช่างประจำทีม"]),
+          techs: Array.isArray(t.techs) ? t.techs : (t.assignee ? t.assignee.split(", ") : ["ผู้ปฏิบัติงานประจำทีม"]),
           time: "09:00",
           date: "วันนี้",
           progress: t.progress || 0,
@@ -956,7 +985,7 @@ window.submitOngoingUpdate = () => {
   submitProgressOnly({
     activeItem: activeItem,
     noteText: noteInput ? noteInput.value : "",
-    closerName: getLineUserName() || "ช่างหน้างาน",
+    closerName: getLineUserName() || "ผู้ปฏิบัติงานหน้างาน",
     totalPhotosCount: uniquePhotos.length,
     onComplete: (updatedInfo) => {
       const act = activeTasks.find(a => a.id === updatedInfo.id);
@@ -1034,7 +1063,7 @@ window.submitCheckout = () => {
     activeItem: activeItem,
     selectedOutcome: selectedCheckoutOutcome,
     noteText: noteInput ? noteInput.value : "",
-    closerName: getLineUserName() || "ช่างหน้างาน",
+    closerName: getLineUserName() || "ผู้ปฏิบัติงานหน้างาน",
     onComplete: (closedRecord) => {
       activeTasks = activeTasks.filter(a => a.id !== closedRecord.id);
       const log = dailyLogs.find(l => l.id === closedRecord.id);
@@ -1233,7 +1262,7 @@ window.shareActiveTaskToLine = async (activeId) => {
   const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
   const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
   const uniquePhotos = getUniquePhotosForActiveTask(item);
-  const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ช่างทั่วไป");
+  const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ผู้ปฏิบัติงานทั่วไป");
   const rawNote = linkedTask?.latestUpdate || item.note;
   const cleanNote = formatLatestNoteText(rawNote);
 
@@ -1295,7 +1324,7 @@ window.openProgressModalForTask = (taskId) => {
         id: task.id,
         taskId: task.id,
         task: task.title,
-        techs: task.assignee ? task.assignee.split(", ") : ["ช่างประจำทีม"],
+        techs: task.assignee ? task.assignee.split(", ") : ["ผู้ปฏิบัติงานประจำทีม"],
         time: "09:00",
         date: "วันนี้"
       };

@@ -100,7 +100,7 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
 // -------------------------------------------------------------
 
 export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, photoCount = 0, taskId = null }) {
-  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
+  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ผู้ปฏิบัติงานทั่วไป");
   const updateDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=update&id=${encodeURIComponent(id)}&task=${encodeURIComponent(task)}&techs=${encodeURIComponent(techList)}&time=${encodeURIComponent(time)}&taskId=${encodeURIComponent(taskId || '')}`;
   const checkoutDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=close&id=${encodeURIComponent(id)}&task=${encodeURIComponent(task)}&techs=${encodeURIComponent(techList)}&time=${encodeURIComponent(time)}&taskId=${encodeURIComponent(taskId || '')}`;
 
@@ -171,7 +171,7 @@ export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, p
             type: "box",
             layout: "horizontal",
             contents: [
-              { type: "text", text: "ทีมช่าง", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: "ผู้ปฏิบัติงาน", size: "xs", color: "#64748B", flex: 4 },
               { type: "text", text: techList, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
             ]
           },
@@ -230,7 +230,7 @@ export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, p
 }
 
 export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress, status, note, updateBy, updateTime, photoCount = 0, totalPhotos = 0 }) {
-  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
+  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ผู้ปฏิบัติงานทั่วไป");
   const cardId = id || taskId || '';
   const updateDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=update&id=${encodeURIComponent(cardId)}&taskId=${encodeURIComponent(taskId || '')}&task=${encodeURIComponent(taskTitle)}&techs=${encodeURIComponent(techList)}`;
   const closeDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=close&id=${encodeURIComponent(cardId)}&taskId=${encodeURIComponent(taskId || '')}&task=${encodeURIComponent(taskTitle)}&techs=${encodeURIComponent(techList)}`;
@@ -278,7 +278,7 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
         contents: [
           {
             type: "box", layout: "horizontal", contents: [
-              { type: "text", text: "ทีมช่าง", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: "ผู้ปฏิบัติงาน", size: "xs", color: "#64748B", flex: 4 },
               { type: "text", text: techList, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
             ]
           },
@@ -309,7 +309,7 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
             type: "box", layout: "vertical", margin: "md", contents: [
               { type: "text", text: "รายละเอียดความคืบหน้า:", size: "xs", color: "#64748B", weight: "bold" },
               { type: "text", text: `"${note || 'อัปเดตความคืบหน้าตามแผนงาน'}"`, size: "xs", color: "#0F172A", wrap: true, margin: "xs" },
-              { type: "text", text: `โดย ${updateBy || 'ช่างหน้างาน'} • ${updateTime}`, size: "xxs", color: "#94A3B8", margin: "xs" }
+              { type: "text", text: `โดย ${updateBy || 'ผู้ปฏิบัติงานหน้างาน'} • ${updateTime}`, size: "xxs", color: "#94A3B8", margin: "xs" }
             ]
           }
         ]
@@ -363,7 +363,7 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
 }
 
 export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, duration, outcome, note, photoCount = 0 }) {
-  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
+  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ผู้ปฏิบัติงานทั่วไป");
 
   return {
     type: "flex",
@@ -403,7 +403,7 @@ export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, durat
         contents: [
           {
             type: "box", layout: "horizontal", contents: [
-              { type: "text", text: "ทีมช่าง", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: "ผู้ปฏิบัติงาน", size: "xs", color: "#64748B", flex: 4 },
               { type: "text", text: techList, size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
             ]
           },
@@ -506,7 +506,7 @@ export function createExtendDeadlineFlexCard({ taskId, taskTitle, oldDeadline, n
           {
             type: "box", layout: "horizontal", contents: [
               { type: "text", text: "ผู้ขอขยายเวลา", size: "xs", color: "#64748B", flex: 4 },
-              { type: "text", text: requestBy || "ช่างหน้างาน", size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
+              { type: "text", text: requestBy || "ผู้ปฏิบัติงานหน้างาน", size: "xs", weight: "bold", color: "#0F172A", flex: 6 }
             ]
           },
           {
@@ -522,7 +522,7 @@ export function createExtendDeadlineFlexCard({ taskId, taskTitle, oldDeadline, n
 }
 
 export function createAssignTaskFlexCard({ id, title, category, priority, customer, techs, startDate, deadline, desc }) {
-  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
+  const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ผู้ปฏิบัติงานทั่วไป");
   const isUrgent = (priority || "").includes("ด่วน");
   const headerBg = isUrgent ? "#991B1B" : "#1E3A8A";
   const custName = customer?.name || "-";

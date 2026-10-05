@@ -54,7 +54,7 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-0.5 no-scrollbar">
         ${pendingTasks.map(task => {
           const isSelected = selectedAssignedTaskId === task.id;
-          const techList = Array.isArray(task.techs) ? task.techs.join(", ") : (task.techs || "ช่างทั่วไป");
+          const techList = Array.isArray(task.techs) ? task.techs.join(", ") : (task.techs || "ผู้ปฏิบัติงานทั่วไป");
           return `
             <div onclick="window.selectAssignedTaskForCheckin('${task.id}')" class="p-3 rounded-xl border text-xs cursor-pointer transition-all ${
               isSelected 
@@ -70,7 +70,7 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
               <div class="font-bold text-sm text-slate-950 line-clamp-1 leading-snug">${task.title}</div>
               ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
               <div class="text-xs text-slate-600 mt-2 font-medium flex items-center space-x-1">
-                <span>👷 ช่าง:</span>
+                <span>👷 ผู้ปฏิบัติงาน:</span>
                 <strong class="text-slate-800 truncate">${techList}</strong>
               </div>
             </div>
@@ -92,6 +92,9 @@ export function selectAssignedTask(taskId, tasksList, setSelectedTechsCallback) 
     const noteInput = document.getElementById("fieldNoteInput");
     if (locInput) locInput.value = "";
     if (noteInput) noteInput.value = "";
+    if (typeof window.selectJobType === "function") {
+      window.selectJobType("ติดตั้งงานใหม่");
+    }
   } else {
     selectedAssignedTaskId = taskId;
     const locInput = document.getElementById("fieldLocationInput");
@@ -102,6 +105,11 @@ export function selectAssignedTask(taskId, tasksList, setSelectedTechsCallback) 
     // Auto-select assigned technicians
     if (setSelectedTechsCallback && task.techs && task.techs.length > 0) {
       setSelectedTechsCallback(task.techs);
+    }
+
+    // Auto-link and select assigned Job Category!
+    if (task.category && typeof window.selectJobType === "function") {
+      window.selectJobType(task.category);
     }
   }
 
@@ -178,8 +186,8 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
   if (selectedTechs.length === 0) {
     showAppAlert({
       type: "warning",
-      title: "ยังไม่ได้เลือกช่าง",
-      message: "กรุณาเลือกทีมช่างอย่างน้อย 1 คนก่อนเช็กอิน"
+      title: "ยังไม่ได้เลือกผู้ปฏิบัติงาน",
+      message: "กรุณาเลือกผู้ปฏิบัติงานอย่างน้อย 1 คนก่อนเช็กอิน"
     });
     return;
   }

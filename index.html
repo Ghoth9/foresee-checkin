@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>Foresee Technology - ระบบจัดการงานปฏิบัติการ CCTV</title>
+  <title>Foresee Technology - ระบบมอบหมายงาน CCTV</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
   <link rel="shortcut icon" href="/favicon.ico">
@@ -27,7 +27,7 @@
             <span class="font-black text-sm md:text-base tracking-tight text-slate-950">FORESEE</span>
             <span class="text-[10px] bg-slate-900 text-white font-extrabold px-1.5 py-0.5 rounded shadow-2xs">FIELD 2.0</span>
           </div>
-          <div class="text-[10px] md:text-[11px] text-slate-600 font-semibold">ระบบปฏิบัติการทีมช่าง CCTV</div>
+          <div class="text-[10px] md:text-[11px] text-slate-600 font-semibold">ระบบมอบหมายงาน</div>
         </div>
       </div>
 
@@ -114,29 +114,35 @@
             <p class="text-xs text-slate-600 font-medium mt-0.5">เลือกงานที่มอบหมายหรือระบุสถานที่ เพื่อส่งการ์ดเข้ากลุ่ม LINE</p>
           </div>
 
-          <!-- 1. ทีมช่างที่เข้าหน้างานวันนี้ -->
+          <!-- 1. ทีมผู้ปฏิบัติงานที่เข้าหน้างานวันนี้ -->
           <div>
-            <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">1. ทีมช่างที่เข้าหน้างานวันนี้ <span class="text-rose-500">*</span></label>
+            <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">1. ทีมผู้ปฏิบัติงานที่เข้าหน้างานวันนี้ <span class="text-rose-500">*</span></label>
             <div class="flex flex-wrap gap-2" id="checkinTechChipsContainer">
               <!-- Rendered dynamically -->
             </div>
           </div>
 
-          <!-- 2. ประเภทงานหน้างาน -->
+          <!-- 2. ประเภทงานหน้างาน (เชื่อมโยงกับงานที่มอบหมาย) -->
           <div>
             <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">2. ประเภทงานหน้างาน <span class="text-rose-500">*</span></label>
-            <div class="grid grid-cols-2 gap-2">
-              <button type="button" id="jobTypeBtn-ติดตั้งกล้องวงจรปิด" onclick="selectJobType('ติดตั้งกล้องวงจรปิด')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-sm">
-                📹 ติดตั้งกล้องวงจรปิด
+            <div class="grid grid-cols-2 gap-2" id="jobTypeButtonsGrid">
+              <button type="button" id="jobTypeBtn-ติดตั้งงานใหม่" onclick="selectJobType('ติดตั้งงานใหม่')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-sm">
+                📹 ติดตั้งงานใหม่
               </button>
-              <button type="button" id="jobTypeBtn-ตรวจเช็คซ่อม / ปรับมุมกล้อง" onclick="selectJobType('ตรวจเช็คซ่อม / ปรับมุมกล้อง')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
-                🔧 ซ่อม / ปรับมุมกล้อง
+              <button type="button" id="jobTypeBtn-งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)" onclick="selectJobType('งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
+                🛡️ เซอร์วิส (ในประกัน)
               </button>
-              <button type="button" id="jobTypeBtn-เปลี่ยนอุปกรณ์ / NVR / Switch" onclick="selectJobType('เปลี่ยนอุปกรณ์ / NVR / Switch')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
-                ⚡ เปลี่ยนอุปกรณ์ / NVR
+              <button type="button" id="jobTypeBtn-งานเซอร์วิส (มีค่าใช้จ่าย)" onclick="selectJobType('งานเซอร์วิส (มีค่าใช้จ่าย)')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
+                💵 เซอร์วิส (มีค่าใช้จ่าย)
+              </button>
+              <button type="button" id="jobTypeBtn-งาน PM (Preventive Maintenance)" onclick="selectJobType('งาน PM (Preventive Maintenance)')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
+                🛠️ งาน PM / ตรวจเช็ก
+              </button>
+              <button type="button" id="jobTypeBtn-เข้าตรวจสอบหน้างาน / สำรวจ" onclick="selectJobType('เข้าตรวจสอบหน้างาน / สำรวจ')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
+                🔍 สำรวจ / ตรวจสอบ
               </button>
               <button type="button" id="jobTypeBtn-custom" onclick="selectJobType('custom')" class="py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300">
-                ✏️ พิมพ์ระบุเอง
+                ✏️ อื่นๆ / ระบุเอง
               </button>
             </div>
             <div id="customJobTypeContainer" class="hidden mt-2.5">
@@ -362,12 +368,12 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-200/90">
         <div>
           <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
-          <p class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงาน CCTV และมอบหมายช่างผู้รับผิดชอบ</p>
+          <p class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
         </div>
         <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-          <input id="taskSearchInput" type="text" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ช่าง, ไซต์งาน..." class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 w-36 sm:w-52 shadow-2xs">
+          <input id="taskSearchInput" type="text" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน, ไซต์งาน..." class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 w-36 sm:w-52 shadow-2xs">
           <button type="button" onclick="openManageTechModal()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-2xs active:scale-95">
-            <span>👥 จัดการทีมช่าง</span>
+            <span>👥 จัดการทีมผู้ปฏิบัติงาน</span>
           </button>
           <button type="button" onclick="openAssignModal()" class="bg-slate-950 hover:bg-slate-800 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition-all flex items-center space-x-1.5 active:scale-95">
             <span>+ มอบหมายงานใหม่</span>
@@ -433,7 +439,7 @@
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
           <h2 class="text-base font-bold text-slate-900">มอบหมายงานใหม่</h2>
-          <p class="text-[11px] text-slate-500 mt-0.5">กรอกข้อมูลงาน รายละเอียดลูกค้า และมอบหมายทีมช่าง</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">กรอกข้อมูลงาน รายละเอียดลูกค้า และมอบหมายผู้ปฏิบัติงาน</p>
         </div>
         <button type="button" onclick="closeAssignModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">✕</button>
       </div>
@@ -536,7 +542,7 @@
 
       <!-- 6. ปุ่มเลือก รายชื่อผู้รับผิดชอบงาน -->
       <div>
-        <label class="block text-xs font-bold text-slate-800 mb-1.5">6. ช่างผู้รับผิดชอบงาน <span class="text-rose-500">*</span></label>
+        <label class="block text-xs font-bold text-slate-800 mb-1.5">6. ผู้ปฏิบัติงานที่รับผิดชอบงาน <span class="text-rose-500">*</span></label>
         <div id="assignTechChipsContainer" class="flex flex-wrap gap-1.5"></div>
       </div>
 
@@ -580,7 +586,7 @@
           <span id="detailTaskIdBadge" class="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-900 text-white shadow-2xs">TASK-000</span>
           <div>
             <h2 class="text-sm md:text-base font-bold text-slate-900">รายละเอียด & แก้ไขข้อมูลงาน</h2>
-            <p class="text-[11px] text-slate-500">ตรวจสอบ แก้ไขข้อมูลงาน ลูกค้า ช่างผู้รับผิดชอบ และกำหนดส่ง</p>
+            <p class="text-[11px] text-slate-500">ตรวจสอบ แก้ไขข้อมูลงาน ลูกค้า ผู้ปฏิบัติงานที่รับผิดชอบ และกำหนดส่ง</p>
           </div>
         </div>
         <button type="button" onclick="closeTaskDetailModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg transition-colors">
@@ -697,7 +703,7 @@
 
         <!-- Assigned Technicians -->
         <div>
-          <label class="block font-bold text-slate-800 mb-1.5">ทีมช่างผู้รับผิดชอบงาน</label>
+          <label class="block font-bold text-slate-800 mb-1.5">ทีมผู้ปฏิบัติงานที่รับผิดชอบงาน</label>
           <div class="flex flex-wrap gap-1.5" id="detailTechChipsContainer">
             <!-- Chips rendered dynamically -->
           </div>
@@ -733,7 +739,7 @@
         <!-- Latest Update note -->
         <div>
           <label class="block font-bold text-slate-800 mb-1">ข้อความอัปเดตล่าสุด / บันทึกเพิ่มเติม</label>
-          <input type="text" id="detailLatestUpdateInput" placeholder="เช่น ทีมช่างเข้าหน้างานแล้ว รอติดตั้งกล้อง..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none">
+          <input type="text" id="detailLatestUpdateInput" placeholder="เช่น ทีมผู้ปฏิบัติงานเข้าหน้างานแล้ว รอติดตั้งกล้อง..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none">
         </div>
 
       </div>
@@ -745,7 +751,7 @@
             <div class="font-bold text-slate-900 text-xs flex items-center space-x-1.5">
               <span>📸 แกลเลอรีภาพถ่าย & ไทม์ไลน์หน้างาน</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-0.5">รวมรูปภาพและประวัติที่ทีมช่างอัปเดตระหว่างปฏิบัติงานจริง</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">รวมรูปภาพและประวัติที่ทีมผู้ปฏิบัติงานอัปเดตระหว่างปฏิบัติงานจริง</p>
           </div>
           <span id="detailTimelineTotalBadge" class="bg-blue-600 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg shadow-2xs">0 ภาพ</span>
         </div>
@@ -823,8 +829,8 @@
             👥
           </div>
           <div>
-            <h3 class="text-sm font-bold text-slate-900">จัดการรายชื่อทีมช่าง</h3>
-            <p class="text-[11px] text-slate-500">เพิ่มหรือลบรายชื่อช่างในระบบ</p>
+            <h3 class="text-sm font-bold text-slate-900">จัดการรายชื่อทีมผู้ปฏิบัติงาน</h3>
+            <p class="text-[11px] text-slate-500">เพิ่มหรือลบรายชื่อผู้ปฏิบัติงานในระบบ</p>
           </div>
         </div>
         <button type="button" onclick="closeManageTechModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg transition-colors">
@@ -834,9 +840,9 @@
 
       <!-- Input to Add New Technician -->
       <div>
-        <label class="block text-xs font-bold text-slate-800 mb-1.5">เพิ่มช่างคนใหม่</label>
+        <label class="block text-xs font-bold text-slate-800 mb-1.5">เพิ่มผู้ปฏิบัติงานคนใหม่</label>
         <div class="flex space-x-2">
-          <input type="text" id="newTechNameInput" onkeydown="if(event.key==='Enter') confirmAddTech()" placeholder="เช่น ช่างกนก, ช่างสมชาย" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+          <input type="text" id="newTechNameInput" onkeydown="if(event.key==='Enter') confirmAddTech()" placeholder="เช่น คุณกนก, พี่อาร์ม, ใบบัว" class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
           <button type="button" onclick="confirmAddTech()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center space-x-1 flex-shrink-0 active:scale-95 shadow-2xs">
             <span>+ เพิ่ม</span>
           </button>
@@ -846,7 +852,7 @@
       <!-- Current Technicians List with Delete Button -->
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="text-xs font-bold text-slate-800">รายชื่อช่างในระบบ</label>
+          <label class="text-xs font-bold text-slate-800">รายชื่อผู้ปฏิบัติงานในระบบ</label>
           <span class="text-[11px] font-semibold text-slate-500" id="techCountLabel">0 คน</span>
         </div>
         <div id="manageTechListContainer" class="space-y-1.5 max-h-56 overflow-y-auto pr-1">

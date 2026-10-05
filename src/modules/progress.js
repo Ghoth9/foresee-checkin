@@ -89,9 +89,9 @@ export async function submitProgressUpdate({ tasksList, currentLineUserName, onC
     task.status = "เสร็จสิ้น";
   }
 
-  const updateEntry = `[คืบหน้า ${currentProgressPercent}%: ${task.status}] ${note || 'อัปเดตงานตามขั้นตอน'} (โดย ${currentLineUserName || 'ช่างหน้างาน'} เมื่อ ${now.toLocaleDateString("th-TH")} ${timeStr})`;
+  const updateEntry = `[คืบหน้า ${currentProgressPercent}%: ${task.status}] ${note || 'อัปเดตงานตามขั้นตอน'} (โดย ${currentLineUserName || 'ผู้ปฏิบัติงานหน้างาน'} เมื่อ ${now.toLocaleDateString("th-TH")} ${timeStr})`;
   task.latestUpdate = updateEntry;
-  task.updateBy = currentLineUserName || "ช่างหน้างาน";
+  task.updateBy = currentLineUserName || "ผู้ปฏิบัติงานหน้างาน";
   task.updateTime = timeStr;
 
   closeProgressModal();
@@ -103,7 +103,7 @@ export async function submitProgressUpdate({ tasksList, currentLineUserName, onC
     progress: currentProgressPercent,
     status: task.status,
     note: note || "-",
-    updateBy: currentLineUserName || "ช่างหน้างาน",
+    updateBy: currentLineUserName || "ผู้ปฏิบัติงานหน้างาน",
     updateEntry: updateEntry
   });
 

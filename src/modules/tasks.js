@@ -34,7 +34,7 @@ try {
 export function getTaskTechs(task) {
   if (Array.isArray(task.techs)) return task.techs;
   if (typeof task.techs === "string") return [task.techs];
-  return ["ช่างทั่วไป"];
+  return ["ผู้ปฏิบัติงานทั่วไป"];
 }
 
 export function setTaskViewMode(mode, tasksList) {
@@ -171,7 +171,7 @@ export function renderTasksList(tasksList) {
       <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 p-8 shadow-xs">
         <div class="w-14 h-14 mx-auto mb-3.5 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl">📋</div>
         <h3 class="text-base font-bold text-slate-900">ยังไม่มีรายการงานในระบบ</h3>
-        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">เริ่มต้นมอบหมายงานแรกให้ทีมช่าง โดยกดปุ่มด้านล่างเพื่อระบุไซต์งานและช่างผู้รับผิดชอบ</p>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">เริ่มต้นมอบหมายงานแรก โดยกดปุ่มด้านล่างเพื่อระบุไซต์งานและผู้ปฏิบัติงานที่รับผิดชอบ</p>
         <button type="button" onclick="openAssignModal()" class="mt-4 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm transition-all inline-flex items-center space-x-1.5 active:scale-95">
           <span>+ มอบหมายงานใหม่</span>
         </button>
@@ -205,7 +205,7 @@ export function renderTasksList(tasksList) {
               <th class="py-3.5 px-3 w-10 text-center font-mono">#</th>
               <th class="py-3.5 px-3 w-32 whitespace-nowrap">สถานะ</th>
               <th class="py-3.5 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
-              <th class="py-3.5 px-3 w-36">ช่างผู้รับผิดชอบ</th>
+              <th class="py-3.5 px-3 w-36">ผู้ปฏิบัติงาน</th>
               <th class="py-3.5 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
               <th class="py-3.5 px-3 w-28 whitespace-nowrap">ความคืบหน้า</th>
               <th class="py-3.5 px-3 w-36 text-right pr-4 whitespace-nowrap">จัดการ</th>
@@ -329,7 +329,7 @@ export function renderTasksList(tasksList) {
             ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<p class="text-[11px] text-blue-600 line-clamp-1 mt-1 font-medium">💬 ${task.latestUpdate}</p>` : ''}
           </div>
           <div class="mt-2 text-xs text-slate-500 flex items-center space-x-1">
-            <span>👷 ช่าง:</span>
+            <span>👷 ผู้ปฏิบัติงาน:</span>
             <strong class="text-slate-700">${techs.join(', ')}</strong>
           </div>
         </div>
@@ -598,8 +598,8 @@ export async function submitAssignForm({ tasksList, onComplete }) {
   if (selectedAssignTechs.length === 0) {
     showAppAlert({
       type: "warning",
-      title: "ยังไม่ได้เลือกช่าง",
-      message: "กรุณาเลือกช่างผู้รับผิดชอบงานอย่างน้อย 1 คน"
+      title: "ยังไม่ได้เลือกผู้ปฏิบัติงาน",
+      message: "กรุณาเลือกผู้ปฏิบัติงานที่รับผิดชอบงานอย่างน้อย 1 คน"
     });
     return;
   }
@@ -1025,7 +1025,7 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
               progress: c.progress || 0,
               status: c.status || "กำลังทำ",
               note: c.note || `เช็กอินเข้าปฏิบัติงานเวลา ${c.checkinTime || '09:00'} น.`,
-              tech: Array.isArray(c.techs) ? c.techs.join(", ") : (c.tech || "ช่างหน้างาน"),
+              tech: Array.isArray(c.techs) ? c.techs.join(", ") : (c.tech || "ผู้ปฏิบัติงานหน้างาน"),
               photos: c.photos,
               isCheckin: true
             });
@@ -1048,7 +1048,7 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
         <div class="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-6">
           <div class="text-3xl mb-2">📸</div>
           <div class="text-sm font-bold text-slate-800">ยังไม่มีบันทึกภาพถ่ายหน้างาน</div>
-          <p class="text-xs text-slate-500 mt-1">รูปถ่ายความคืบหน้าจะแสดงที่นี่เมื่อทีมช่างเช็กอินหรืออัปเดตงานระหว่างวัน</p>
+          <p class="text-xs text-slate-500 mt-1">รูปถ่ายความคืบหน้าจะแสดงที่นี่เมื่อผู้ปฏิบัติงานเช็กอินหรืออัปเดตงานระหว่างวัน</p>
         </div>
       `;
     } else {
@@ -1096,7 +1096,7 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
               </div>
               ${item.note && item.note !== '-' ? `<p class="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100 leading-relaxed">${item.note}</p>` : ''}
               <div class="text-[11px] text-slate-500">
-                ผู้ปฏิบัติงาน: <strong class="text-slate-800">${item.tech || 'ช่างประจำทีม'}</strong>
+                ผู้ปฏิบัติงาน: <strong class="text-slate-800">${item.tech || 'ผู้ปฏิบัติงานประจำทีม'}</strong>
               </div>
               ${photosHtml}
             </div>

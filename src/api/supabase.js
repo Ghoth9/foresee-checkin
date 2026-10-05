@@ -238,7 +238,7 @@ export async function updateTaskProgressApi({ taskId, taskTitle, progress, statu
       progress: Number(progress) || 0,
       status: status || "กำลังทำ",
       note: note || "-",
-      tech: updateBy || "ช่างหน้างาน",
+      tech: updateBy || "ผู้ปฏิบัติงานหน้างาน",
       photos: cleanPhotos,
       createdAt: now.toISOString()
     };
@@ -422,19 +422,19 @@ export async function saveCheckoutApi(payload) {
             progress: 100,
             status: "เสร็จสิ้น",
             note: `ปิดงาน: ${payload.outcome || 'เสร็จเรียบร้อย'} ${payload.note ? `(${payload.note})` : ''}`,
-            tech: payload.closedBy || payload.closerName || "ช่างหน้างาน",
+            tech: payload.closedBy || payload.closerName || "ผู้ปฏิบัติงานหน้างาน",
             photos: cleanPhotos,
             createdAt: now.toISOString()
           };
           await supabase.from('tasks').update({
             progress: 100,
             status: 'เสร็จสิ้น',
-            latest_update: `[ปิดงาน 100%] ${payload.outcome || 'เสร็จเรียบร้อย'} (โดย ${payload.closedBy || 'ช่างหน้างาน'} เมื่อ ${timeStr} น.)`,
+            latest_update: `[ปิดงาน 100%] ${payload.outcome || 'เสร็จเรียบร้อย'} (โดย ${payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน'} เมื่อ ${timeStr} น.)`,
             customer: {
               ...existingCust,
               progress_history: [...existingHistory, closeHistoryItem]
             },
-            updated_by: payload.closedBy || 'ช่างหน้างาน',
+            updated_by: payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน',
             updated_at: now.toISOString()
           }).eq('id', targetTaskId);
         }
