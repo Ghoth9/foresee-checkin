@@ -234,11 +234,11 @@ export function setCheckinTechs(techs) {
 // MANAGE TECHNICIANS MODAL
 // -------------------------------------------------------------
 export function openManageTechModal() {
-  if (currentUserRole !== "admin") {
+  if (currentUserRole !== "admin" && !isUserAdminActual()) {
     showAppAlert({
       type: "warning",
-      title: "เฉพาะคุณใบปอ (แอดมิน)",
-      message: "เฉพาะคุณใบปอ หรือแอดมินเท่านั้นที่มีสิทธิ์จัดการทีมงานครับ"
+      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
+      message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์จัดการทีมงานครับ"
     });
     return;
   }
@@ -1254,7 +1254,7 @@ export function submitAdminPinUnlock() {
     showAppAlert({
       type: "warning",
       title: "รหัส PIN ไม่ถูกต้อง",
-      message: "กรุณาระบุรหัส PIN แอดมินให้ถูกต้อง (หรือเปิดผ่านบัญชี LINE ของคุณใบปอ)"
+      message: "กรุณาระบุรหัส PIN ผู้ดูแลระบบให้ถูกต้อง"
     });
   }
 }
@@ -1263,8 +1263,8 @@ export function openTeamRoleModal() {
   if (currentUserRole !== "admin" && !isUserAdminActual()) {
     showAppAlert({
       type: "warning",
-      title: "ต้องใช้สิทธิ์แอดมิน",
-      message: "เฉพาะคุณใบปอ หรือแอดมินเท่านั้นที่สามารถเข้าถึงส่วนจัดการทีมงานได้"
+      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
+      message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถเข้าถึงส่วนจัดการทีมงานได้"
     });
     return;
   }
@@ -1604,8 +1604,8 @@ window.openAssignModal = () => {
   if (currentUserRole !== "admin") {
     showAppAlert({
       type: "warning",
-      title: "เฉพาะคุณใบปอ (แอดมิน)",
-      message: "เฉพาะคุณใบปอ หรือแอดมินเท่านั้นที่มีสิทธิ์มอบหมายงานใหม่ครับ"
+      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
+      message: "ฟังก์ชันมอบหมายงานสงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นครับ"
     });
     return;
   }
@@ -1688,8 +1688,8 @@ window.saveTaskDetailChanges = () => {
   if (currentUserRole !== "admin") {
     showAppAlert({
       type: "warning",
-      title: "ไม่มีสิทธิ์แก้ไขงาน",
-      message: "เฉพาะคุณใบปอ (แอดมิน) เท่านั้นที่มีสิทธิ์แก้ไขข้อมูลงานครับ"
+      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
+      message: "ฟังก์ชันแก้ไขข้อมูลงานสงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นครับ"
     });
     return;
   }
@@ -1701,8 +1701,8 @@ window.deleteCurrentDetailTask = () => {
   if (currentUserRole !== "admin") {
     showAppAlert({
       type: "warning",
-      title: "ไม่มีสิทธิ์ลบงาน",
-      message: "เฉพาะคุณใบปอ (แอดมิน) เท่านั้นที่มีสิทธิ์ลบงานครับ"
+      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
+      message: "ฟังก์ชันลบงานสงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นครับ"
     });
     return;
   }

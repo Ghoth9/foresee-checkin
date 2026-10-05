@@ -53,7 +53,7 @@ export function updateQuickCardUI(task) {
     if (descEl) descEl.innerText = task.desc && task.desc !== "-" ? task.desc : "ไม่มีรายละเอียดเพิ่มเติม";
     if (techsEl) techsEl.innerText = techList;
     if (deadlineEl) deadlineEl.innerText = formatThaiDateDisplay(task.deadline);
-    if (toggleTextEl) toggleTextEl.innerText = "✏️ แก้ไข / ขยายดูรายละเอียด";
+    if (toggleTextEl) toggleTextEl.innerText = "📋 ขยายดูรายละเอียดงาน";
     if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
 
     if (normalHeader) normalHeader.classList.add("hidden");
@@ -101,7 +101,7 @@ export function toggleCheckinFormDetails() {
     detailsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } else {
     detailsContainer.classList.add("hidden");
-    if (toggleTextEl) toggleTextEl.innerText = "✏️ แก้ไข / ขยายดูรายละเอียด";
+    if (toggleTextEl) toggleTextEl.innerText = "📋 ขยายดูรายละเอียดงาน";
     if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
   }
 }
