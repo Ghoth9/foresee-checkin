@@ -1082,17 +1082,8 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
     }
   } catch (e) {}
 
-  // Calculate unique photos count across all timeline items
-  const uniqueAllPhotos = new Set();
-  timelineItems.forEach(it => {
-    if (Array.isArray(it.photos)) {
-      it.photos.forEach(p => {
-        const url = typeof p === 'string' ? p : (p.dataUrl || p.base64 || p.src || '');
-        if (url) uniqueAllPhotos.add(url);
-      });
-    }
-  });
-  const totalPhotos = uniqueAllPhotos.size;
+  // Total photos count across all timeline updates
+  const totalPhotos = timelineItems.reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
   const photoBadge = document.getElementById("detailTimelinePhotoCountBadge");
   const totalBadge = document.getElementById("detailTimelineTotalBadge");
   if (photoBadge) photoBadge.innerText = totalPhotos;

@@ -197,6 +197,37 @@ export async function saveTaskApi(task) {
 
 export async function deleteTaskApi(id) {
   try {
+    // 1. Clean up photos from storage bucket
+    try {
+      const { data: t } = await supabase.from('tasks').select('*').eq('id', id).maybeSingle();
+      if (t && t.customer && Array.isArray(t.customer.progress_history)) {
+        const filePaths = [];
+        t.customer.progress_history.forEach(h => {
+          if (Array.isArray(h.photos)) {
+            h.photos.forEach(p => {
+              const url = typeof p === 'string' ? p : (p.dataUrl || p.base64 || '');
+              if (url.includes('/storage/v1/object/public/')) {
+                const after = url.split('/storage/v1/object/public/')[1];
+                if (after) {
+                  const segments = after.split('/');
+                  segments.shift();
+                  filePaths.push(segments.join('/').split('?')[0]);
+                }
+              } else if (url.includes('/work-photos/')) {
+                const parts = url.split('/work-photos/');
+                if (parts[1]) filePaths.push(parts[1].split('?')[0]);
+              }
+            });
+          }
+        });
+        if (filePaths.length > 0) {
+          await supabase.storage.from('work-photos').remove(filePaths);
+        }
+      }
+    } catch (cleanErr) {
+      console.warn("deleteTask storage cleanup warning:", cleanErr);
+    }
+
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -216,17 +247,26 @@ export async function updateTaskProgressApi({ taskId, taskTitle, progress, statu
     const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
     const dateStr = now.toLocaleDateString("th-TH");
 
-    // 1. Process photos into clean data URLs / URLs
+    // 1. Process photos into clean data URLs / URLs (with Storage upload if bucket is ready)
     const cleanPhotos = [];
     if (photos && photos.length > 0) {
-      for (const p of photos) {
-        if (typeof p === 'string') {
-          cleanPhotos.push(p);
-        } else if (p.dataUrl) {
-          cleanPhotos.push(p.dataUrl);
-        } else if (p.base64) {
-          const formatted = p.base64.startsWith('data:') ? p.base64 : `data:image/jpeg;base64,${p.base64}`;
-          cleanPhotos.push(formatted);
+      for (let i = 0; i < photos.length; i++) {
+        const p = photos[i];
+        let str = typeof p === 'string' ? p : (p.dataUrl || p.base64 || null);
+        if (str) {
+          if (!str.startsWith('data:') && !str.startsWith('http')) {
+            str = `data:image/jpeg;base64,${str}`;
+          }
+          if (str.startsWith('data:')) {
+            try {
+              const uploadedUrl = await uploadPhotoToSupabase(str, `progress_${taskId || 'task'}_${i + 1}.jpg`);
+              if (uploadedUrl) {
+                cleanPhotos.push(uploadedUrl);
+                continue;
+              }
+            } catch (e) {}
+          }
+          cleanPhotos.push(str);
         }
       }
     }
@@ -335,12 +375,28 @@ export async function extendTaskDeadlineApi({ taskId, newDeadline, oldDeadline, 
 // -------------------------------------------------------------
 export async function saveCheckinApi(data) {
   try {
-    const cleanPhotos = (data.photos || []).map(p => {
-      if (typeof p === 'string') return p;
-      if (p.dataUrl) return p.dataUrl;
-      if (p.base64) return p.base64.startsWith('data:') ? p.base64 : `data:image/jpeg;base64,${p.base64}`;
-      return null;
-    }).filter(Boolean);
+    const cleanPhotos = [];
+    if (data.photos && data.photos.length > 0) {
+      for (let i = 0; i < data.photos.length; i++) {
+        const p = data.photos[i];
+        let str = typeof p === 'string' ? p : (p.dataUrl || p.base64 || null);
+        if (str) {
+          if (!str.startsWith('data:') && !str.startsWith('http')) {
+            str = `data:image/jpeg;base64,${str}`;
+          }
+          if (str.startsWith('data:')) {
+            try {
+              const uploadedUrl = await uploadPhotoToSupabase(str, `checkin_${data.id || 'chk'}_${i + 1}.jpg`);
+              if (uploadedUrl) {
+                cleanPhotos.push(uploadedUrl);
+                continue;
+              }
+            } catch (e) {}
+          }
+          cleanPhotos.push(str);
+        }
+      }
+    }
 
     const payload = {
       id: data.id,
@@ -371,12 +427,28 @@ export async function saveCheckinApi(data) {
 
 export async function saveCheckoutApi(payload) {
   try {
-    const cleanPhotos = (payload.photos || []).map(p => {
-      if (typeof p === 'string') return p;
-      if (p.dataUrl) return p.dataUrl;
-      if (p.base64) return p.base64.startsWith('data:') ? p.base64 : `data:image/jpeg;base64,${p.base64}`;
-      return null;
-    }).filter(Boolean);
+    const cleanPhotos = [];
+    if (payload.photos && payload.photos.length > 0) {
+      for (let i = 0; i < payload.photos.length; i++) {
+        const p = payload.photos[i];
+        let str = typeof p === 'string' ? p : (p.dataUrl || p.base64 || null);
+        if (str) {
+          if (!str.startsWith('data:') && !str.startsWith('http')) {
+            str = `data:image/jpeg;base64,${str}`;
+          }
+          if (str.startsWith('data:')) {
+            try {
+              const uploadedUrl = await uploadPhotoToSupabase(str, `checkout_${payload.id || 'out'}_${i + 1}.jpg`);
+              if (uploadedUrl) {
+                cleanPhotos.push(uploadedUrl);
+                continue;
+              }
+            } catch (e) {}
+          }
+          cleanPhotos.push(str);
+        }
+      }
+    }
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
@@ -512,11 +584,20 @@ export async function deletePhotoFromSupabaseApi(photoUrl, taskId, checkinId) {
 
     // 3. Delete from Supabase Storage bucket if it is a hosted file
     try {
-      if (photoUrl.includes('/work-photos/')) {
+      if (photoUrl.includes('/storage/v1/object/public/')) {
+        const afterPublic = photoUrl.split('/storage/v1/object/public/')[1];
+        if (afterPublic) {
+          const [bucketName, ...pathSegments] = afterPublic.split('/');
+          const storagePath = pathSegments.join('/').split('?')[0];
+          if (bucketName && storagePath) {
+            await supabase.storage.from(bucketName).remove([decodeURIComponent(storagePath)]);
+          }
+        }
+      } else if (photoUrl.includes('/work-photos/')) {
         const parts = photoUrl.split('/work-photos/');
         if (parts[1]) {
           const storagePath = parts[1].split('?')[0];
-          await supabase.storage.from('work-photos').remove([storagePath]);
+          await supabase.storage.from('work-photos').remove([decodeURIComponent(storagePath)]);
         }
       }
     } catch (sErr) {
@@ -532,6 +613,33 @@ export async function deletePhotoFromSupabaseApi(photoUrl, taskId, checkinId) {
 
 export async function deleteCheckinApi(id) {
   try {
+    // 1. Delete associated photos from Storage bucket
+    try {
+      const { data: chk } = await supabase.from('checkins').select('*').eq('id', id).maybeSingle();
+      if (chk && Array.isArray(chk.photos)) {
+        const filePaths = [];
+        chk.photos.forEach(p => {
+          const url = typeof p === 'string' ? p : (p.dataUrl || p.base64 || '');
+          if (url.includes('/storage/v1/object/public/')) {
+            const after = url.split('/storage/v1/object/public/')[1];
+            if (after) {
+              const segments = after.split('/');
+              segments.shift();
+              filePaths.push(segments.join('/').split('?')[0]);
+            }
+          } else if (url.includes('/work-photos/')) {
+            const parts = url.split('/work-photos/');
+            if (parts[1]) filePaths.push(parts[1].split('?')[0]);
+          }
+        });
+        if (filePaths.length > 0) {
+          await supabase.storage.from('work-photos').remove(filePaths);
+        }
+      }
+    } catch (cleanErr) {
+      console.warn("deleteCheckin storage cleanup warning:", cleanErr);
+    }
+
     const { error } = await supabase
       .from('checkins')
       .delete()

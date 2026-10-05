@@ -377,16 +377,16 @@ export function getUniquePhotosForActiveTask(activeItem) {
     t.title === activeItem.task
   );
 
-  const uniqueMap = new Map();
+  const photosList = [];
 
   // 1. Photos in active checkin
   if (Array.isArray(activeItem.photos)) {
-    activeItem.photos.forEach((p) => {
+    activeItem.photos.forEach((p, idx) => {
       const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
-      if (src && !uniqueMap.has(src)) {
-        uniqueMap.set(src, {
+      if (src) {
+        photosList.push({
           src,
-          caption: `${activeItem.task} • รูปหน้างาน #${uniqueMap.size + 1}`
+          caption: `${activeItem.task} • รูปเช็กอิน #${idx + 1}`
         });
       }
     });
@@ -396,12 +396,12 @@ export function getUniquePhotosForActiveTask(activeItem) {
   if (linkedTask && Array.isArray(linkedTask.progressHistory)) {
     linkedTask.progressHistory.forEach(h => {
       if (Array.isArray(h.photos)) {
-        h.photos.forEach((hp) => {
+        h.photos.forEach((hp, idx) => {
           const src = hp.dataUrl || hp.base64 || hp.url || (typeof hp === "string" ? hp : null);
-          if (src && !uniqueMap.has(src)) {
-            uniqueMap.set(src, {
+          if (src) {
+            photosList.push({
               src,
-              caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || h.tech || 'ช่าง'})`
+              caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || h.tech || 'ช่าง'}) #${idx + 1}`
             });
           }
         });
@@ -409,7 +409,7 @@ export function getUniquePhotosForActiveTask(activeItem) {
     });
   }
 
-  return Array.from(uniqueMap.values());
+  return photosList;
 }
 
 export function formatLatestNoteText(rawText) {
