@@ -916,21 +916,47 @@
     </div>
   </div>
 
-  <!-- 5. FULL-SCREEN PHOTO LIGHTBOX MODAL (Supervisor Image Viewer) -->
-  <div id="imageLightboxModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 z-[999] animate-fade-in">
-    <div class="absolute top-4 right-4 flex items-center space-x-2 z-10">
-      <a id="lightboxDownloadBtn" href="#" download="cctv_work_photo.jpg" class="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-semibold backdrop-blur-sm transition-all flex items-center space-x-1.5 cursor-pointer">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        <span>ดาวน์โหลด</span>
-      </a>
-      <button type="button" onclick="window.closeImageLightbox()" class="w-8 h-8 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center text-lg font-bold backdrop-blur-sm transition-all cursor-pointer">
-        ✕
-      </button>
+  <!-- 5. FULL-SCREEN PHOTO LIGHTBOX MODAL (Supervisor Image Viewer with Interactive Zoom & Pan) -->
+  <div id="imageLightboxModal" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-3 md:p-6 z-[999] select-none touch-none animate-fade-in" onclick="if(event.target === this) window.closeImageLightbox()">
+    
+    <!-- Top Bar: Zoom Controls & Close -->
+    <div class="w-full flex items-center justify-between z-20 pointer-events-auto">
+      <!-- Zoom Toolset -->
+      <div class="flex items-center space-x-1.5 bg-slate-900/80 backdrop-blur-md border border-white/10 p-1 rounded-2xl shadow-lg">
+        <button type="button" onclick="window.zoomLightbox(-0.3)" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center font-bold text-base transition-all" title="ซูมออก (-)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/></svg>
+        </button>
+        <span id="lightboxZoomPercent" class="text-[11px] font-mono font-bold text-white px-2 min-w-[50px] text-center">100%</span>
+        <button type="button" onclick="window.zoomLightbox(0.3)" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center font-bold text-base transition-all" title="ซูมเข้า (+)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        </button>
+        <button type="button" onclick="window.resetLightboxZoom()" class="px-2.5 h-9 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-[11px] font-semibold transition-all" title="รีเซ็ตขนาดภาพ">
+          รีเซ็ต
+        </button>
+      </div>
+
+      <!-- Action buttons: Download & Close -->
+      <div class="flex items-center space-x-2">
+        <a id="lightboxDownloadBtn" href="#" download="cctv_work_photo.jpg" class="h-9 px-3.5 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-semibold backdrop-blur-md border border-white/10 transition-all flex items-center space-x-1.5 cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span class="hidden sm:inline">ดาวน์โหลด</span>
+        </a>
+        <button type="button" onclick="window.closeImageLightbox()" class="w-9 h-9 rounded-2xl bg-rose-500/80 hover:bg-rose-600 active:scale-95 text-white flex items-center justify-center text-lg font-bold backdrop-blur-md border border-white/10 transition-all cursor-pointer" title="ปิดหน้าต่าง">
+          ✕
+        </button>
+      </div>
     </div>
-    <div class="max-w-4xl max-h-[82vh] flex items-center justify-center overflow-hidden rounded-2xl shadow-2xl p-2">
-      <img id="lightboxImg" src="" class="max-w-full max-h-[80vh] object-contain rounded-xl select-none shadow-2xl" alt="work photo preview">
+
+    <!-- Center Viewport (Pinch / Drag / Zoom Container) -->
+    <div id="lightboxViewport" class="relative w-full flex-1 flex items-center justify-center overflow-hidden my-2 cursor-grab active:cursor-grabbing">
+      <img id="lightboxImg" src="" class="max-w-[95vw] max-h-[75vh] object-contain rounded-xl select-none shadow-2xl transition-transform duration-100 ease-out will-change-transform" alt="work photo preview" draggable="false">
     </div>
-    <div id="lightboxCaption" class="text-white/90 text-xs text-center mt-2.5 max-w-lg font-medium px-4 py-1.5 bg-slate-900/60 backdrop-blur-sm rounded-full"></div>
+
+    <!-- Bottom Caption & Hint -->
+    <div class="z-20 flex flex-col items-center space-y-1">
+      <div id="lightboxCaption" class="text-white text-xs text-center max-w-lg font-medium px-4 py-1.5 bg-slate-900/80 backdrop-blur-md border border-white/10 rounded-full shadow-lg"></div>
+      <span class="text-[10px] text-white/50">💡 เลื่อนลูกกลิ้ง / ใช้ 2 นิ้วซูมภาพ หรือแตะ 2 ครั้งเพื่อซูม</span>
+    </div>
   </div>
 
   <footer class="py-4 text-center text-[11px] text-slate-400 border-t border-slate-200/80 bg-white">

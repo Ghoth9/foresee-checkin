@@ -252,7 +252,13 @@ export async function updateTaskProgressApi({ taskId, taskTitle, progress, statu
 
     const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
     const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
-    const updatedHistory = [...existingHistory, newHistoryItem];
+    // Deduplicate history entry if same progress and note within last 10 seconds
+    const isDuplicateHistory = existingHistory.some(h => 
+      Number(h.progress) === Number(progress) && 
+      h.note === (note || "-") && 
+      (now.getTime() - new Date(h.createdAt || 0).getTime() < 10000)
+    );
+    const updatedHistory = isDuplicateHistory ? existingHistory : [...existingHistory, newHistoryItem];
 
     // 3. Update task in database
     const updateData = {
@@ -287,11 +293,14 @@ export async function updateTaskProgressApi({ taskId, taskTitle, progress, statu
       if (matchingCheckins && matchingCheckins.length > 0) {
         const chk = matchingCheckins[0];
         const existingPhotos = Array.isArray(chk.photos) ? chk.photos : [];
-        const combinedPhotos = [...existingPhotos, ...cleanPhotos];
+        const existingSet = new Set(existingPhotos.map(p => typeof p === 'string' ? p : (p.dataUrl || p.base64 || '')));
+        const newUniquePhotos = cleanPhotos.filter(p => !existingSet.has(typeof p === 'string' ? p : (p.dataUrl || p.base64 || '')));
+        const combinedPhotos = [...existingPhotos, ...newUniquePhotos];
+
         await supabase.from('checkins').update({
           progress: Number(progress) || 0,
           status: status,
-          note: note ? `${chk.note ? chk.note + ' | ' : ''}[${progress}%] ${note}` : chk.note,
+          note: note ? `[${progress}%] ${note}` : chk.note,
           photos: combinedPhotos,
           updated_at: now.toISOString()
         }).eq('id', chk.id);

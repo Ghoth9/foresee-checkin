@@ -221,12 +221,18 @@ export function calculateDuration(checkinTimeStr) {
 // -------------------------------------------------------------
 // SUBMIT: PROGRESS UPDATE (MODE 1: งานยังไม่เสร็จ)
 // -------------------------------------------------------------
+let isSubmittingProgress = false;
+let isSubmittingCheckout = false;
+
 export async function submitProgressOnly({
   activeItem,
   noteText,
   closerName,
+  totalPhotosCount = 0,
   onComplete
 }) {
+  if (isSubmittingProgress) return;
+
   if (!activeItem) {
     showAppAlert({
       type: "warning",
@@ -236,53 +242,84 @@ export async function submitProgressOnly({
     return;
   }
 
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-  const dateStr = now.toLocaleDateString("th-TH");
-  const updateEntry = `[คืบหน้า ${updatePercent}%: ${updateStatus}] ${noteText.trim() || 'อัปเดตงานตามขั้นตอน'} (โดย ${closerName || 'ช่างหน้างาน'} เมื่อ ${dateStr} ${timeStr})`;
+  isSubmittingProgress = true;
+  const updateBtn = document.getElementById("submitUpdateBtn");
+  if (updateBtn) {
+    updateBtn.disabled = true;
+    updateBtn.className = "w-full bg-slate-400 text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-wait transition-all flex items-center justify-center space-x-2 select-none";
+    updateBtn.innerHTML = `<span>⏳ กำลังบันทึกความคืบหน้า...</span>`;
+  }
 
-  // 1. Send Progress Flex Card
-  const flexCard = createProgressFlexCard({
-    id: activeItem.id,
-    taskId: activeItem.taskId || activeItem.id,
-    taskTitle: activeItem.task,
-    techs: activeItem.techs,
-    progress: updatePercent,
-    status: updateStatus,
-    note: noteText.trim() || "อัปเดตความคืบหน้าระหว่างปฏิบัติงาน",
-    updateBy: closerName || "ช่างหน้างาน",
-    updateTime: timeStr,
-    photoCount: checkoutPhotos.length
-  });
-
-  // 2. Sync to Supabase Database & Timeline
-  const apiRes = await updateTaskProgressApi({
-    taskId: activeItem.taskId || activeItem.id,
-    taskTitle: activeItem.task,
-    progress: updatePercent,
-    status: updateStatus,
-    note: noteText.trim() || "-",
-    updateBy: closerName || "ช่างหน้างาน",
-    updateEntry: updateEntry,
-    photos: checkoutPhotos
-  });
-
-  // 3. Share to LINE
-  const shareRes = await triggerLiffShare(flexCard, "อัปเดตความคืบหน้างานและส่งเข้า LINE สำเร็จ!");
-
-  const savedPhotos = [...checkoutPhotos];
+  // 1. Snapshot and clear photos immediately so user cannot double-submit the same photos
+  const photosToUpload = [...checkoutPhotos];
   clearCheckoutPhotos();
+  const fileInputs = document.querySelectorAll('input[type="file"]');
+  fileInputs.forEach(fi => { fi.value = ''; });
 
-  if (onComplete) onComplete({
-    id: activeItem.id,
-    task: activeItem.task,
-    status: updateStatus,
-    progress: updatePercent,
-    latestUpdate: updateEntry,
-    photos: savedPhotos,
-    historyItem: apiRes?.historyItem,
-    lineShared: !!(shareRes && shareRes.success)
-  });
+  try {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("th-TH");
+    const updateEntry = `[คืบหน้า ${updatePercent}%: ${updateStatus}] ${noteText.trim() || 'อัปเดตงานตามขั้นตอน'} (โดย ${closerName || 'ช่างหน้างาน'} เมื่อ ${dateStr} ${timeStr})`;
+
+    const newTotalPhotos = totalPhotosCount + photosToUpload.length;
+
+    // 2. Send Progress Flex Card with totalPhotos
+    const flexCard = createProgressFlexCard({
+      id: activeItem.id,
+      taskId: activeItem.taskId || activeItem.id,
+      taskTitle: activeItem.task,
+      techs: activeItem.techs,
+      progress: updatePercent,
+      status: updateStatus,
+      note: noteText.trim() || "อัปเดตความคืบหน้าระหว่างปฏิบัติงาน",
+      updateBy: closerName || "ช่างหน้างาน",
+      updateTime: timeStr,
+      photoCount: photosToUpload.length,
+      totalPhotos: newTotalPhotos
+    });
+
+    // 3. Sync to Supabase Database & Timeline
+    const apiRes = await updateTaskProgressApi({
+      taskId: activeItem.taskId || activeItem.id,
+      taskTitle: activeItem.task,
+      progress: updatePercent,
+      status: updateStatus,
+      note: noteText.trim() || "-",
+      updateBy: closerName || "ช่างหน้างาน",
+      updateEntry: updateEntry,
+      photos: photosToUpload
+    });
+
+    // 4. Share to LINE (with safe fallback)
+    let shareRes = null;
+    try {
+      shareRes = await triggerLiffShare(flexCard, "อัปเดตความคืบหน้างานและส่งเข้า LINE สำเร็จ!");
+    } catch (shareErr) {
+      console.warn("LINE share error:", shareErr);
+    }
+
+    if (onComplete) onComplete({
+      id: activeItem.id,
+      task: activeItem.task,
+      status: updateStatus,
+      progress: updatePercent,
+      latestUpdate: updateEntry,
+      photos: photosToUpload,
+      historyItem: apiRes?.historyItem,
+      lineShared: !!(shareRes && shareRes.success)
+    });
+  } catch (err) {
+    console.error("submitProgressOnly error:", err);
+    showAppAlert({
+      type: "error",
+      title: "เกิดข้อผิดพลาด",
+      message: "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง"
+    });
+  } finally {
+    isSubmittingProgress = false;
+    updateCheckoutSubmitButtonsState();
+  }
 }
 
 // -------------------------------------------------------------
@@ -295,6 +332,8 @@ export async function submitCheckoutForm({
   closerName,
   onComplete
 }) {
+  if (isSubmittingCheckout) return;
+
   if (!activeItem) {
     showAppAlert({
       type: "warning",
@@ -333,45 +372,72 @@ export async function submitCheckoutForm({
     return;
   }
 
-  const now = new Date();
-  const outTimeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-  const durationStr = calculateDuration(activeItem.time);
+  isSubmittingCheckout = true;
+  const checkoutBtn = document.getElementById("submitCheckoutBtn");
+  if (checkoutBtn) {
+    checkoutBtn.disabled = true;
+    checkoutBtn.className = "w-full bg-slate-400 text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-wait transition-all flex items-center justify-center space-x-2 select-none";
+    checkoutBtn.innerHTML = `<span>⏳ กำลังบันทึกปิดงาน...</span>`;
+  }
 
-  const payload = {
-    id: activeItem.id,
-    taskId: activeItem.taskId || null,
-    task: activeItem.task,
-    techs: activeItem.techs,
-    inTime: formatGasTime(activeItem.time),
-    outTime: outTimeStr,
-    duration: durationStr,
-    outcome: selectedOutcome,
-    note: noteText.trim() || "-",
-    closedBy: closerName || "ช่างหน้างาน",
-    photoCount: checkoutPhotos.length,
-    photos: checkoutPhotos.map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }))
-  };
-
-  // 1. Flex Message
-  const flexCard = createCheckoutFlexCard({
-    id: activeItem.id,
-    task: activeItem.task,
-    techs: activeItem.techs,
-    inTime: formatGasTime(activeItem.time),
-    outTime: outTimeStr,
-    duration: durationStr,
-    outcome: selectedOutcome,
-    note: noteText.trim() || "",
-    photoCount: checkoutPhotos.length
-  });
-
-  // 2. Realtime sync to GAS
-  saveCheckoutApi(payload);
-
-  // 3. Share to LINE
-  await triggerLiffShare(flexCard, "ปิดงานและส่งสรุปผลงานเข้า LINE สำเร็จ!");
-
-  // Reset
+  const photosToUpload = [...checkoutPhotos];
   clearCheckoutPhotos();
-  if (onComplete) onComplete(payload);
+  const fileInputs = document.querySelectorAll('input[type="file"]');
+  fileInputs.forEach(fi => { fi.value = ''; });
+
+  try {
+    const now = new Date();
+    const outTimeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    const durationStr = calculateDuration(activeItem.time);
+
+    const payload = {
+      id: activeItem.id,
+      taskId: activeItem.taskId || null,
+      task: activeItem.task,
+      techs: activeItem.techs,
+      inTime: formatGasTime(activeItem.time),
+      outTime: outTimeStr,
+      duration: durationStr,
+      outcome: selectedOutcome,
+      note: noteText.trim() || "-",
+      closedBy: closerName || "ช่างหน้างาน",
+      photoCount: photosToUpload.length,
+      photos: photosToUpload.map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }))
+    };
+
+    // 1. Flex Message
+    const flexCard = createCheckoutFlexCard({
+      id: activeItem.id,
+      task: activeItem.task,
+      techs: activeItem.techs,
+      inTime: formatGasTime(activeItem.time),
+      outTime: outTimeStr,
+      duration: durationStr,
+      outcome: selectedOutcome,
+      note: noteText.trim() || "",
+      photoCount: photosToUpload.length
+    });
+
+    // 2. Realtime sync to GAS / Supabase
+    saveCheckoutApi(payload);
+
+    // 3. Share to LINE
+    try {
+      await triggerLiffShare(flexCard, "ปิดงานและส่งสรุปผลงานเข้า LINE สำเร็จ!");
+    } catch (shareErr) {
+      console.warn("LINE share checkout error:", shareErr);
+    }
+
+    if (onComplete) onComplete(payload);
+  } catch (err) {
+    console.error("submitCheckoutForm error:", err);
+    showAppAlert({
+      type: "error",
+      title: "เกิดข้อผิดพลาด",
+      message: "ไม่สามารถบันทึกปิดงานได้ กรุณาลองใหม่อีกครั้ง"
+    });
+  } finally {
+    isSubmittingCheckout = false;
+    updateCheckoutSubmitButtonsState();
+  }
 }

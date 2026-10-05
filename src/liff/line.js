@@ -242,11 +242,16 @@ export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, p
   };
 }
 
-export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress, status, note, updateBy, updateTime, photoCount = 0 }) {
+export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress, status, note, updateBy, updateTime, photoCount = 0, totalPhotos = 0 }) {
   const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ช่างทั่วไป");
   const cardId = id || taskId || '';
   const updateDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=update&id=${encodeURIComponent(cardId)}&taskId=${encodeURIComponent(taskId || '')}&task=${encodeURIComponent(taskTitle)}&techs=${encodeURIComponent(techList)}`;
   const closeDeepLink = `https://liff.line.me/${MY_LIFF_ID}?tab=checkout&action=close&id=${encodeURIComponent(cardId)}&taskId=${encodeURIComponent(taskId || '')}&task=${encodeURIComponent(taskTitle)}&techs=${encodeURIComponent(techList)}`;
+
+  const displayCount = totalPhotos > 0 ? totalPhotos : photoCount;
+  const photoButtonLabel = displayCount > 0 
+    ? `📸 ดูรูปหน้างาน (${displayCount} รูป) & ไทม์ไลน์` 
+    : `📸 ดูรูปหน้างาน & ไทม์ไลน์`;
 
   return {
     type: "flex",
@@ -305,9 +310,14 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
           ...(photoCount > 0 ? [{
             type: "box", layout: "horizontal", contents: [
               { type: "text", text: "ภาพหน้างาน", size: "xs", color: "#64748B", flex: 4 },
-              { type: "text", text: `📸 แนบรูปความคืบหน้า ${photoCount} ภาพ`, size: "xs", weight: "bold", color: "#2563EB", flex: 6 }
+              { type: "text", text: `📸 แนบรูปเพิ่มรอบนี้ ${photoCount} ภาพ`, size: "xs", weight: "bold", color: "#2563EB", flex: 6 }
             ]
-          }] : []),
+          }] : (totalPhotos > 0 ? [{
+            type: "box", layout: "horizontal", contents: [
+              { type: "text", text: "ภาพหน้างาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: `📸 มีภาพในระบบแล้ว ${totalPhotos} ภาพ`, size: "xs", weight: "bold", color: "#2563EB", flex: 6 }
+            ]
+          }] : [])),
           {
             type: "box", layout: "vertical", margin: "md", contents: [
               { type: "text", text: "รายละเอียดความคืบหน้า:", size: "xs", color: "#64748B", weight: "bold" },
@@ -331,7 +341,7 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
             margin: "xs",
             action: {
               type: "uri",
-              label: `📸 ดูรูปหน้างาน (${photoCount} รูป) & ไทม์ไลน์`,
+              label: photoButtonLabel,
               uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks&taskId=${encodeURIComponent(taskId || id || '')}&subtab=timeline`
             }
           },

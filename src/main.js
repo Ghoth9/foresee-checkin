@@ -48,6 +48,8 @@ import {
   switchTaskDetailTab,
   openImageLightbox,
   closeImageLightbox,
+  zoomLightbox,
+  resetLightboxZoom,
   setDetailModalStatus,
   setDetailModalPriority,
   updateDetailPhoneLink,
@@ -335,6 +337,60 @@ export function selectJobType(type) {
 let selectedActiveCheckoutId = null;
 let selectedCheckoutOutcome = "ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด";
 
+export function getUniquePhotosForActiveTask(activeItem) {
+  if (!activeItem) return [];
+  const linkedTask = tasksList.find(t => 
+    (activeItem.taskId && t.id === activeItem.taskId) || 
+    t.id === activeItem.id || 
+    t.title === activeItem.task
+  );
+
+  const uniqueMap = new Map();
+
+  // 1. Photos in active checkin
+  if (Array.isArray(activeItem.photos)) {
+    activeItem.photos.forEach((p) => {
+      const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
+      if (src && !uniqueMap.has(src)) {
+        uniqueMap.set(src, {
+          src,
+          caption: `${activeItem.task} • รูปหน้างาน #${uniqueMap.size + 1}`
+        });
+      }
+    });
+  }
+
+  // 2. Photos in task progress history
+  if (linkedTask && Array.isArray(linkedTask.progressHistory)) {
+    linkedTask.progressHistory.forEach(h => {
+      if (Array.isArray(h.photos)) {
+        h.photos.forEach((hp) => {
+          const src = hp.dataUrl || hp.base64 || hp.url || (typeof hp === "string" ? hp : null);
+          if (src && !uniqueMap.has(src)) {
+            uniqueMap.set(src, {
+              src,
+              caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || h.tech || 'ช่าง'})`
+            });
+          }
+        });
+      }
+    });
+  }
+
+  return Array.from(uniqueMap.values());
+}
+
+export function formatLatestNoteText(rawText) {
+  if (!rawText || rawText === '-') return '';
+  // If text contains pipe chain " | ", take the last updated section
+  if (rawText.includes(' | ')) {
+    const parts = rawText.split(' | ').filter(Boolean);
+    const last = parts[parts.length - 1].trim();
+    return last;
+  }
+  return rawText.trim();
+}
+
 export function renderActiveTaskPhotos(activeItem) {
   const container = document.getElementById("activeTaskExistingPhotosContainer");
   const grid = document.getElementById("activeTaskPhotosGrid");
@@ -347,43 +403,7 @@ export function renderActiveTaskPhotos(activeItem) {
     return;
   }
 
-  const linkedTask = tasksList.find(t => 
-    (activeItem.taskId && t.id === activeItem.taskId) || 
-    t.id === activeItem.id || 
-    t.title === activeItem.task
-  );
-
-  const photosList = [];
-
-  // 1. Photos in active checkin
-  if (Array.isArray(activeItem.photos)) {
-    activeItem.photos.forEach((p, idx) => {
-      const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
-      if (src && !photosList.some(existing => existing.src === src)) {
-        photosList.push({
-          src,
-          caption: `${activeItem.task} • รูปหน้างาน #${idx + 1}`
-        });
-      }
-    });
-  }
-
-  // 2. Photos in task progress history
-  if (linkedTask && Array.isArray(linkedTask.progressHistory)) {
-    linkedTask.progressHistory.forEach(h => {
-      if (Array.isArray(h.photos)) {
-        h.photos.forEach((hp, idx) => {
-          const src = hp.dataUrl || hp.base64 || hp.url || (typeof hp === "string" ? hp : null);
-          if (src && !photosList.some(existing => existing.src === src)) {
-            photosList.push({
-              src,
-              caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || 'ช่าง'})`
-            });
-          }
-        });
-      }
-    });
-  }
+  const photosList = getUniquePhotosForActiveTask(activeItem);
 
   if (photosList.length === 0) {
     container.classList.add("hidden");
@@ -439,7 +459,10 @@ export function renderActiveCheckoutList() {
     const displayTaskId = item.taskId ? `${item.taskId} (${item.id})` : item.id;
     const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
     const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
-    const totalPhotos = (item.photos?.length || 0) + (linkedTask?.progressHistory?.reduce((sum, h) => sum + (h.photos?.length || 0), 0) || 0);
+    const uniquePhotos = getUniquePhotosForActiveTask(item);
+    const totalPhotos = uniquePhotos.length;
+    const rawNote = linkedTask?.latestUpdate || item.note;
+    const cleanNote = formatLatestNoteText(rawNote);
 
     return `
       <div onclick="window.selectActiveTaskForCheckout('${item.id}')" class="p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
@@ -460,12 +483,13 @@ export function renderActiveCheckoutList() {
           </button>
         </div>
         <div class="font-bold text-sm text-slate-950">${item.task}</div>
-        ${linkedTask?.latestUpdate || item.note ? `
-          <div class="text-[11px] text-blue-900 bg-blue-50/80 rounded-lg px-2 py-1 mt-1 font-medium border border-blue-100 line-clamp-1">
-            📌 ล่าสุด: ${item.note || linkedTask?.latestUpdate}
+        ${cleanNote ? `
+          <div class="text-[11px] text-blue-900 bg-blue-50/90 rounded-lg px-2.5 py-1.5 mt-2 font-medium border border-blue-200/70 flex items-start space-x-1.5">
+            <span class="flex-shrink-0 text-blue-600 font-bold">📌 ล่าสุด:</span>
+            <span class="truncate block flex-1 font-sans text-slate-800" title="${cleanNote}">${cleanNote}</span>
           </div>
         ` : ''}
-        <div class="text-slate-600 mt-1.5 flex items-center justify-between font-medium">
+        <div class="text-slate-600 mt-2 flex items-center justify-between font-medium pt-1.5 border-t border-slate-100">
           <span>👷 ช่าง: <strong class="text-slate-900">${techList}</strong></span>
           <span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>
         </div>
@@ -976,18 +1000,23 @@ window.setCheckoutUpdateStatus = setUpdateStatus;
 window.submitOngoingUpdate = () => {
   const activeItem = activeTasks.find(a => a.id === selectedActiveCheckoutId);
   const noteInput = document.getElementById("checkoutUpdateNoteInput");
+  const uniquePhotos = getUniquePhotosForActiveTask(activeItem);
 
   submitProgressOnly({
     activeItem: activeItem,
     noteText: noteInput ? noteInput.value : "",
     closerName: getLineUserName() || "ช่างหน้างาน",
+    totalPhotosCount: uniquePhotos.length,
     onComplete: (updatedInfo) => {
       const act = activeTasks.find(a => a.id === updatedInfo.id);
       if (act) {
         act.status = updatedInfo.status;
         act.progress = updatedInfo.progress;
         if (Array.isArray(updatedInfo.photos) && updatedInfo.photos.length > 0) {
-          act.photos = [...(act.photos || []), ...updatedInfo.photos];
+          const curPhotos = Array.isArray(act.photos) ? act.photos : [];
+          const curSet = new Set(curPhotos.map(p => typeof p === 'string' ? p : (p.dataUrl || p.base64 || '')));
+          const newUnique = updatedInfo.photos.filter(p => !curSet.has(typeof p === 'string' ? p : (p.dataUrl || p.base64 || '')));
+          act.photos = [...curPhotos, ...newUnique];
         }
       }
       const log = dailyLogs.find(l => l.id === updatedInfo.id);
@@ -1009,7 +1038,9 @@ window.submitOngoingUpdate = () => {
           linkedTask.latestUpdate = updatedInfo.latestUpdate;
           if (updatedInfo.historyItem) {
             if (!Array.isArray(linkedTask.progressHistory)) linkedTask.progressHistory = [];
-            linkedTask.progressHistory.push(updatedInfo.historyItem);
+            if (!linkedTask.progressHistory.some(h => h.id === updatedInfo.historyItem.id)) {
+              linkedTask.progressHistory.push(updatedInfo.historyItem);
+            }
           }
           localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
           renderTasksList(tasksList);
@@ -1143,6 +1174,9 @@ window.closeTaskDetailModal = closeTaskDetailModal;
 window.switchTaskDetailTab = switchTaskDetailTab;
 window.openImageLightbox = openImageLightbox;
 window.closeImageLightbox = closeImageLightbox;
+window.zoomLightbox = zoomLightbox;
+window.resetLightboxZoom = resetLightboxZoom;
+window.getUniquePhotosForActiveTask = getUniquePhotosForActiveTask;
 window.setDetailModalStatus = setDetailModalStatus;
 window.setDetailModalPriority = setDetailModalPriority;
 window.updateDetailPhoneLink = updateDetailPhoneLink;
