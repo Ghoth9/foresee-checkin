@@ -1310,7 +1310,7 @@ export function renderTeamRoleList() {
 
         <div class="flex items-center space-x-1.5 flex-shrink-0">
           <select onchange="window.handleChangeMemberRole('${tech.id}', this.value)" class="text-xs font-semibold rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-slate-800 focus:outline-none focus:border-slate-800 cursor-pointer">
-            <option value="technician" ${!isAdmin ? 'selected' : ''}>ผู้ปฏิบัติงาน</option>
+            <option value="technician" ${!isAdmin ? 'selected' : ''}>👷 ผู้ปฏิบัติงาน</option>
             <option value="admin" ${isAdmin ? 'selected' : ''}>👑 แอดมิน</option>
           </select>
           <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors" title="ลบสมาชิก">
