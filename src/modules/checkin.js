@@ -16,6 +16,7 @@ import { showAppAlert } from '../utils/dialog.js';
 
 let checkinPhotos = [];
 let selectedAssignedTaskId = null;
+let cachedTasksList = [];
 
 export function getCheckinPhotos() {
   return checkinPhotos;
@@ -26,7 +27,87 @@ export function clearCheckinPhotos() {
   renderPhotoPreviews();
 }
 
+export function updateQuickCardUI(task) {
+  const normalHeader = document.getElementById("checkinNormalHeader");
+  const quickCard = document.getElementById("assignedTaskQuickCheckinCard");
+  const detailsContainer = document.getElementById("checkinFormDetailsContainer");
+  const detailsEditNotice = document.getElementById("checkinDetailsEditNotice");
+
+  if (!quickCard) return;
+
+  if (task) {
+    const taskIdEl = document.getElementById("quickCardTaskId");
+    const categoryEl = document.getElementById("quickCardCategory");
+    const titleEl = document.getElementById("quickCardTitle");
+    const descEl = document.getElementById("quickCardDesc");
+    const techsEl = document.getElementById("quickCardTechs");
+    const deadlineEl = document.getElementById("quickCardDeadline");
+    const toggleTextEl = document.getElementById("quickCardToggleText");
+    const toggleChevronEl = document.getElementById("quickCardToggleChevron");
+
+    const techList = Array.isArray(task.techs) ? task.techs.join(", ") : (task.techs || "ผู้ปฏิบัติงานทั่วไป");
+
+    if (taskIdEl) taskIdEl.innerText = task.id;
+    if (categoryEl) categoryEl.innerText = task.category || "ติดตั้งงานใหม่";
+    if (titleEl) titleEl.innerText = task.title;
+    if (descEl) descEl.innerText = task.desc && task.desc !== "-" ? task.desc : "ไม่มีรายละเอียดเพิ่มเติม";
+    if (techsEl) techsEl.innerText = techList;
+    if (deadlineEl) deadlineEl.innerText = formatThaiDateDisplay(task.deadline);
+    if (toggleTextEl) toggleTextEl.innerText = "✏️ แก้ไข / ขยายดูรายละเอียด";
+    if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
+
+    if (normalHeader) normalHeader.classList.add("hidden");
+    quickCard.classList.remove("hidden");
+    
+    // By default, collapse details container so the user sees the Quick Card + Big Check-in Button immediately!
+    if (detailsContainer) detailsContainer.classList.add("hidden");
+    if (detailsEditNotice) detailsEditNotice.classList.remove("hidden");
+  } else {
+    if (normalHeader) normalHeader.classList.remove("hidden");
+    quickCard.classList.add("hidden");
+    if (detailsContainer) detailsContainer.classList.remove("hidden");
+    if (detailsEditNotice) detailsEditNotice.classList.add("hidden");
+  }
+}
+
+export function deselectAssignedTask(tasksList = null) {
+  selectedAssignedTaskId = null;
+  const locInput = document.getElementById("fieldLocationInput");
+  const noteInput = document.getElementById("fieldNoteInput");
+  if (locInput) locInput.value = "";
+  if (noteInput) noteInput.value = "";
+  if (typeof window.selectJobType === "function") {
+    window.selectJobType("ติดตั้งงานใหม่");
+  }
+  updateQuickCardUI(null);
+  const listToRender = tasksList || cachedTasksList;
+  if (listToRender && listToRender.length > 0) {
+    renderAssignedTasksBanner(listToRender, [], null);
+  }
+}
+
+export function toggleCheckinFormDetails() {
+  const detailsContainer = document.getElementById("checkinFormDetailsContainer");
+  const toggleTextEl = document.getElementById("quickCardToggleText");
+  const toggleChevronEl = document.getElementById("quickCardToggleChevron");
+
+  if (!detailsContainer) return;
+  const isHidden = detailsContainer.classList.contains("hidden");
+
+  if (isHidden) {
+    detailsContainer.classList.remove("hidden");
+    if (toggleTextEl) toggleTextEl.innerText = "▲ ย่อรายละเอียดกลับ";
+    if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(180deg)";
+    detailsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    detailsContainer.classList.add("hidden");
+    if (toggleTextEl) toggleTextEl.innerText = "✏️ แก้ไข / ขยายดูรายละเอียด";
+    if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
+  }
+}
+
 export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTask) {
+  if (Array.isArray(tasksList)) cachedTasksList = tasksList;
   const container = document.getElementById("assignedTasksCheckinContainer");
   if (!container) return;
 
@@ -82,19 +163,13 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
 }
 
 export function selectAssignedTask(taskId, tasksList, setSelectedTechsCallback) {
+  if (Array.isArray(tasksList)) cachedTasksList = tasksList;
   const task = tasksList.find(t => t.id === taskId);
   if (!task) return;
 
   if (selectedAssignedTaskId === taskId) {
     // Deselect if already selected
-    selectedAssignedTaskId = null;
-    const locInput = document.getElementById("fieldLocationInput");
-    const noteInput = document.getElementById("fieldNoteInput");
-    if (locInput) locInput.value = "";
-    if (noteInput) noteInput.value = "";
-    if (typeof window.selectJobType === "function") {
-      window.selectJobType("ติดตั้งงานใหม่");
-    }
+    deselectAssignedTask(tasksList);
   } else {
     selectedAssignedTaskId = taskId;
     const locInput = document.getElementById("fieldLocationInput");
@@ -111,6 +186,9 @@ export function selectAssignedTask(taskId, tasksList, setSelectedTechsCallback) 
     if (task.category && typeof window.selectJobType === "function") {
       window.selectJobType(task.category);
     }
+
+    // Update Quick Card UI
+    updateQuickCardUI(task);
   }
 
   // Highlight selected card
@@ -250,6 +328,6 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
 
   // Reset form
   clearCheckinPhotos();
-  selectedAssignedTaskId = null;
+  deselectAssignedTask();
   if (onComplete) onComplete(checkinRecord);
 }

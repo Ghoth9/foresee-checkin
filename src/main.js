@@ -10,6 +10,8 @@ import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheck
 import {
   renderAssignedTasksBanner,
   selectAssignedTask,
+  deselectAssignedTask,
+  toggleCheckinFormDetails,
   handlePhotoUpload,
   removePhoto,
   submitCheckinForm
@@ -937,6 +939,8 @@ function updateLineStatusUI() {
 // -------------------------------------------------------------
 window.switchTab = switchTab;
 window.selectAssignedTaskForCheckin = (taskId) => selectAssignedTask(taskId, tasksList, setCheckinTechs);
+window.deselectAssignedTask = () => deselectAssignedTask(tasksList);
+window.toggleCheckinFormDetails = toggleCheckinFormDetails;
 window.handlePhotoUpload = handlePhotoUpload;
 window.removeCheckinPhoto = removePhoto;
 window.selectJobType = selectJobType;
