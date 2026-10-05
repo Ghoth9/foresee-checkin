@@ -21,8 +21,8 @@ const htmlContent = `<!DOCTYPE html>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap');
 
     @page {
-      size: A4;
-      margin: 14mm 16mm 14mm 16mm;
+      size: A4 portrait;
+      margin: 0;
     }
 
     * {
@@ -47,12 +47,17 @@ const htmlContent = `<!DOCTYPE html>
 
     /* Page container */
     .page {
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
+      padding: 22mm 24mm 16mm 24mm;
+      box-sizing: border-box;
       page-break-after: always;
       position: relative;
-      min-height: 268mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      overflow: hidden;
     }
 
     .page:last-child {
@@ -395,7 +400,27 @@ const htmlContent = `<!DOCTYPE html>
             <span class="tech-tag green">LINE Cards</span>
           </div>
           <div class="tech-desc">
-            การ์ดแจ้งเตือนผลงานแบบ Mega Bubble ปรับเปลี่ยนรูปแบบและเฉดสีตามสถานะงานจริงอัตโนมัติ ได้แก่ สีเขียว (ปิดงานสำเร็จ), สีแดงเตือนภัย (ติดปัญหาหน้างาน) และสีน้ำเงิน (อัปเดตความคืบหน้าระหว่างวัน)
+            การ์ดแจ้งเตือนผลงานแบบ Mega Bubble ปรับเปลี่ยนเฉดสีตามสถานะงานจริง: สีเขียว (ปิดงานสำเร็จ), สีแดงเตือนภัย (ติดปัญหาหน้างาน) และสีน้ำเงิน (อัปเดตความคืบหน้าระหว่างวัน)
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-header">
+            <span class="tech-name">Deep Link Action Routing Engine</span>
+            <span class="tech-tag blue">Navigation</span>
+          </div>
+          <div class="tech-desc">
+            ระบบส่งต่อพารามิเตอร์ผ่าน URL (Deep Linking) นำทางผู้ใช้ไปยังแท็บงานที่ต้องการทันที เช่น เปิดดูรายละเอียดงาน, หน้าเช็กอิน หรือหน้าปิดงาน พร้อมดึงข้อมูลเดิมขึ้นมาแสดงอัตโนมัติ
+          </div>
+        </div>
+
+        <div class="tech-card">
+          <div class="tech-header">
+            <span class="tech-name">Mobile-First In-App Webview Engine</span>
+            <span class="tech-tag purple">Mobile UX</span>
+          </div>
+          <div class="tech-desc">
+            ออกแบบให้ทำงานบน In-App Browser ของ LINE ได้อย่างสมบูรณ์แบบ รองรับทั้งระบบปฏิบัติการ iOS และ Android โดยผู้ปฏิบัติงานไม่ต้องติดตั้งแอปพลิเคชันเพิ่มเติมลงในเครื่อง
           </div>
         </div>
       </div>
@@ -494,8 +519,8 @@ const htmlContent = `<!DOCTYPE html>
           </tr>
           <tr>
             <td><strong>Version Control & CI/CD</strong></td>
-            <td>Git & GitHub Repository</td>
-            <td>ระบบควบคุมเวอร์ชันซอร์สโค้ด และการคอมไพล์เพื่ออัปเดตเวอร์ชันโปรดักชันอัตโนมัติ (Automated Build Pipeline)</td>
+            <td>Git & GitHub Automated Pipeline</td>
+            <td>ระบบควบคุมเวอร์ชันซอร์สโค้ด และการคอมไพล์เพื่ออัปเดตเวอร์ชันโปรดักชันอัตโนมัติเมื่อพุชโค้ด</td>
           </tr>
           <tr>
             <td><strong>Data Security & Protocol</strong></td>
@@ -506,6 +531,11 @@ const htmlContent = `<!DOCTYPE html>
             <td><strong>API & Integration</strong></td>
             <td>RESTful & WebSockets (JSON)</td>
             <td>สถาปัตยกรรม API มาตรฐาน สะอาด ปลอดภัย และรองรับการขยายระบบในอนาคต</td>
+          </tr>
+          <tr>
+            <td><strong>Backup & Resilience</strong></td>
+            <td>Cloud Storage & Google Sheets Dual Sync</td>
+            <td>ระบบสำรองข้อมูลคู่ขนาน ป้องกันข้อมูลสูญหาย และอำนวยความสะดวกในการจัดทำรายงานย้อนหลัง</td>
           </tr>
         </tbody>
       </table>
