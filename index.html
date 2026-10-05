@@ -468,6 +468,11 @@
             <span>เสร็จสิ้น</span>
             <span id="statCompleted" class="font-mono text-[11px] text-emerald-600 font-semibold">0</span>
           </button>
+          <button type="button" onclick="setStatusFilter('ติดปัญหา')" id="statusFilterBtn-ติดปัญหา" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            <span>ติดปัญหา</span>
+            <span id="statProblem" class="font-mono text-[11px] text-rose-600 font-semibold">0</span>
+          </button>
         </div>
 
         <!-- Tech Chips & View Switcher -->
@@ -676,10 +681,11 @@
           <!-- Status -->
           <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/90">
             <label class="block font-bold text-slate-800 mb-1.5">สถานะงาน</label>
-            <div class="grid grid-cols-3 gap-1">
+            <div class="grid grid-cols-4 gap-1">
               <button type="button" id="detailStatus-กำลังทำ" onclick="setDetailModalStatus('กำลังทำ')" class="py-1.5 px-1 rounded-lg border text-[11px] font-semibold text-center transition-all bg-blue-600 text-white border-blue-600">กำลังทำ</button>
               <button type="button" id="detailStatus-เกินกำหนด" onclick="setDetailModalStatus('เกินกำหนด')" class="py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white text-slate-700 border-slate-200">เกินกำหนด</button>
               <button type="button" id="detailStatus-เสร็จสิ้น" onclick="setDetailModalStatus('เสร็จสิ้น')" class="py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white text-slate-700 border-slate-200">เสร็จสิ้น</button>
+              <button type="button" id="detailStatus-ติดปัญหา" onclick="setDetailModalStatus('ติดปัญหา')" class="py-1.5 px-1 rounded-lg border text-[11px] font-medium text-center transition-all bg-white text-slate-700 border-slate-200">ติดปัญหา</button>
             </div>
           </div>
 

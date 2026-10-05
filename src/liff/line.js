@@ -364,30 +364,37 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
 
 export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, duration, outcome, note, photoCount = 0 }) {
   const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ผู้ปฏิบัติงานทั่วไป");
+  const isProblem = outcome === "ติดปัญหา";
+
+  const headerBg = isProblem ? "#B91C1C" : "#065F46";
+  const headerSubColor = isProblem ? "#FECACA" : "#A7F3D0";
+  const headerIdColor = isProblem ? "#FCA5A5" : "#6EE7B7";
+  const headerTitle = isProblem ? "⚠️ ปิดงานไม่สำเร็จ (ติดปัญหาหน้างาน)" : "🏁 ปิดงานและส่งมอบเรียบร้อย";
+  const altText = isProblem ? `[ติดปัญหาหน้างาน] ${task} โดย ${techList}` : `[ปิดงานสำเร็จ] ${task} โดย ${techList}`;
 
   return {
     type: "flex",
-    altText: `[ปิดงานสำเร็จ] ${task} โดย ${techList}`,
+    altText: altText,
     contents: {
       type: "bubble",
       size: "mega",
       header: {
         type: "box",
         layout: "vertical",
-        backgroundColor: "#065F46",
+        backgroundColor: headerBg,
         paddingAll: "18px",
         contents: [
           {
             type: "box",
             layout: "horizontal",
             contents: [
-              { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#A7F3D0", size: "xxs", flex: 6 },
-              { type: "text", text: id, color: "#6EE7B7", size: "xs", align: "end", weight: "bold", flex: 4 }
+              { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: headerSubColor, size: "xxs", flex: 6 },
+              { type: "text", text: id, color: headerIdColor, size: "xs", align: "end", weight: "bold", flex: 4 }
             ]
           },
           {
             type: "text",
-            text: "🏁 ปิดงานและส่งมอบเรียบร้อย",
+            text: headerTitle,
             weight: "bold",
             color: "#FFFFFF",
             size: "lg",
@@ -422,24 +429,24 @@ export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, durat
           {
             type: "box", layout: "horizontal", contents: [
               { type: "text", text: "รวมระยะเวลา", size: "xs", color: "#64748B", flex: 4 },
-              { type: "text", text: duration || "ตามเวลาปฏิบัติงาน", size: "xs", weight: "bold", color: "#059669", flex: 6 }
+              { type: "text", text: duration || "ตามเวลาปฏิบัติงาน", size: "xs", weight: "bold", color: isProblem ? "#DC2626" : "#059669", flex: 6 }
             ]
           },
           {
             type: "box", layout: "horizontal", contents: [
               { type: "text", text: "ผลการทำงาน", size: "xs", color: "#64748B", flex: 4 },
-              { type: "text", text: outcome || "ติดตั้งเรียบร้อย", size: "xs", weight: "bold", color: "#0F172A", wrap: true, flex: 6 }
+              { type: "text", text: isProblem ? "⚠️ ติดปัญหา" : (outcome || "ติดตั้งเรียบร้อย"), size: "xs", weight: "bold", color: isProblem ? "#DC2626" : "#0F172A", wrap: true, flex: 6 }
             ]
           },
           ...(photoCount > 0 ? [{
             type: "box", layout: "horizontal", contents: [
-              { type: "text", text: "ภาพส่งมอบ", size: "xs", color: "#64748B", flex: 4 },
-              { type: "text", text: `📸 แนบรูปส่งมอบ ${photoCount} ภาพ`, size: "xs", weight: "bold", color: "#059669", flex: 6 }
+              { type: "text", text: isProblem ? "ภาพหน้างาน" : "ภาพส่งมอบ", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: `📸 แนบรูป${isProblem ? 'หน้างาน' : 'ส่งมอบ'} ${photoCount} ภาพ`, size: "xs", weight: "bold", color: isProblem ? "#DC2626" : "#059669", flex: 6 }
             ]
           }] : []),
           ...(note ? [{
             type: "box", layout: "vertical", margin: "xs", contents: [
-              { type: "text", text: `หมายเหตุ: ${note}`, size: "xs", color: "#64748B", wrap: true }
+              { type: "text", text: isProblem ? `🚨 ปัญหาที่พบ: ${note}` : `หมายเหตุ: ${note}`, size: "xs", color: isProblem ? "#B91C1C" : "#64748B", weight: isProblem ? "bold" : "regular", wrap: true }
             ]
           }] : [])
         ]

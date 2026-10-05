@@ -108,22 +108,23 @@ export function setTaskSearchQuery(q) {
 export function renderTasksList(tasksList) {
   const container = document.getElementById("tasksListContainer");
   if (!container) return;
-
-  // 1. Calculate Filter Statistics (BUG FIX: Accurate overdue calculation)
-  let overdueCount = 0;
-  let inprogCount = 0;
-  let completedCount = 0;
-
   const techFiltered = tasksList.filter(t => {
     if (currentTechFilter === "ทั้งหมด") return true;
     const techs = getTaskTechs(t);
     return techs.includes(currentTechFilter);
   });
 
+  let inprogCount = 0;
+  let overdueCount = 0;
+  let completedCount = 0;
+  let problemCount = 0;
+
   techFiltered.forEach(t => {
     const isDone = t.status === "เสร็จสิ้น";
+    const isProblem = t.status === "ติดปัญหา";
     const isOver = isTaskOverdue(t.deadline, isDone);
     if (isDone) completedCount++;
+    else if (isProblem) problemCount++;
     else if (isOver) overdueCount++;
     else inprogCount++;
   });
@@ -136,15 +137,19 @@ export function renderTasksList(tasksList) {
   if (elProg) elProg.innerText = inprogCount;
   const elComp = document.getElementById("statCompleted");
   if (elComp) elComp.innerText = completedCount;
+  const elProb = document.getElementById("statProblem");
+  if (elProb) elProb.innerText = problemCount;
 
   // 2. Filter by Status & Search
   const filteredTasks = techFiltered.filter(t => {
     const isDone = t.status === "เสร็จสิ้น";
+    const isProblem = t.status === "ติดปัญหา";
     const isOver = isTaskOverdue(t.deadline, isDone);
 
-    if (currentStatusFilter === "กำลังทำ" && (isDone || isOver)) return false;
+    if (currentStatusFilter === "กำลังทำ" && (isDone || isOver || isProblem)) return false;
     if (currentStatusFilter === "เกินกำหนด" && !isOver) return false;
     if (currentStatusFilter === "เสร็จสิ้น" && !isDone) return false;
+    if (currentStatusFilter === "ติดปัญหา" && !isProblem) return false;
 
     if (taskSearchQuery) {
       const q = taskSearchQuery.toLowerCase();
@@ -221,8 +226,10 @@ export function renderTasksList(tasksList) {
       const techs = getTaskTechs(task);
       const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
 
+      const isProblem = task.status === "ติดปัญหา";
       let badgeBg = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
       if (isDone) badgeBg = "bg-emerald-100 text-emerald-900 border-emerald-300 font-bold";
+      else if (isProblem) badgeBg = "bg-rose-100 text-rose-800 border-rose-300 font-bold";
       else if (isOver) badgeBg = "bg-rose-100 text-rose-900 border-rose-300 font-bold";
       else if (task.status === "กำลังทำ") badgeBg = "bg-blue-100 text-blue-900 border-blue-300 font-bold";
 
@@ -257,12 +264,12 @@ export function renderTasksList(tasksList) {
           </td>
           <td class="py-3 px-3 whitespace-nowrap">
             <div class="font-mono text-xs text-slate-800 font-semibold">${formatThaiDateDisplay(task.deadline)}</div>
-            <div class="mt-0.5">${getDeadlineCountdownBadge(task.deadline, isDone)}</div>
+            <div class="mt-0.5">${isProblem ? `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap flex-shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>⚠️ ติดปัญหา</span></span>` : getDeadlineCountdownBadge(task.deadline, isDone)}</div>
           </td>
           <td class="py-3 px-3 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <div class="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                <div class="h-1.5 ${isDone ? 'bg-emerald-500' : 'bg-slate-900'} rounded-full transition-all" style="width: ${task.progress || 0}%"></div>
+                <div class="h-1.5 ${isDone ? 'bg-emerald-500' : (isProblem ? 'bg-rose-500' : 'bg-slate-900')} rounded-full transition-all" style="width: ${task.progress || 0}%"></div>
               </div>
               <span class="font-mono text-xs font-bold text-slate-800">${task.progress || 0}%</span>
             </div>
@@ -303,8 +310,10 @@ export function renderTasksList(tasksList) {
       const techs = getTaskTechs(task);
       const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
 
+      const isProblem = task.status === "ติดปัญหา";
       let badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
       if (isDone) badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200";
+      else if (isProblem) badgeBg = "bg-rose-50 text-rose-700 border-rose-200 font-bold";
       else if (isOver) badgeBg = "bg-rose-50 text-rose-700 border-rose-200";
 
       const cardClass = isNew
@@ -337,11 +346,11 @@ export function renderTasksList(tasksList) {
         <div class="pt-2 border-t border-slate-100 space-y-2">
           <div class="flex items-center justify-between text-xs font-mono">
             <span class="text-slate-500">กำหนดส่ง: <strong>${formatThaiDateDisplay(task.deadline)}</strong></span>
-            ${getDeadlineCountdownBadge(task.deadline, isDone)}
+            ${isProblem ? `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap flex-shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>⚠️ ติดปัญหา</span></span>` : getDeadlineCountdownBadge(task.deadline, isDone)}
           </div>
           <div class="flex items-center space-x-2">
             <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-              <div class="h-1.5 ${isDone ? 'bg-emerald-500' : 'bg-slate-900'} rounded-full" style="width: ${task.progress || 0}%"></div>
+              <div class="h-1.5 ${isDone ? 'bg-emerald-500' : (isProblem ? 'bg-rose-500' : 'bg-slate-900')} rounded-full" style="width: ${task.progress || 0}%"></div>
             </div>
             <span class="text-xs font-mono font-bold text-slate-700">${task.progress || 0}%</span>
           </div>
@@ -1171,7 +1180,8 @@ export function setDetailModalStatus(st) {
   const statuses = [
     { key: "กำลังทำ", activeClass: "bg-blue-600 text-white border-blue-600 font-bold shadow-xs" },
     { key: "เกินกำหนด", activeClass: "bg-rose-600 text-white border-rose-600 font-bold shadow-xs" },
-    { key: "เสร็จสิ้น", activeClass: "bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs" }
+    { key: "เสร็จสิ้น", activeClass: "bg-emerald-600 text-white border-emerald-600 font-bold shadow-xs" },
+    { key: "ติดปัญหา", activeClass: "bg-rose-600 text-white border-rose-600 font-bold shadow-xs" }
   ];
   statuses.forEach(s => {
     const btn = document.getElementById(`detailStatus-${s.key}`);

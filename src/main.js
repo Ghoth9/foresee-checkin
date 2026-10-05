@@ -1057,21 +1057,27 @@ window.submitCheckout = () => {
     noteText: noteInput ? noteInput.value : "",
     closerName: getLineUserName() || "ผู้ปฏิบัติงานหน้างาน",
     onComplete: (closedRecord) => {
+      const isProblem = closedRecord.outcome === "ติดปัญหา";
       activeTasks = activeTasks.filter(a => a.id !== closedRecord.id);
       const log = dailyLogs.find(l => l.id === closedRecord.id);
       if (log) {
-        log.status = "เสร็จสิ้น";
+        log.status = isProblem ? "ติดปัญหา" : "เสร็จสิ้น";
         log.checkoutTime = closedRecord.outTime;
         log.outcome = closedRecord.outcome;
+        log.note = closedRecord.note;
       }
 
-      // Link and complete the assigned task in tasksList
+      // Link and update the assigned task in tasksList
       if (closedRecord.taskId) {
         const linkedTask = tasksList.find(t => t.id === closedRecord.taskId);
         if (linkedTask) {
-          linkedTask.status = "เสร็จสิ้น";
-          linkedTask.progress = 100;
-          linkedTask.latestUpdate = `ปิดงานเรียบร้อย: ${closedRecord.outcome}`;
+          linkedTask.status = isProblem ? "ติดปัญหา" : "เสร็จสิ้น";
+          if (!isProblem) {
+            linkedTask.progress = 100;
+            linkedTask.latestUpdate = `ปิดงานเรียบร้อย: ${closedRecord.outcome}`;
+          } else {
+            linkedTask.latestUpdate = `[ติดปัญหา] ${closedRecord.note ? closedRecord.note : 'พบปัญหาหน้างาน'} (โดย ${closedRecord.closedBy || 'ช่าง'})`;
+          }
           localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
           renderTasksList(tasksList);
         }
@@ -1082,9 +1088,11 @@ window.submitCheckout = () => {
       renderTodayLogs();
       renderActiveCheckoutList();
       showAppAlert({
-        type: "success",
-        title: "ปิดงานสำเร็จ!",
-        message: "ปิดงานและส่งผลงานเข้าห้องแชท LINE เรียบร้อยแล้ว"
+        type: isProblem ? "warning" : "success",
+        title: isProblem ? "บันทึกแจ้งปัญหาหน้างานสำเร็จ" : "ปิดงานสำเร็จ!",
+        message: isProblem 
+          ? "บันทึกสถานะติดปัญหาและส่งแจ้งเตือนเข้าห้องแชท LINE เรียบร้อยแล้ว"
+          : "ปิดงานและส่งผลงานเข้าห้องแชท LINE เรียบร้อยแล้ว"
       });
     }
   });

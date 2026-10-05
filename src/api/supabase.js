@@ -454,6 +454,20 @@ export async function saveCheckoutApi(payload) {
     const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
     const dateStr = now.toLocaleDateString("th-TH");
 
+    const isProblem = payload.outcome === "ติดปัญหา";
+    const checkoutStatus = isProblem ? "ติดปัญหา" : "เสร็จสิ้น";
+
+    const targetTaskId = payload.taskId || payload.id;
+    let currentTask = null;
+    if (targetTaskId) {
+      try {
+        const { data: currentTasks } = await supabase.from('tasks').select('*').eq('id', targetTaskId).limit(1);
+        currentTask = currentTasks && currentTasks[0] ? currentTasks[0] : null;
+      } catch (fErr) {}
+    }
+
+    const taskProgress = isProblem ? (currentTask?.progress || 0) : 100;
+
     const { error } = await supabase
       .from('checkins')
       .update({
@@ -461,8 +475,8 @@ export async function saveCheckoutApi(payload) {
         duration: payload.duration,
         outcome: payload.outcome,
         note: payload.note || '',
-        status: 'เสร็จสิ้น',
-        progress: 100,
+        status: checkoutStatus,
+        progress: taskProgress,
         closer_name: payload.closedBy || payload.closerName || '',
         photos: cleanPhotos,
         updated_at: now.toISOString()
@@ -472,37 +486,36 @@ export async function saveCheckoutApi(payload) {
     if (error) throw error;
 
     // Also update linked task in tasks table
-    const targetTaskId = payload.taskId || payload.id;
-    if (targetTaskId) {
+    if (targetTaskId && currentTask) {
       try {
-        const { data: currentTasks } = await supabase.from('tasks').select('*').eq('id', targetTaskId).limit(1);
-        const currentTask = currentTasks && currentTasks[0] ? currentTasks[0] : null;
-        if (currentTask) {
-          const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
-          const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
-          const closeHistoryItem = {
-            id: `UPD-CLOSE-${Date.now().toString(36)}`,
-            time: timeStr,
-            date: dateStr,
-            progress: 100,
-            status: "เสร็จสิ้น",
-            note: `ปิดงาน: ${payload.outcome || 'เสร็จเรียบร้อย'} ${payload.note ? `(${payload.note})` : ''}`,
-            tech: payload.closedBy || payload.closerName || "ผู้ปฏิบัติงานหน้างาน",
-            photos: cleanPhotos,
-            createdAt: now.toISOString()
-          };
-          await supabase.from('tasks').update({
-            progress: 100,
-            status: 'เสร็จสิ้น',
-            latest_update: `[ปิดงาน 100%] ${payload.outcome || 'เสร็จเรียบร้อย'} (โดย ${payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน'} เมื่อ ${timeStr} น.)`,
-            customer: {
-              ...existingCust,
-              progress_history: [...existingHistory, closeHistoryItem]
-            },
-            updated_by: payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน',
-            updated_at: now.toISOString()
-          }).eq('id', targetTaskId);
-        }
+        const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
+        const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
+        const closeHistoryItem = {
+          id: `UPD-CLOSE-${Date.now().toString(36)}`,
+          time: timeStr,
+          date: dateStr,
+          progress: taskProgress,
+          status: checkoutStatus,
+          note: isProblem 
+            ? `ติดปัญหาหน้างาน: ${payload.note || '-'}` 
+            : `ปิดงาน: ${payload.outcome || 'เสร็จเรียบร้อย'} ${payload.note ? `(${payload.note})` : ''}`,
+          tech: payload.closedBy || payload.closerName || "ผู้ปฏิบัติงานหน้างาน",
+          photos: cleanPhotos,
+          createdAt: now.toISOString()
+        };
+        await supabase.from('tasks').update({
+          progress: taskProgress,
+          status: checkoutStatus,
+          latest_update: isProblem 
+            ? `[ติดปัญหา] ${payload.note || 'พบปัญหาหน้างาน'} (โดย ${payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน'} เมื่อ ${timeStr} น.)` 
+            : `[ปิดงาน 100%] ${payload.outcome || 'เสร็จเรียบร้อย'} (โดย ${payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน'} เมื่อ ${timeStr} น.)`,
+          customer: {
+            ...existingCust,
+            progress_history: [...existingHistory, closeHistoryItem]
+          },
+          updated_by: payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน',
+          updated_at: now.toISOString()
+        }).eq('id', targetTaskId);
       } catch (tErr) {
         console.warn("link close task update error:", tErr);
       }
