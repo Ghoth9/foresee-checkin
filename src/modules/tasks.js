@@ -724,6 +724,10 @@ export function setOnDeletePhotoCallback(fn) {
   onDeletePhotoCallback = fn;
 }
 
+let mouseDownX = 0;
+let mouseDownY = 0;
+let mouseDownTime = 0;
+
 export function clampPan(x, y, zoom) {
   if (zoom <= 1) return { x: 0, y: 0 };
   const viewport = document.getElementById("lightboxViewport");
@@ -731,12 +735,16 @@ export function clampPan(x, y, zoom) {
   if (!viewport || !img) return { x: 0, y: 0 };
 
   const vpW = viewport.clientWidth || window.innerWidth;
-  const vpH = viewport.clientHeight || (window.innerHeight * 0.7);
+  const vpH = viewport.clientHeight || (window.innerHeight * 0.75);
   const renderedW = (img.offsetWidth || (vpW * 0.8)) * zoom;
   const renderedH = (img.offsetHeight || (vpH * 0.8)) * zoom;
 
-  const maxPanX = Math.max(0, (renderedW - vpW) / 2 + 30);
-  const maxPanY = Math.max(0, (renderedH - vpH) / 2 + 30);
+  // Allow generous margin so user can pan comfortably beyond image borders
+  const marginX = Math.max(160, vpW * 0.4);
+  const marginY = Math.max(160, vpH * 0.4);
+
+  const maxPanX = Math.max(marginX, (renderedW - vpW) / 2 + marginX);
+  const maxPanY = Math.max(marginY, (renderedH - vpH) / 2 + marginY);
 
   return {
     x: Math.max(-maxPanX, Math.min(maxPanX, x)),
@@ -747,10 +755,11 @@ export function clampPan(x, y, zoom) {
 export function updateLightboxTransform(animate = true) {
   const img = document.getElementById("lightboxImg");
   const percentElem = document.getElementById("lightboxZoomPercent");
+  const viewport = document.getElementById("lightboxViewport");
   if (!img) return;
 
   if (animate) {
-    img.style.transition = "transform 0.15s ease-out";
+    img.style.transition = "transform 0.18s cubic-bezier(0.2, 0, 0.2, 1)";
   } else {
     img.style.transition = "none";
   }
@@ -758,6 +767,9 @@ export function updateLightboxTransform(animate = true) {
   img.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
   if (percentElem) {
     percentElem.innerText = `${Math.round(currentZoom * 100)}%`;
+  }
+  if (viewport) {
+    viewport.style.cursor = currentZoom > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in";
   }
 }
 
@@ -792,52 +804,56 @@ export function initLightboxGestures() {
   // Mouse wheel zoom
   viewport.addEventListener("wheel", (e) => {
     e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.25 : -0.25;
+    const delta = e.deltaY < 0 ? 0.3 : -0.3;
     zoomLightbox(delta);
   }, { passive: false });
 
-  // Mouse Drag / Pan
+  // Mouse Drag / Pan / Click Zoom
   viewport.addEventListener("mousedown", (e) => {
-    if (e.button !== 0 || currentZoom <= 1) return;
+    if (e.button !== 0) return;
     isDragging = true;
+    mouseDownX = e.clientX;
+    mouseDownY = e.clientY;
+    mouseDownTime = Date.now();
     startDragX = e.clientX - panX;
     startDragY = e.clientY - panY;
-    viewport.style.cursor = "grabbing";
+    viewport.style.cursor = currentZoom > 1 ? "grabbing" : "zoom-in";
   });
 
   window.addEventListener("mousemove", (e) => {
-    if (!isDragging || currentZoom <= 1) return;
-    const clamped = clampPan(e.clientX - startDragX, e.clientY - startDragY, currentZoom);
-    panX = clamped.x;
-    panY = clamped.y;
-    updateLightboxTransform(false);
-  });
-
-  window.addEventListener("mouseup", () => {
-    if (isDragging) {
-      isDragging = false;
-      const vp = document.getElementById("lightboxViewport");
-      if (vp) vp.style.cursor = currentZoom > 1 ? "grab" : "default";
+    if (!isDragging) return;
+    if (currentZoom > 1) {
+      const clamped = clampPan(e.clientX - startDragX, e.clientY - startDragY, currentZoom);
+      panX = clamped.x;
+      panY = clamped.y;
+      updateLightboxTransform(false);
     }
   });
 
-  // Double Click / Double Tap to zoom
-  viewport.addEventListener("click", (e) => {
-    if (e.target !== img && e.target !== viewport) return;
-    const now = Date.now();
-    if (now - lastTapTime < 300) {
-      if (currentZoom > 1.2) {
-        resetLightboxZoom();
-      } else {
-        currentZoom = 2.5;
-        panX = 0;
-        panY = 0;
+  window.addEventListener("mouseup", (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    const moveDist = Math.hypot(e.clientX - mouseDownX, e.clientY - mouseDownY);
+    const duration = Date.now() - mouseDownTime;
+
+    // Single click (not dragging): toggle zoom smoothly
+    if (moveDist < 6 && duration < 350) {
+      if (currentZoom <= 1.05) {
+        currentZoom = 2.2;
+        const vpRect = viewport.getBoundingClientRect();
+        const clickOffsetX = (vpRect.left + vpRect.width / 2) - e.clientX;
+        const clickOffsetY = (vpRect.top + vpRect.height / 2) - e.clientY;
+        const clamped = clampPan(clickOffsetX * 1.2, clickOffsetY * 1.2, currentZoom);
+        panX = clamped.x;
+        panY = clamped.y;
         updateLightboxTransform(true);
+      } else {
+        resetLightboxZoom();
       }
-      lastTapTime = 0;
     } else {
-      lastTapTime = now;
+      updateLightboxTransform(false);
     }
+    viewport.style.cursor = currentZoom > 1 ? "grab" : "zoom-in";
   });
 
   // Touch: Pinch to zoom & Pan
@@ -882,6 +898,20 @@ export function initLightboxGestures() {
     }
     if (e.touches.length === 0) {
       isDragging = false;
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        if (currentZoom > 1.2) {
+          resetLightboxZoom();
+        } else {
+          currentZoom = 2.2;
+          panX = 0;
+          panY = 0;
+          updateLightboxTransform(true);
+        }
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
     }
   }, { passive: true });
 }
@@ -1009,6 +1039,17 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
     timelineItems = [...task.customer.progress_history];
   }
 
+  // Collect all photos from existing progress history updates
+  const existingUpdatePhotoSet = new Set();
+  timelineItems.forEach(it => {
+    if (Array.isArray(it.photos)) {
+      it.photos.forEach(p => {
+        const url = typeof p === 'string' ? p : (p.dataUrl || p.base64 || p.src || '');
+        if (url) existingUpdatePhotoSet.add(url);
+      });
+    }
+  });
+
   // Also include matching check-in photos if stored locally
   try {
     const rawCheckins = localStorage.getItem("fs_daily_logs");
@@ -1017,25 +1058,41 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
       const matched = parsed.filter(c => c.taskId === task.id || c.id === task.id || c.task === task.title);
       matched.forEach(c => {
         if (!timelineItems.some(it => it.id === c.id)) {
-          if (c.photos && c.photos.length > 0) {
-            timelineItems.unshift({
-              id: c.id,
-              time: c.checkinTime || "09:00",
-              date: c.date || "วันนี้",
-              progress: c.progress || 0,
-              status: c.status || "กำลังทำ",
-              note: c.note || `เช็กอินเข้าปฏิบัติงานเวลา ${c.checkinTime || '09:00'} น.`,
-              tech: Array.isArray(c.techs) ? c.techs.join(", ") : (c.tech || "ผู้ปฏิบัติงานหน้างาน"),
-              photos: c.photos,
-              isCheckin: true
-            });
-          }
+          // Filter out photos that are already in progress updates (prevents duplicate photos bug)
+          const genuineCheckinPhotos = Array.isArray(c.photos) 
+            ? c.photos.filter(p => {
+                const url = typeof p === 'string' ? p : (p.dataUrl || p.base64 || p.src || '');
+                return url && !existingUpdatePhotoSet.has(url);
+              })
+            : [];
+
+          timelineItems.unshift({
+            id: c.id,
+            time: c.checkinTime || "09:00",
+            date: c.date || "วันนี้",
+            progress: 0,
+            status: c.status || "กำลังทำ",
+            note: c.note || `เช็กอินเข้าปฏิบัติงานเวลา ${c.checkinTime || '09:00'} น.`,
+            tech: Array.isArray(c.techs) ? c.techs.join(", ") : (c.tech || "ผู้ปฏิบัติงานหน้างาน"),
+            photos: genuineCheckinPhotos,
+            isCheckin: true
+          });
         }
       });
     }
   } catch (e) {}
 
-  const totalPhotos = timelineItems.reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
+  // Calculate unique photos count across all timeline items
+  const uniqueAllPhotos = new Set();
+  timelineItems.forEach(it => {
+    if (Array.isArray(it.photos)) {
+      it.photos.forEach(p => {
+        const url = typeof p === 'string' ? p : (p.dataUrl || p.base64 || p.src || '');
+        if (url) uniqueAllPhotos.add(url);
+      });
+    }
+  });
+  const totalPhotos = uniqueAllPhotos.size;
   const photoBadge = document.getElementById("detailTimelinePhotoCountBadge");
   const totalBadge = document.getElementById("detailTimelineTotalBadge");
   if (photoBadge) photoBadge.innerText = totalPhotos;

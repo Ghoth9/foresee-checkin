@@ -292,16 +292,9 @@ export async function updateTaskProgressApi({ taskId, taskTitle, progress, statu
 
       if (matchingCheckins && matchingCheckins.length > 0) {
         const chk = matchingCheckins[0];
-        const existingPhotos = Array.isArray(chk.photos) ? chk.photos : [];
-        const existingSet = new Set(existingPhotos.map(p => typeof p === 'string' ? p : (p.dataUrl || p.base64 || '')));
-        const newUniquePhotos = cleanPhotos.filter(p => !existingSet.has(typeof p === 'string' ? p : (p.dataUrl || p.base64 || '')));
-        const combinedPhotos = [...existingPhotos, ...newUniquePhotos];
-
         await supabase.from('checkins').update({
           progress: Number(progress) || 0,
           status: status,
-          note: note ? `[${progress}%] ${note}` : chk.note,
-          photos: combinedPhotos,
           updated_at: now.toISOString()
         }).eq('id', chk.id);
       }

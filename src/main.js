@@ -904,12 +904,6 @@ export async function refreshFromSupabase(force = false) {
 
     if (selectedActiveCheckoutId) {
       const curActive = activeTasks.find(a => a.id === selectedActiveCheckoutId || a.taskId === selectedActiveCheckoutId);
-      const curTask = tasksList.find(t => t.id === curActive?.taskId || t.id === selectedActiveCheckoutId);
-      if (curActive && curActive.progress !== undefined) {
-        setUpdatePercent(curActive.progress);
-      } else if (curTask && curTask.progress !== undefined) {
-        setUpdatePercent(curTask.progress);
-      }
       if (curActive) renderActiveTaskPhotos(curActive);
     }
   } catch (err) {
@@ -996,12 +990,6 @@ window.submitOngoingUpdate = () => {
       if (act) {
         act.status = updatedInfo.status;
         act.progress = updatedInfo.progress;
-        if (Array.isArray(updatedInfo.photos) && updatedInfo.photos.length > 0) {
-          const curPhotos = Array.isArray(act.photos) ? act.photos : [];
-          const curSet = new Set(curPhotos.map(p => typeof p === 'string' ? p : (p.dataUrl || p.base64 || '')));
-          const newUnique = updatedInfo.photos.filter(p => !curSet.has(typeof p === 'string' ? p : (p.dataUrl || p.base64 || '')));
-          act.photos = [...curPhotos, ...newUnique];
-        }
       }
       const log = dailyLogs.find(l => l.id === updatedInfo.id);
       if (log) {
