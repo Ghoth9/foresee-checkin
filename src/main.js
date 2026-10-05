@@ -988,6 +988,15 @@ export function isCurrentUserAdmin() {
 }
 
 export async function resolveUserRole() {
+  // 0. Check active simulation first (persisted in sessionStorage)
+  const sim = sessionStorage.getItem("fs_simulated_role");
+  if (sim) {
+    simulatedRole = sim;
+    currentUserRole = sim;
+    applyRolePermissionsUI(currentUserRole, currentLinkedTech);
+    return;
+  }
+
   // 1. Check session override (PIN unlock on PC/Safari)
   if (sessionStorage.getItem("fs_admin_override") === "true") {
     currentUserRole = "admin";
@@ -1005,14 +1014,21 @@ export async function resolveUserRole() {
       // If not found by line_user_id, match by displayName keywords
       if (!match) {
         const dName = (profile.displayName || "").toLowerCase();
-        // Check if user is baipor
-        if (dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("095-8188897") || dName.includes("สุพิชชาญาต์")) {
+        if (dName.includes("nonmarn")) {
+          match = techniciansList.find(t => t.name && t.name.toLowerCase().includes("nonmarn"));
+        } else if (dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("095-8188897") || dName.includes("สุพิชชาญาต์")) {
           match = techniciansList.find(t => (t.name && (t.name.includes("ใบปอ") || t.name.includes("สุพิชชาญาต์"))));
+        } else if (dName.includes("arm") || dName.includes("อาร์ม") || dName.includes("ชัยวัฒน์")) {
+          match = techniciansList.find(t => t.name && (t.name.includes("อาร์ม") || t.name.includes("ชัยวัฒน์")));
         }
 
-        // Or match against any technician's name
+        // Or match against any technician's nickname
         if (!match) {
-          match = techniciansList.find(t => t.name && dName.includes(t.name.toLowerCase()));
+          match = techniciansList.find(t => {
+            if (!t.name) return false;
+            const pureName = t.name.replace(/K\./g, '').split('(')[0].trim().toLowerCase();
+            return pureName && dName.includes(pureName);
+          });
         }
 
         // Auto-bind line_user_id to this technician in Supabase
@@ -1045,26 +1061,31 @@ export function isUserAdminActual() {
     if (profile && profile.userId) {
       const match = techniciansList.find(t => t.line_user_id === profile.userId);
       if (match && match.role === "admin") return true;
+      const dName = (profile.displayName || "").toLowerCase();
+      if (dName.includes("nonmarn") || dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("อาร์ม")) return true;
     }
   }
   return false;
 }
 
 export function switchSimulatedRole(mode) {
-  if (mode === "admin" && !isUserAdminActual() && currentUserRole !== "admin") {
-    closeRoleDropdownMenu();
-    const el = document.getElementById("adminPinModal");
-    const input = document.getElementById("adminPinInput");
-    if (input) input.value = "";
-    if (el) el.classList.remove("hidden");
-    if (input) input.focus();
-    return;
+  if (mode === "admin") {
+    sessionStorage.removeItem("fs_simulated_role");
+    sessionStorage.setItem("fs_admin_override", "true");
+    simulatedRole = null;
+    currentUserRole = "admin";
+  } else {
+    sessionStorage.setItem("fs_simulated_role", "technician");
+    simulatedRole = "technician";
+    currentUserRole = "technician";
   }
 
-  simulatedRole = mode;
-  currentUserRole = mode;
   closeRoleDropdownMenu();
   applyRolePermissionsUI(currentUserRole, currentLinkedTech);
+
+  // Sync tasks view and check-in banner immediately
+  renderTasksList(tasksList);
+  renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
 
   showAppAlert({
     type: "info",
@@ -1073,10 +1094,6 @@ export function switchSimulatedRole(mode) {
       ? "แสดงผลแบบแอดมินเต็มรูปแบบ (มอบหมายงาน, แก้ไข, ลบงาน, จัดการสิทธิ์)"
       : "แสดงผลแบบผู้ปฏิบัติงาน (ซ่อนปุ่มมอบหมายงานและปุ่มลบงาน ฟิลด์ข้อมูลหลักเป็นแบบอ่านอย่างเดียว)"
   });
-
-  if (currentTab === "tasks") {
-    renderTasksList(tasksList);
-  }
 }
 
 export function toggleRoleDropdownMenu() {
