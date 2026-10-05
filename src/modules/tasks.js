@@ -219,6 +219,7 @@ export function renderTasksList(tasksList) {
       const isOver = isTaskOverdue(task.deadline, isDone);
       const isNew = recentNewTaskIds.has(task.id) || task.isNew;
       const techs = getTaskTechs(task);
+      const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
 
       let badgeBg = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
       if (isDone) badgeBg = "bg-emerald-100 text-emerald-900 border-emerald-300 font-bold";
@@ -267,10 +268,18 @@ export function renderTasksList(tasksList) {
             </div>
           </td>
           <td class="py-3 px-3 text-right pr-4 whitespace-nowrap">
-            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95" title="คลิกเพื่อดูรายละเอียดและแก้ไขงาน">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              <span>ดู/แก้ไข</span>
-            </button>
+            <div class="flex items-center justify-end space-x-1.5">
+              ${photoCount > 0 ? `
+                <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs" title="ดูภาพหน้างาน">
+                  <span>📸</span>
+                  <span>${photoCount}</span>
+                </button>
+              ` : ''}
+              <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95" title="คลิกเพื่อดูรายละเอียดและแก้ไขงาน">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span>ดู/แก้ไข</span>
+              </button>
+            </div>
           </td>
         </tr>
       `;
@@ -292,6 +301,7 @@ export function renderTasksList(tasksList) {
       const isOver = isTaskOverdue(task.deadline, isDone);
       const isNew = recentNewTaskIds.has(task.id) || task.isNew;
       const techs = getTaskTechs(task);
+      const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
 
       let badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
       if (isDone) badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200";
@@ -316,6 +326,7 @@ export function renderTasksList(tasksList) {
           <div>
             <h3 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">${task.title}</h3>
             ${task.desc && task.desc !== '-' ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2">${task.desc}</p>` : ''}
+            ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<p class="text-[11px] text-blue-600 line-clamp-1 mt-1 font-medium">💬 ${task.latestUpdate}</p>` : ''}
           </div>
           <div class="mt-2 text-xs text-slate-500 flex items-center space-x-1">
             <span>👷 ช่าง:</span>
@@ -334,10 +345,14 @@ export function renderTasksList(tasksList) {
             </div>
             <span class="text-xs font-mono font-bold text-slate-700">${task.progress || 0}%</span>
           </div>
-          <div class="pt-1">
-            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="w-full py-1.5 text-center text-xs font-semibold bg-slate-50 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-700 border border-slate-200 group-hover:border-blue-200 rounded-lg transition-all flex items-center justify-center space-x-1.5 shadow-2xs">
+          <div class="grid grid-cols-2 gap-1.5 pt-1">
+            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="py-1.5 px-2 text-center text-xs font-bold ${photoCount > 0 ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'} border rounded-lg transition-all flex items-center justify-center space-x-1 shadow-2xs">
+              <span>📸</span>
+              <span>ภาพหน้างาน (${photoCount})</span>
+            </button>
+            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="py-1.5 px-2 text-center text-xs font-semibold bg-slate-50 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-700 border border-slate-200 group-hover:border-blue-200 rounded-lg transition-all flex items-center justify-center space-x-1 shadow-2xs">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              <span>ดูรายละเอียดและแก้ไขงาน</span>
+              <span>ดู/แก้ไข</span>
             </button>
           </div>
         </div>
@@ -659,8 +674,47 @@ let currentDetailTaskId = null;
 let currentDetailStatus = "กำลังทำ";
 let currentDetailPriority = "ปกติ";
 let currentDetailTechs = [];
+let currentDetailTab = "info";
 
-export function openTaskDetailModal(taskId, tasksList, allTechnicians) {
+export function switchTaskDetailTab(tab) {
+  currentDetailTab = tab;
+  const tabInfo = document.getElementById("taskDetailTabBtnInfo");
+  const tabTimeline = document.getElementById("taskDetailTabBtnTimeline");
+  const contentInfo = document.getElementById("detailTabContentInfo");
+  const contentTimeline = document.getElementById("detailTabContentTimeline");
+
+  if (tab === "timeline") {
+    if (tabInfo) tabInfo.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 cursor-pointer";
+    if (tabTimeline) tabTimeline.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-2xs transition-all flex items-center space-x-1.5 cursor-pointer";
+    if (contentInfo) contentInfo.classList.add("hidden");
+    if (contentTimeline) contentTimeline.classList.remove("hidden");
+  } else {
+    if (tabInfo) tabInfo.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-2xs transition-all flex items-center space-x-1.5 cursor-pointer";
+    if (tabTimeline) tabTimeline.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 cursor-pointer";
+    if (contentInfo) contentInfo.classList.remove("hidden");
+    if (contentTimeline) contentTimeline.classList.add("hidden");
+  }
+}
+
+export function openImageLightbox(src, caption = "") {
+  const modal = document.getElementById("imageLightboxModal");
+  const img = document.getElementById("lightboxImg");
+  const cap = document.getElementById("lightboxCaption");
+  const dl = document.getElementById("lightboxDownloadBtn");
+  if (!modal || !img) return;
+
+  img.src = src;
+  if (cap) cap.innerText = caption;
+  if (dl) dl.href = src;
+  modal.classList.remove("hidden");
+}
+
+export function closeImageLightbox() {
+  const modal = document.getElementById("imageLightboxModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTab = "info") {
   currentDetailTaskId = taskId;
   const task = tasksList.find(t => t.id === taskId);
   if (!task) return;
@@ -740,6 +794,115 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians) {
   // Latest update
   const latestInput = document.getElementById("detailLatestUpdateInput");
   if (latestInput) latestInput.value = task.latestUpdate && task.latestUpdate !== "ยังไม่มีอัปเดต" ? task.latestUpdate : "";
+
+  // -------------------------------------------------------------
+  // RENDER PROGRESS TIMELINE & PHOTOS (Supervisor Experience)
+  // -------------------------------------------------------------
+  let timelineItems = [];
+  if (Array.isArray(task.progressHistory) && task.progressHistory.length > 0) {
+    timelineItems = [...task.progressHistory];
+  } else if (task.customer && Array.isArray(task.customer.progress_history)) {
+    timelineItems = [...task.customer.progress_history];
+  }
+
+  // Also include matching check-in photos if stored locally
+  try {
+    const rawCheckins = localStorage.getItem("fs_daily_logs");
+    if (rawCheckins) {
+      const parsed = JSON.parse(rawCheckins);
+      const matched = parsed.filter(c => c.taskId === task.id || c.id === task.id || c.task === task.title);
+      matched.forEach(c => {
+        if (!timelineItems.some(it => it.id === c.id)) {
+          if (c.photos && c.photos.length > 0) {
+            timelineItems.unshift({
+              id: c.id,
+              time: c.checkinTime || "09:00",
+              date: c.date || "วันนี้",
+              progress: c.progress || 0,
+              status: c.status || "กำลังทำ",
+              note: c.note || `เช็กอินเข้าปฏิบัติงานเวลา ${c.checkinTime || '09:00'} น.`,
+              tech: Array.isArray(c.techs) ? c.techs.join(", ") : (c.tech || "ช่างหน้างาน"),
+              photos: c.photos,
+              isCheckin: true
+            });
+          }
+        }
+      });
+    }
+  } catch (e) {}
+
+  const totalPhotos = timelineItems.reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
+  const photoBadge = document.getElementById("detailTimelinePhotoCountBadge");
+  const totalBadge = document.getElementById("detailTimelineTotalBadge");
+  if (photoBadge) photoBadge.innerText = totalPhotos;
+  if (totalBadge) totalBadge.innerText = `${totalPhotos} ภาพ`;
+
+  const timelineContainer = document.getElementById("detailTimelineContainer");
+  if (timelineContainer) {
+    if (timelineItems.length === 0) {
+      timelineContainer.innerHTML = `
+        <div class="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-6">
+          <div class="text-3xl mb-2">📸</div>
+          <div class="text-sm font-bold text-slate-800">ยังไม่มีบันทึกภาพถ่ายหน้างาน</div>
+          <p class="text-xs text-slate-500 mt-1">รูปถ่ายความคืบหน้าจะแสดงที่นี่เมื่อทีมช่างเช็กอินหรืออัปเดตงานระหว่างวัน</p>
+        </div>
+      `;
+    } else {
+      timelineContainer.innerHTML = timelineItems.map((item, idx) => {
+        const isDone = item.status === "เสร็จสิ้น" || item.progress === 100;
+        const bulletColor = isDone ? "bg-emerald-500 ring-4 ring-emerald-100" : "bg-blue-600 ring-4 ring-blue-100";
+        const hasPhotos = Array.isArray(item.photos) && item.photos.length > 0;
+
+        let photosHtml = "";
+        if (hasPhotos) {
+          photosHtml = `
+            <div class="pt-2">
+              <div class="text-[11px] font-bold text-slate-700 mb-1.5 flex items-center space-x-1">
+                <span>📸 รูปถ่ายหน้างาน (${item.photos.length} รูป):</span>
+                <span class="text-[10px] text-slate-400 font-normal">(แตะเพื่อดูภาพขยาย)</span>
+              </div>
+              <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                ${item.photos.map((pUrl, pIdx) => `
+                  <div class="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group cursor-pointer shadow-2xs hover:ring-2 hover:ring-blue-500 transition-all bg-slate-100" onclick="window.openImageLightbox('${pUrl}', '${task.title} • ${item.time} น. (${item.progress}%)')">
+                    <img src="${pUrl}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="photo ${pIdx + 1}" loading="lazy">
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-colors">
+                      <span class="opacity-0 group-hover:opacity-100 text-white text-[10px] font-bold bg-slate-900/80 px-2 py-0.5 rounded-full backdrop-blur-xs">🔍 ขยาย</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="relative pl-6 pb-4 border-l-2 border-slate-200 last:border-l-0 last:pb-0">
+            <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full ${bulletColor} flex items-center justify-center text-[9px] text-white font-bold">
+              ${idx + 1}
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2">
+              <div class="flex items-center justify-between flex-wrap gap-1">
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-xs font-bold text-slate-900">${item.isCheckin ? '📍 เช็กอินเข้าหน้างาน' : `📊 คืบหน้า ${item.progress}%`}</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">
+                    ${item.status}
+                  </span>
+                </div>
+                <span class="text-[11px] font-mono text-slate-500 font-semibold">${item.date ? item.date + ' • ' : ''}${item.time || ''} น.</span>
+              </div>
+              ${item.note && item.note !== '-' ? `<p class="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100 leading-relaxed">${item.note}</p>` : ''}
+              <div class="text-[11px] text-slate-500">
+                ผู้ปฏิบัติงาน: <strong class="text-slate-800">${item.tech || 'ช่างประจำทีม'}</strong>
+              </div>
+              ${photosHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  switchTaskDetailTab(initialTab);
 
   const modal = document.getElementById("taskDetailModal");
   if (modal) modal.classList.remove("hidden");

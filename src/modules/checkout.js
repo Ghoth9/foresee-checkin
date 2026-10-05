@@ -257,8 +257,8 @@ export async function submitProgressOnly({
     photoCount: checkoutPhotos.length
   });
 
-  // 2. Sync to GAS
-  updateTaskProgressApi({
+  // 2. Sync to Supabase Database & Timeline
+  const apiRes = await updateTaskProgressApi({
     taskId: activeItem.taskId || activeItem.id,
     taskTitle: activeItem.task,
     progress: updatePercent,
@@ -266,19 +266,24 @@ export async function submitProgressOnly({
     note: noteText.trim() || "-",
     updateBy: closerName || "ช่างหน้างาน",
     updateEntry: updateEntry,
-    photos: checkoutPhotos.map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }))
+    photos: checkoutPhotos
   });
 
   // 3. Share to LINE
-  await triggerLiffShare(flexCard, "อัปเดตความคืบหน้างานและส่งเข้า LINE สำเร็จ!");
+  const shareRes = await triggerLiffShare(flexCard, "อัปเดตความคืบหน้างานและส่งเข้า LINE สำเร็จ!");
 
+  const savedPhotos = [...checkoutPhotos];
   clearCheckoutPhotos();
+
   if (onComplete) onComplete({
     id: activeItem.id,
     task: activeItem.task,
     status: updateStatus,
     progress: updatePercent,
-    latestUpdate: updateEntry
+    latestUpdate: updateEntry,
+    photos: savedPhotos,
+    historyItem: apiRes?.historyItem,
+    lineShared: !!(shareRes && shareRes.success)
   });
 }
 

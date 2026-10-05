@@ -45,6 +45,9 @@ import {
   saveEditedTask,
   openTaskDetailModal,
   closeTaskDetailModal,
+  switchTaskDetailTab,
+  openImageLightbox,
+  closeImageLightbox,
   setDetailModalStatus,
   setDetailModalPriority,
   updateDetailPhoneLink,
@@ -612,6 +615,11 @@ async function bootstrapApp() {
         selectActiveTaskForCheckout(existing.id);
       }
     }
+  } else if (targetTab === "tasks" && targetTaskId) {
+    const targetSubtab = urlParams.get("subtab");
+    setTimeout(() => {
+      openTaskDetailModal(targetTaskId, tasksList, allTechnicians, targetSubtab === "timeline" ? "timeline" : "info");
+    }, 150);
   }
 
   // 2. LIFF Init
@@ -861,6 +869,10 @@ window.submitOngoingUpdate = () => {
           linkedTask.progress = updatedInfo.progress;
           linkedTask.status = updatedInfo.status;
           linkedTask.latestUpdate = updatedInfo.latestUpdate;
+          if (updatedInfo.historyItem) {
+            if (!Array.isArray(linkedTask.progressHistory)) linkedTask.progressHistory = [];
+            linkedTask.progressHistory.push(updatedInfo.historyItem);
+          }
           localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
           renderTasksList(tasksList);
         }
@@ -870,11 +882,20 @@ window.submitOngoingUpdate = () => {
       localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
       renderTodayLogs();
       renderActiveCheckoutList();
-      showAppAlert({
-        type: "success",
-        title: "อัปเดตสำเร็จ!",
-        message: `อัปเดตความคืบหน้าเป็น ${updatedInfo.progress}% และส่งเข้า LINE เรียบร้อยแล้ว`
-      });
+
+      if (updatedInfo.lineShared) {
+        showAppAlert({
+          type: "success",
+          title: "อัปเดตและแชร์สำเร็จ!",
+          message: `บันทึกความคืบหน้าเป็น ${updatedInfo.progress}% และแชร์รายงานเข้ากลุ่ม LINE เรียบร้อยแล้ว`
+        });
+      } else {
+        showAppAlert({
+          type: "info",
+          title: "บันทึกข้อมูลสำเร็จ!",
+          message: `บันทึกความคืบหน้าเป็น ${updatedInfo.progress}% และจัดเก็บรูปถ่ายเข้าสู่ระบบแล้ว\n(ยังไม่ได้แชร์เข้าห้องแชท LINE เนื่องจากยกเลิกการเลือกห้องแชท หรือเปิดผ่านเบราว์เซอร์ทั่วไป)`
+        });
+      }
     }
   });
 };
@@ -977,8 +998,11 @@ window.prevCalendarMonth = prevCalendarMonth;
 window.nextCalendarMonth = nextCalendarMonth;
 window.selectTodayOnCalendar = selectTodayOnCalendar;
 
-window.openTaskDetailModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
+window.openTaskDetailModal = (taskId, initialTab = "info") => openTaskDetailModal(taskId, tasksList, allTechnicians, initialTab);
 window.closeTaskDetailModal = closeTaskDetailModal;
+window.switchTaskDetailTab = switchTaskDetailTab;
+window.openImageLightbox = openImageLightbox;
+window.closeImageLightbox = closeImageLightbox;
 window.setDetailModalStatus = setDetailModalStatus;
 window.setDetailModalPriority = setDetailModalPriority;
 window.updateDetailPhoneLink = updateDetailPhoneLink;

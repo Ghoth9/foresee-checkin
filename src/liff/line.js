@@ -53,12 +53,7 @@ import { showAppAlert } from '../utils/dialog.js';
 
 export async function triggerLiffShare(flexCard, successMessage = "แชร์เข้าห้องแชท LINE สำเร็จ!") {
   if (typeof liff === "undefined") {
-    showAppAlert({
-      type: "error",
-      title: "ไม่พบ LINE SDK",
-      message: "ระบบไม่พบ LINE LIFF SDK ในเบราว์เซอร์นี้"
-    });
-    return false;
+    return { success: false, reason: "no_sdk" };
   }
 
   try {
@@ -70,37 +65,32 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
         message: "กรุณากด 'เข้าสู่ระบบ LINE' เพื่อแชร์การ์ดเข้ากลุ่ม",
         onOk: () => liff.login({ redirectUri: window.location.href })
       });
-      return false;
+      return { success: false, reason: "not_logged_in" };
     }
 
     if (liff.isApiAvailable("shareTargetPicker")) {
       const res = await liff.shareTargetPicker([flexCard]);
       if (res) {
-        return true;
+        return { success: true };
       }
-      return false;
+      return { success: false, reason: "cancelled" };
     } else {
       // In-app 1-on-1 fallback
       if (liff.isInClient()) {
-        await liff.sendMessages([flexCard]);
-        showAppAlert({
-          type: "success",
-          title: "ส่งการ์ดสำเร็จ",
-          message: successMessage
-        });
-        return true;
+        try {
+          await liff.sendMessages([flexCard]);
+          return { success: true };
+        } catch (sendErr) {
+          console.warn("sendMessages failed:", sendErr);
+          return { success: false, reason: "send_error", error: sendErr.message };
+        }
       } else {
-        showAppAlert({
-          type: "info",
-          title: "แจ้งเตือน",
-          message: "เบราว์เซอร์นี้ไม่รองรับการเปิด Share Target Picker ของ LINE โดยตรง"
-        });
-        return false;
+        return { success: false, reason: "not_supported" };
       }
     }
   } catch (err) {
     console.warn("LIFF share error:", err);
-    return false;
+    return { success: false, reason: "error", error: err.message };
   }
 }
 
@@ -319,6 +309,18 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
         paddingAll: "12px",
         paddingTop: "0px",
         contents: [
+          {
+            type: "button",
+            style: "primary",
+            color: "#2563EB",
+            height: "sm",
+            margin: "xs",
+            action: {
+              type: "uri",
+              label: `📸 ดูรูปหน้างาน (${photoCount} รูป) & ไทม์ไลน์`,
+              uri: `https://liff.line.me/${MY_LIFF_ID}?tab=tasks&taskId=${encodeURIComponent(taskId || id || '')}&subtab=timeline`
+            }
+          },
           {
             type: "button",
             style: "primary",

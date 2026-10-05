@@ -48,6 +48,7 @@ export async function fetchInitialData() {
         progress: t.progress || 0,
         latestUpdate: t.latest_update || 'ยังไม่มีอัปเดต',
         customer: t.customer || {},
+        progressHistory: t.customer?.progress_history || [],
         oldDeadline: t.old_deadline || '-',
         reason: t.extend_reason || '-',
         updateBy: t.updated_by || '-'
@@ -211,24 +212,59 @@ export async function deleteTaskApi(id) {
 
 export async function updateTaskProgressApi({ taskId, taskTitle, progress, status, note, updateBy, updateEntry, photos = [] }) {
   try {
-    // 1. Upload photos to Supabase Storage if provided
-    let photoUrls = [];
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("th-TH");
+
+    // 1. Process photos into clean data URLs / URLs
+    const cleanPhotos = [];
     if (photos && photos.length > 0) {
       for (const p of photos) {
-        if (p.base64) {
-          const url = await uploadPhotoToSupabase(p.base64, p.name);
-          if (url) photoUrls.push(url);
+        if (typeof p === 'string') {
+          cleanPhotos.push(p);
+        } else if (p.dataUrl) {
+          cleanPhotos.push(p.dataUrl);
+        } else if (p.base64) {
+          const formatted = p.base64.startsWith('data:') ? p.base64 : `data:image/jpeg;base64,${p.base64}`;
+          cleanPhotos.push(formatted);
         }
       }
     }
 
-    // 2. Update task in database
+    const newHistoryItem = {
+      id: `UPD-${Date.now().toString(36)}`,
+      time: timeStr,
+      date: dateStr,
+      progress: Number(progress) || 0,
+      status: status || "กำลังทำ",
+      note: note || "-",
+      tech: updateBy || "ช่างหน้างาน",
+      photos: cleanPhotos,
+      createdAt: now.toISOString()
+    };
+
+    // 2. Fetch current task to append to progress_history
+    let currentTaskQuery = supabase.from('tasks').select('*');
+    if (taskId) currentTaskQuery = currentTaskQuery.eq('id', taskId);
+    else if (taskTitle) currentTaskQuery = currentTaskQuery.eq('title', taskTitle);
+    const { data: currentTasks } = await currentTaskQuery.limit(1);
+    const currentTask = currentTasks && currentTasks[0] ? currentTasks[0] : null;
+
+    const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
+    const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
+    const updatedHistory = [...existingHistory, newHistoryItem];
+
+    // 3. Update task in database
     const updateData = {
-      progress: progress,
+      progress: Number(progress) || 0,
       status: status,
-      latest_update: updateEntry || `[คืบหน้า ${progress}%: ${status}] ${note || ''} (โดย ${updateBy})`,
+      latest_update: updateEntry || `[คืบหน้า ${progress}%: ${status}] ${note || ''} (โดย ${updateBy} เมื่อ ${timeStr} น.)`,
+      customer: {
+        ...existingCust,
+        progress_history: updatedHistory
+      },
       updated_by: updateBy,
-      updated_at: new Date().toISOString()
+      updated_at: now.toISOString()
     };
 
     let query = supabase.from('tasks').update(updateData);
@@ -238,10 +274,33 @@ export async function updateTaskProgressApi({ taskId, taskTitle, progress, statu
       query = query.eq('title', taskTitle);
     }
 
-    const { error } = await query;
-    if (error) throw error;
+    const { error: tErr } = await query;
+    if (tErr) console.warn("update task error:", tErr);
 
-    return { success: true, photoUrls };
+    // 4. Update checkins record if exists
+    try {
+      let checkinQuery = supabase.from('checkins').select('*');
+      if (taskId) checkinQuery = checkinQuery.or(`task_id.eq.${taskId},id.eq.${taskId}`);
+      else if (taskTitle) checkinQuery = checkinQuery.eq('task_title', taskTitle);
+      const { data: matchingCheckins } = await checkinQuery.limit(1);
+
+      if (matchingCheckins && matchingCheckins.length > 0) {
+        const chk = matchingCheckins[0];
+        const existingPhotos = Array.isArray(chk.photos) ? chk.photos : [];
+        const combinedPhotos = [...existingPhotos, ...cleanPhotos];
+        await supabase.from('checkins').update({
+          progress: Number(progress) || 0,
+          status: status,
+          note: note ? `${chk.note ? chk.note + ' | ' : ''}[${progress}%] ${note}` : chk.note,
+          photos: combinedPhotos,
+          updated_at: now.toISOString()
+        }).eq('id', chk.id);
+      }
+    } catch (cErr) {
+      console.warn("update checkins link error:", cErr);
+    }
+
+    return { success: true, historyItem: newHistoryItem, photos: cleanPhotos };
   } catch (err) {
     console.warn("updateTaskProgressApi error:", err);
     return { success: false, error: err.message };
@@ -274,6 +333,13 @@ export async function extendTaskDeadlineApi({ taskId, newDeadline, oldDeadline, 
 // -------------------------------------------------------------
 export async function saveCheckinApi(data) {
   try {
+    const cleanPhotos = (data.photos || []).map(p => {
+      if (typeof p === 'string') return p;
+      if (p.dataUrl) return p.dataUrl;
+      if (p.base64) return p.base64.startsWith('data:') ? p.base64 : `data:image/jpeg;base64,${p.base64}`;
+      return null;
+    }).filter(Boolean);
+
     const payload = {
       id: data.id,
       task_id: data.taskId || null,
@@ -285,6 +351,7 @@ export async function saveCheckinApi(data) {
       map_url: data.mapUrl || '',
       checkin_time: data.time,
       status: 'กำลังทำ',
+      photos: cleanPhotos,
       created_at: new Date().toISOString()
     };
 
@@ -302,6 +369,17 @@ export async function saveCheckinApi(data) {
 
 export async function saveCheckoutApi(payload) {
   try {
+    const cleanPhotos = (payload.photos || []).map(p => {
+      if (typeof p === 'string') return p;
+      if (p.dataUrl) return p.dataUrl;
+      if (p.base64) return p.base64.startsWith('data:') ? p.base64 : `data:image/jpeg;base64,${p.base64}`;
+      return null;
+    }).filter(Boolean);
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("th-TH");
+
     const { error } = await supabase
       .from('checkins')
       .update({
@@ -310,13 +388,52 @@ export async function saveCheckoutApi(payload) {
         outcome: payload.outcome,
         note: payload.note || '',
         status: 'เสร็จสิ้น',
-        closer_name: payload.closerName || '',
-        photos: payload.photoUrls || [],
-        updated_at: new Date().toISOString()
+        progress: 100,
+        closer_name: payload.closedBy || payload.closerName || '',
+        photos: cleanPhotos,
+        updated_at: now.toISOString()
       })
       .eq('id', payload.id);
 
     if (error) throw error;
+
+    // Also update linked task in tasks table
+    const targetTaskId = payload.taskId || payload.id;
+    if (targetTaskId) {
+      try {
+        const { data: currentTasks } = await supabase.from('tasks').select('*').eq('id', targetTaskId).limit(1);
+        const currentTask = currentTasks && currentTasks[0] ? currentTasks[0] : null;
+        if (currentTask) {
+          const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
+          const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
+          const closeHistoryItem = {
+            id: `UPD-CLOSE-${Date.now().toString(36)}`,
+            time: timeStr,
+            date: dateStr,
+            progress: 100,
+            status: "เสร็จสิ้น",
+            note: `ปิดงาน: ${payload.outcome || 'เสร็จเรียบร้อย'} ${payload.note ? `(${payload.note})` : ''}`,
+            tech: payload.closedBy || payload.closerName || "ช่างหน้างาน",
+            photos: cleanPhotos,
+            createdAt: now.toISOString()
+          };
+          await supabase.from('tasks').update({
+            progress: 100,
+            status: 'เสร็จสิ้น',
+            latest_update: `[ปิดงาน 100%] ${payload.outcome || 'เสร็จเรียบร้อย'} (โดย ${payload.closedBy || 'ช่างหน้างาน'} เมื่อ ${timeStr} น.)`,
+            customer: {
+              ...existingCust,
+              progress_history: [...existingHistory, closeHistoryItem]
+            },
+            updated_by: payload.closedBy || 'ช่างหน้างาน',
+            updated_at: now.toISOString()
+          }).eq('id', targetTaskId);
+        }
+      } catch (tErr) {
+        console.warn("link close task update error:", tErr);
+      }
+    }
+
     return { success: true, id: payload.id };
   } catch (err) {
     console.warn("saveCheckoutApi error:", err);
