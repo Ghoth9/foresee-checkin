@@ -554,10 +554,12 @@ export function renderActiveCheckoutList() {
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
               <span>แชร์เข้า LINE</span>
             </button>
-            <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="ลบรายการเช็กอินนี้">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              <span>ลบรายการ</span>
-            </button>
+            ${currentUserRole === "admin" ? `
+              <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="ลบรายการเช็กอินนี้">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <span>ลบรายการ</span>
+              </button>
+            ` : ''}
           </div>
         </div>
         <div class="font-bold text-sm text-slate-950">${item.task}</div>
@@ -590,6 +592,14 @@ export function renderActiveCheckoutList() {
 }
 
 export function deleteActiveCheckin(id) {
+  if (currentUserRole !== "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
+      message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบรายการเช็กอินได้ครับ"
+    });
+    return;
+  }
   const item = activeTasks.find(a => a.id === id);
   if (!item) return;
 
@@ -625,6 +635,14 @@ export function deleteActiveCheckin(id) {
 }
 
 export function clearAllActiveCheckins() {
+  if (currentUserRole !== "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
+      message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถล้างรายการเช็กอินทั้งหมดได้ครับ"
+    });
+    return;
+  }
   if (activeTasks.length === 0) return;
 
   showAppConfirm({
@@ -721,6 +739,8 @@ export function renderTodayLogs() {
     return;
   }
 
+  const isAdmin = currentUserRole === "admin";
+
   container.innerHTML = dailyLogs.map(log => {
     const isDone = log.status === "เสร็จสิ้น" || log.status === "ปิดงานแล้ว";
     const techs = Array.isArray(log.techs) ? log.techs.join(", ") : (log.techs || "-");
@@ -730,9 +750,11 @@ export function renderTodayLogs() {
           <span class="text-[10px] font-bold px-1.5 py-0.2 rounded ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} font-mono">${log.id}</span>
           <div class="flex items-center space-x-1.5">
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">${log.status}</span>
-            <button type="button" onclick="event.stopPropagation(); window.deleteTodayLog('${log.id}')" class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1 rounded transition-colors active:scale-95" title="ลบประวัตินี้">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
+            ${isAdmin ? `
+              <button type="button" onclick="event.stopPropagation(); window.deleteTodayLog('${log.id}')" class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1 rounded transition-colors active:scale-95" title="ลบประวัตินี้">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            ` : ''}
           </div>
         </div>
         <div class="font-bold text-slate-900 truncate">${log.task}</div>
@@ -746,6 +768,14 @@ export function renderTodayLogs() {
 }
 
 export function deleteTodayLog(id) {
+  if (currentUserRole !== "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
+      message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบประวัติงานได้ครับ"
+    });
+    return;
+  }
   showAppConfirm({
     title: "ยืนยันการลบประวัติ",
     message: `คุณต้องการลบประวัติงาน "${id}" ออกจากรายการหรือไม่?`,
@@ -1221,6 +1251,20 @@ export function applyRolePermissionsUI(role, techObj) {
       notice.classList.add("flex");
     }
   }
+
+  // 7. Clear all checkins button in Checkout tab
+  const clearAllBtn = document.getElementById("clearAllCheckinsBtn");
+  if (clearAllBtn) {
+    if (isAdmin && activeTasks.length > 0) {
+      clearAllBtn.classList.remove("hidden");
+    } else {
+      clearAllBtn.classList.add("hidden");
+    }
+  }
+
+  // 8. Re-render Today Logs & Active Checkout List to sync delete buttons
+  renderTodayLogs();
+  renderActiveCheckoutList();
 }
 
 export function handleRoleBadgeClick() {
