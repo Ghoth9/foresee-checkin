@@ -744,11 +744,16 @@ async function bootstrapApp() {
     }, 150);
   }
 
-  // 2. LIFF Init
-  await initLiff();
-  updateLineStatusUI();
+  // 2. INSTANT ZERO-MILLISECOND RENDER FROM LOCAL CACHE (0ms delay)
+  renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+  renderCheckinTechChips();
+  renderActiveCheckoutList();
+  renderTechFilterChips(tasksList, allTechnicians);
+  renderTasksList(tasksList);
+  renderTodayLogs();
 
-  // 3. GPS Request
+  // 3. Background Services (Non-blocking): LINE LIFF & GPS
+  initLiff().then(() => updateLineStatusUI()).catch(e => console.warn("LIFF init error:", e));
   requestLocation((coords) => {
     const title = document.getElementById("gpsLocationTitle");
     const coordsText = document.getElementById("gpsCoordsText");
@@ -767,117 +772,17 @@ async function bootstrapApp() {
     }
   });
 
-  // 4. Sync initial data from Google Sheet in background
-  const gasData = await fetchInitialData();
-  if (gasData) {
-    if (gasData.technicians && gasData.technicians.length > 0) {
-      allTechnicians = Array.from(new Set([...allTechnicians, ...gasData.technicians]));
-      localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
-    }
-    if (gasData.tasks && Array.isArray(gasData.tasks)) {
-      tasksList = gasData.tasks.map(gt => {
-        let prog = gt.progress !== undefined ? gt.progress : 0;
-        if (gt.status === "เสร็จสิ้น") {
-          prog = 100;
-        } else if (gt.reason) {
-          const match = String(gt.reason).match(/คืบหน้า\s*(\d+)%/);
-          if (match) {
-            prog = parseInt(match[1], 10);
-          }
-        }
-        return {
-          ...gt,
-          progress: prog,
-          latestUpdate: gt.latestUpdate || (gt.reason && gt.reason !== '-' ? gt.reason : '')
-        };
-      });
-      localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
-    }
-    if (gasData.activeCheckins && Array.isArray(gasData.activeCheckins)) {
-      activeTasks = gasData.activeCheckins.map(a => {
-        const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
-        return {
-          id: a.id,
-          taskId: a.taskId || null,
-          task: a.task,
-          techs: Array.isArray(a.techs) && a.techs.length > 0 ? a.techs : (a.tech ? [a.tech] : ["ช่างทั่วไป"]),
-          time: formatGasTime(a.time) || "09:00",
-          date: formatGasDate(a.date),
-          progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0),
-          photos: a.photos || [],
-          note: a.note || ''
-        };
-      });
-      // Merge in-progress tasks from tasksList into activeTasks so they are ready for updating
-      tasksList.forEach(t => {
-        if (t.status === "กำลังทำ" && !activeTasks.some(a => a.taskId === t.id || a.id === t.id || a.task === t.title)) {
-          activeTasks.push({
-            id: t.id,
-            taskId: t.id,
-            task: t.title,
-            techs: Array.isArray(t.techs) ? t.techs : (t.assignee ? t.assignee.split(", ") : ["ช่างประจำทีม"]),
-            time: "09:00",
-            date: "วันนี้",
-            progress: t.progress || 0,
-            photos: [],
-            note: t.latestUpdate || ''
-          });
-        }
-      });
-      localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
-    }
+  // 4. Initial live sync from Supabase immediately in parallel
+  refreshFromSupabase(true);
 
-    // 3. Daily Logs (ALWAYS SYNC FROM SUPABASE/GAS AS SINGLE SOURCE OF TRUTH)
-    const allSheetCheckins = [
-      ...(gasData.activeCheckins || []).map(a => ({
-        id: a.id,
-        task: a.task,
-        techs: a.techs || [a.tech],
-        checkinTime: formatGasTime(a.time),
-        checkoutTime: a.outTime && a.outTime !== '-' ? formatGasTime(a.outTime) : null,
-        status: a.status === "กำลังปฏิบัติงาน" ? "กำลังทำ" : "เสร็จสิ้น"
-      })),
-      ...(gasData.closedCheckins || []).map(c => ({
-        id: c.id,
-        task: c.task,
-        techs: c.techs || [c.tech],
-        checkinTime: formatGasTime(c.time),
-        checkoutTime: formatGasTime(c.outTime),
-        status: "เสร็จสิ้น"
-      }))
-    ];
-    dailyLogs = allSheetCheckins;
-    localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
-  }
-
-  // 5. Re-render views for current tab without resetting tab
-  if (currentTab === "checkin") {
-    renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
-    renderCheckinTechChips();
-  } else if (currentTab === "checkout") {
-    renderActiveCheckoutList();
-    const matchId = targetId || targetTaskId;
-    if (matchId) {
-      const existing = activeTasks.find(a => a.id === matchId || a.taskId === matchId);
-      if (existing) {
-        selectActiveTaskForCheckout(existing.id);
-      }
-    }
-  } else if (currentTab === "tasks") {
-    renderTechFilterChips(tasksList, allTechnicians);
-    renderTasksList(tasksList);
-  }
-
-  renderTodayLogs();
-
-  // 6. Supabase Realtime Live Synchronization across all devices!
+  // 5. Supabase Realtime Live Synchronization across all devices!
   subscribeToRealtimeChanges({
-    onTasksChange: () => refreshFromSupabase(),
-    onCheckinsChange: () => refreshFromSupabase(),
-    onTechsChange: () => refreshFromSupabase()
+    onTasksChange: () => refreshFromSupabase(true),
+    onCheckinsChange: () => refreshFromSupabase(true),
+    onTechsChange: () => refreshFromSupabase(true)
   });
 
-  // 7. Auto refresh on window focus / tab visibility change (PC & Mobile sync)
+  // 6. Auto refresh on window focus / tab visibility change (PC & Mobile sync)
   window.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       refreshFromSupabase();
@@ -887,17 +792,25 @@ async function bootstrapApp() {
     refreshFromSupabase();
   });
 
-  // 8. Guaranteed background sync interval (every 15 seconds)
-  setInterval(refreshFromSupabase, 15000);
+  // 7. Background sync interval (every 15 seconds)
+  setInterval(() => refreshFromSupabase(), 15000);
 }
 
-export async function refreshFromSupabase() {
+let isRefreshing = false;
+let lastRefreshTime = 0;
+
+export async function refreshFromSupabase(force = false) {
+  const now = Date.now();
+  if (!force && (isRefreshing || (now - lastRefreshTime < 2000))) return;
+  isRefreshing = true;
+  lastRefreshTime = now;
+
   try {
     const fresh = await fetchInitialData();
     if (!fresh) return;
 
-    if (fresh.technicians && Array.isArray(fresh.technicians)) {
-      allTechnicians = fresh.technicians;
+    if (fresh.technicians && Array.isArray(fresh.technicians) && fresh.technicians.length > 0) {
+      allTechnicians = Array.from(new Set([...allTechnicians, ...fresh.technicians]));
       localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
       renderManageTechList();
       renderCheckinTechChips();
@@ -905,31 +818,58 @@ export async function refreshFromSupabase() {
     }
 
     if (fresh.tasks && Array.isArray(fresh.tasks)) {
-      tasksList = fresh.tasks;
+      const serverMap = new Map(fresh.tasks.map(t => [t.id, t]));
+      // Keep any recently created local tasks (under 3 mins old) that might still be syncing
+      const recentLocal = tasksList.filter(t => !serverMap.has(t.id) && (Date.now() - (t.createdAt || 0) < 180000));
+      tasksList = [...recentLocal, ...fresh.tasks];
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
       renderTasksList(tasksList);
       renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
       renderTechFilterChips(tasksList, allTechnicians);
     }
 
-    if (fresh.activeCheckins && Array.isArray(fresh.activeCheckins)) {
-      activeTasks = fresh.activeCheckins.map(a => {
-        const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
-        return {
-          ...a,
-          progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0)
-        };
-      });
-      localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
-    }
+    // Active Checkins + In-Progress Tasks Merge
+    const checkinActives = Array.isArray(fresh.activeCheckins) ? fresh.activeCheckins.map(a => {
+      const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
+      return {
+        id: a.id,
+        taskId: a.taskId || null,
+        task: a.task,
+        techs: Array.isArray(a.techs) && a.techs.length > 0 ? a.techs : (a.tech ? [a.tech] : ["ช่างทั่วไป"]),
+        time: formatGasTime(a.time) || "09:00",
+        date: formatGasDate(a.date),
+        progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0),
+        photos: a.photos || [],
+        note: a.note || ''
+      };
+    }) : [];
+
+    // Also include in-progress tasks so technicians can view & update anytime
+    tasksList.forEach(t => {
+      if (t.status === "กำลังทำ" && !checkinActives.some(a => a.taskId === t.id || a.id === t.id || a.task === t.title)) {
+        checkinActives.push({
+          id: t.id,
+          taskId: t.id,
+          task: t.title,
+          techs: Array.isArray(t.techs) ? t.techs : (t.assignee ? t.assignee.split(", ") : ["ช่างประจำทีม"]),
+          time: "09:00",
+          date: "วันนี้",
+          progress: t.progress || 0,
+          photos: [],
+          note: t.latestUpdate || ''
+        });
+      }
+    });
+
+    activeTasks = checkinActives;
+    localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+    renderActiveCheckoutList();
 
     if (fresh.activeCheckins || fresh.closedCheckins) {
       dailyLogs = [...(fresh.activeCheckins || []), ...(fresh.closedCheckins || [])];
       localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
       renderTodayLogs();
     }
-
-    renderActiveCheckoutList();
 
     if (selectedActiveCheckoutId) {
       const curActive = activeTasks.find(a => a.id === selectedActiveCheckoutId || a.taskId === selectedActiveCheckoutId);
@@ -943,6 +883,8 @@ export async function refreshFromSupabase() {
     }
   } catch (err) {
     console.warn("refreshFromSupabase error:", err);
+  } finally {
+    isRefreshing = false;
   }
 }
 

@@ -648,23 +648,33 @@ export async function submitAssignForm({ tasksList, onComplete }) {
     localStorage.setItem("fs_recent_new_tasks", JSON.stringify(Array.from(recentNewTaskIds)));
   } catch (e) {}
 
-  // Sync to Sheet
-  saveTaskApi(newTask);
-
+  // 1. Update memory & localStorage immediately (Optimistic Update)
   tasksList.unshift(newTask);
   localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
 
-  // Trigger LINE Share Target Picker
-  const flexCard = createAssignTaskFlexCard(newTask);
-  await triggerLiffShare(flexCard, "มอบหมายงานใหม่และส่งเข้ากลุ่ม LINE เรียบร้อยแล้ว");
+  // 2. Immediately re-render views so the user instantly sees the new task
+  if (onComplete) onComplete([newTask]);
+
+  // 3. Persist to Supabase Database
+  try {
+    await saveTaskApi(newTask);
+  } catch (err) {
+    console.warn("saveTaskApi error:", err);
+  }
+
+  // 4. Trigger LINE Share Target Picker (Safe non-blocking)
+  try {
+    const flexCard = createAssignTaskFlexCard(newTask);
+    triggerLiffShare(flexCard, "มอบหมายงานใหม่และส่งเข้ากลุ่ม LINE เรียบร้อยแล้ว");
+  } catch (shareErr) {
+    console.warn("LIFF share error:", shareErr);
+  }
 
   showAppAlert({
     type: "success",
     title: "มอบหมายงานสำเร็จ!",
-    message: `บันทึกงาน "${titleDisplay}" (${taskId}) และส่งข้อมูลเข้ากลุ่ม LINE เรียบร้อยแล้ว`
+    message: `บันทึกงาน "${titleDisplay}" (${taskId}) เรียบร้อยแล้ว`
   });
-
-  if (onComplete) onComplete([newTask]);
 }
 
 // -------------------------------------------------------------
