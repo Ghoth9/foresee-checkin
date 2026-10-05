@@ -988,23 +988,8 @@ export function isCurrentUserAdmin() {
 }
 
 export async function resolveUserRole() {
-  // 0. Check active simulation first (persisted in sessionStorage)
-  const sim = sessionStorage.getItem("fs_simulated_role");
-  if (sim) {
-    simulatedRole = sim;
-    currentUserRole = sim;
-    applyRolePermissionsUI(currentUserRole, currentLinkedTech);
-    return;
-  }
-
-  // 1. Check session override (PIN unlock on PC/Safari)
-  if (sessionStorage.getItem("fs_admin_override") === "true") {
-    currentUserRole = "admin";
-    applyRolePermissionsUI("admin", { name: "แอดมิน (PIN Unlock)", role: "admin" });
-    return;
-  }
-
-  // 2. Check LINE Login Profile
+  // 1. Identify LINE Login Profile and perform Auto-Bind
+  let matchedTech = null;
   if (isLineLoggedIn()) {
     const profile = getLineUserProfile();
     if (profile && profile.userId) {
@@ -1027,7 +1012,7 @@ export async function resolveUserRole() {
           match = techniciansList.find(t => {
             if (!t.name) return false;
             const pureName = t.name.replace(/K\./g, '').split('(')[0].trim().toLowerCase();
-            return pureName && dName.includes(pureName);
+            return pureName && pureName.length > 1 && dName.includes(pureName);
           });
         }
 
@@ -1040,22 +1025,43 @@ export async function resolveUserRole() {
 
       if (match) {
         currentLinkedTech = match;
-        currentUserRole = match.role || "technician";
-        applyRolePermissionsUI(currentUserRole, match);
-        return;
+        matchedTech = match;
+      } else {
+        // Logged in via LINE, but no profile linked yet! Prompt link modal once!
+        if (sessionStorage.getItem("fs_link_modal_dismissed") !== "true") {
+          setTimeout(() => openLinkLineAccountModal(), 600);
+        }
       }
     }
   }
 
-  // Default fallback
-  currentUserRole = "technician";
-  applyRolePermissionsUI("technician", null);
+  // 2. Determine actual role
+  let actualRole = "technician";
+  if (matchedTech && matchedTech.role === "admin") {
+    actualRole = "admin";
+  } else if (sessionStorage.getItem("fs_admin_override") === "true") {
+    actualRole = "admin";
+  }
+
+  // 3. Check active simulation (persisted in sessionStorage)
+  const sim = sessionStorage.getItem("fs_simulated_role");
+  if (sim) {
+    simulatedRole = sim;
+    currentUserRole = sim;
+    applyRolePermissionsUI(currentUserRole, currentLinkedTech);
+    return;
+  }
+
+  // 4. Normal role application
+  currentUserRole = actualRole;
+  applyRolePermissionsUI(currentUserRole, currentLinkedTech);
 }
 
 let simulatedRole = null;
 
 export function isUserAdminActual() {
   if (sessionStorage.getItem("fs_admin_override") === "true") return true;
+  if (currentLinkedTech && currentLinkedTech.role === "admin") return true;
   if (isLineLoggedIn()) {
     const profile = getLineUserProfile();
     if (profile && profile.userId) {
@@ -1071,7 +1077,6 @@ export function isUserAdminActual() {
 export function switchSimulatedRole(mode) {
   if (mode === "admin") {
     sessionStorage.removeItem("fs_simulated_role");
-    sessionStorage.setItem("fs_admin_override", "true");
     simulatedRole = null;
     currentUserRole = "admin";
   } else {
@@ -1092,7 +1097,7 @@ export function switchSimulatedRole(mode) {
     title: mode === "admin" ? "สลับเป็น: มุมมองแอดมิน 👑" : "สลับเป็น: มุมมองผู้ปฏิบัติงาน 👷",
     message: mode === "admin"
       ? "แสดงผลแบบแอดมินเต็มรูปแบบ (มอบหมายงาน, แก้ไข, ลบงาน, จัดการสิทธิ์)"
-      : "แสดงผลแบบผู้ปฏิบัติงาน (ซ่อนปุ่มมอบหมายงานและปุ่มลบงาน ฟิลด์ข้อมูลหลักเป็นแบบอ่านอย่างเดียว)"
+      : "แสดงผลแบบผู้ปฏิบัติงาน (ซ่อนปุ่มมอบหมายงานและปุ่มลบงาน ดูรายละเอียดงานอย่างเดียว)"
   });
 }
 
@@ -1120,13 +1125,13 @@ export function applyRolePermissionsUI(role, techObj) {
   if (badge && icon && text) {
     if (isAdmin) {
       icon.innerText = "👑";
-      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : "คุณใบปอ";
+      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : (getLineUserName() || "แอดมิน");
       text.innerText = `แอดมิน: ${cleanName}`;
       badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer";
       badge.title = "คุณมีสิทธิ์แอดมิน (แตะเพื่อสลับมุมมองหรือจัดการสิทธิ์)";
     } else {
       icon.innerText = "👷";
-      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : "ทั่วไป";
+      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : (getLineUserName() || "ทั่วไป");
       text.innerText = `ผู้ปฏิบัติงาน: ${cleanName}`;
       badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer";
       badge.title = "เข้าสู่ระบบในฐานะผู้ปฏิบัติงาน (แตะเพื่อปลดล็อกแอดมินหรือสลับมุมมอง)";
@@ -1244,7 +1249,7 @@ export function submitAdminPinUnlock() {
     sessionStorage.setItem("fs_admin_override", "true");
     currentUserRole = "admin";
     closeAdminPinModal();
-    applyRolePermissionsUI("admin", { name: "คุณใบปอ (Admin)", role: "admin" });
+    applyRolePermissionsUI("admin", { name: "ผู้ดูแลระบบ (Admin)", role: "admin" });
     showAppAlert({
       type: "success",
       title: "ปลดล็อกสิทธิ์แอดมินสำเร็จ",
@@ -1290,9 +1295,13 @@ export function renderTeamRoleList() {
     return;
   }
 
+  const currentLineName = getLineUserName();
+  const currentLineId = getLineUserId();
+
   container.innerHTML = techniciansList.map(tech => {
     const isAdmin = tech.role === "admin";
     const isLineLinked = !!tech.line_user_id;
+    const isLinkedToMe = isLineLinked && currentLineId && tech.line_user_id === currentLineId;
 
     return `
       <div class="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
@@ -1300,11 +1309,26 @@ export function renderTeamRoleList() {
           <div class="flex items-center space-x-1.5 flex-wrap">
             <span class="font-bold text-xs text-slate-900 truncate">${tech.name}</span>
             ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">👷 ผู้ปฏิบัติงาน</span>`}
+            ${isLinkedToMe ? `<span class="px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">บัญชีของคุณ</span>` : ''}
           </div>
-          <div class="text-[11px] text-slate-400 mt-0.5 flex items-center space-x-2">
+          <div class="text-[11px] text-slate-400 mt-1 flex items-center space-x-2 flex-wrap gap-y-1">
             <span>📞 ${tech.phone || '-'}</span>
             <span>•</span>
-            <span class="${isLineLinked ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${isLineLinked ? '🟢 เชื่อม LINE แล้ว' : '⚪ ยังไม่ผูก LINE'}</span>
+            ${isLineLinked ? `
+              <span class="text-emerald-600 font-semibold flex items-center space-x-1">
+                <span>🟢 เชื่อม LINE แล้ว</span>
+                <button type="button" onclick="window.unbindTechLineUser('${tech.id}')" class="text-slate-400 hover:text-rose-600 text-[10px] ml-1 p-0.5 rounded hover:bg-rose-50" title="ยกเลิกการผูก LINE">✕ ยกเลิกผูก</button>
+              </span>
+            ` : `
+              <div class="flex items-center space-x-1.5 flex-wrap gap-1">
+                <span class="text-slate-400">⚪ ยังไม่ผูก LINE</span>
+                ${isLineLoggedIn() ? `
+                  <button type="button" onclick="window.bindCurrentLineUserToTech('${tech.id}')" class="text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded-md transition-all active:scale-95 shadow-2xs">
+                    🔗 ผูกกับ LINE ฉัน (${currentLineName || 'ฉัน'})
+                  </button>
+                ` : ''}
+              </div>
+            `}
           </div>
         </div>
 
@@ -1320,6 +1344,96 @@ export function renderTeamRoleList() {
       </div>
     `;
   }).join("");
+}
+
+export async function bindCurrentLineUserToTech(techId) {
+  const profile = getLineUserProfile();
+  if (!profile || !profile.userId) {
+    showAppAlert({
+      type: "warning",
+      title: "ยังไม่ได้เข้าสู่ระบบ LINE",
+      message: "กรุณากดเข้าสู่ระบบ LINE ก่อนดำเนินการผูกบัญชีครับ"
+    });
+    return;
+  }
+  const res = await bindTechnicianLineUserApi(techId, profile.userId);
+  if (res.success) {
+    const tech = techniciansList.find(t => t.id === techId);
+    if (tech) tech.line_user_id = profile.userId;
+    showAppAlert({
+      type: "success",
+      title: "ผูกบัญชี LINE สำเร็จ!",
+      message: `เชื่อมต่อบัญชี LINE "${profile.displayName}" เข้ากับ "${tech?.name || ''}" เรียบร้อยแล้ว 🟢`
+    });
+    refreshFromSupabase(true);
+  } else {
+    showAppAlert({
+      type: "warning",
+      title: "เกิดข้อผิดพลาด",
+      message: res.error || "ไม่สามารถผูกบัญชี LINE ได้"
+    });
+  }
+}
+
+export async function unbindTechLineUser(techId) {
+  showAppConfirm({
+    title: "ยืนยันยกเลิกการผูกบัญชี LINE",
+    message: "คุณต้องการยกเลิกการผูกบัญชี LINE ของสมาชิกท่านนี้หรือไม่?",
+    confirmText: "ยกเลิกการผูก",
+    cancelText: "ปิด",
+    isDanger: true,
+    onConfirm: async () => {
+      const res = await bindTechnicianLineUserApi(techId, null);
+      if (res.success) {
+        const tech = techniciansList.find(t => t.id === techId);
+        if (tech) tech.line_user_id = null;
+        showAppAlert({
+          type: "info",
+          title: "ยกเลิกการผูก LINE สำเร็จ",
+          message: "ยกเลิกการผูกบัญชีเรียบร้อยแล้ว"
+        });
+        refreshFromSupabase(true);
+      }
+    }
+  });
+}
+
+export function openLinkLineAccountModal() {
+  const el = document.getElementById("linkLineAccountModal");
+  const nameEl = document.getElementById("linkLineDisplayNameText");
+  const listEl = document.getElementById("linkLineMemberListContainer");
+  if (!el || !listEl) return;
+
+  const currentName = getLineUserName() || "LINE User";
+  if (nameEl) nameEl.innerText = currentName;
+
+  listEl.innerHTML = techniciansList.map(tech => {
+    const isBound = !!tech.line_user_id;
+    return `
+      <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-2 shadow-2xs">
+        <div class="min-w-0">
+          <div class="font-bold text-xs text-slate-900 truncate">${tech.name}</div>
+          <div class="text-[10px] text-slate-500">${tech.role === 'admin' ? '👑 แอดมิน' : '👷 ผู้ปฏิบัติงาน'} ${isBound ? '• ผูก LINE แล้ว' : '• ยังไม่ผูก LINE'}</div>
+        </div>
+        <button type="button" onclick="window.selectTechToBindLine('${tech.id}')" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs active:scale-95 transition-all flex-shrink-0">
+          เลือกฉัน
+        </button>
+      </div>
+    `;
+  }).join("");
+
+  el.classList.remove("hidden");
+}
+
+export function closeLinkLineAccountModal() {
+  const el = document.getElementById("linkLineAccountModal");
+  if (el) el.classList.add("hidden");
+  sessionStorage.setItem("fs_link_modal_dismissed", "true");
+}
+
+export async function selectTechToBindLine(techId) {
+  await bindCurrentLineUserToTech(techId);
+  closeLinkLineAccountModal();
 }
 
 export async function handleChangeMemberRole(techId, newRole) {
@@ -1599,6 +1713,11 @@ window.closeTeamRoleModal = closeTeamRoleModal;
 window.handleChangeMemberRole = handleChangeMemberRole;
 window.submitAddNewMember = submitAddNewMember;
 window.handleDeleteMember = handleDeleteMember;
+window.bindCurrentLineUserToTech = bindCurrentLineUserToTech;
+window.unbindTechLineUser = unbindTechLineUser;
+window.openLinkLineAccountModal = openLinkLineAccountModal;
+window.closeLinkLineAccountModal = closeLinkLineAccountModal;
+window.selectTechToBindLine = selectTechToBindLine;
 
 window.openAssignModal = () => {
   if (currentUserRole !== "admin") {
@@ -1647,6 +1766,8 @@ window.prevCalendarMonth = prevCalendarMonth;
 window.nextCalendarMonth = nextCalendarMonth;
 window.selectTodayOnCalendar = selectTodayOnCalendar;
 
+window.isCurrentUserAdmin = () => currentUserRole === "admin";
+
 window.openTaskDetailModal = (taskId, initialTab = "info") => {
   openTaskDetailModal(taskId, tasksList, allTechnicians, initialTab);
   const isAdmin = currentUserRole === "admin";
@@ -1659,7 +1780,9 @@ window.openTaskDetailModal = (taskId, initialTab = "info") => {
     "detailCustAddressInput",
     "detailCustEmailInput",
     "detailCustLineInput",
-    "detailCategorySelect"
+    "detailCategorySelect",
+    "detailLatestUpdateInput",
+    "detailProgressRange"
   ];
   inputs.forEach(id => {
     const el = document.getElementById(id);
@@ -1672,6 +1795,35 @@ window.openTaskDetailModal = (taskId, initialTab = "info") => {
       }
     }
   });
+
+  // Dynamic Modal Header
+  const titleEl = document.getElementById("taskDetailModalTitle");
+  const subtitleEl = document.getElementById("taskDetailModalSubtitle");
+  if (titleEl) titleEl.innerText = isAdmin ? "รายละเอียด & แก้ไขข้อมูลงาน" : "รายละเอียดงาน";
+  if (subtitleEl) subtitleEl.innerText = isAdmin ? "ตรวจสอบ แก้ไขข้อมูลงาน ลูกค้า ผู้ปฏิบัติงานที่รับผิดชอบ และกำหนดส่ง" : "ตรวจสอบข้อมูลงาน ลูกค้า สถานที่หน้างาน และความคืบหน้า";
+
+  // Lock status and priority buttons for technician
+  ["กำลังทำ", "เกินกำหนด", "เสร็จสิ้น", "ติดปัญหา"].forEach(st => {
+    const btn = document.getElementById(`detailStatus-${st}`);
+    if (btn) {
+      if (!isAdmin) {
+        btn.classList.add("pointer-events-none", "opacity-80", "cursor-default");
+      } else {
+        btn.classList.remove("pointer-events-none", "opacity-80", "cursor-default");
+      }
+    }
+  });
+  ["ปกติ", "ด่วน", "ด่วนที่สุด"].forEach(pr => {
+    const btn = document.getElementById(`detailPriority-${pr}`);
+    if (btn) {
+      if (!isAdmin) {
+        btn.classList.add("pointer-events-none", "opacity-80", "cursor-default");
+      } else {
+        btn.classList.remove("pointer-events-none", "opacity-80", "cursor-default");
+      }
+    }
+  });
+
   applyRolePermissionsUI(currentUserRole, currentLinkedTech);
 };
 window.closeTaskDetailModal = closeTaskDetailModal;

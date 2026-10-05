@@ -282,9 +282,9 @@ export function renderTasksList(tasksList) {
                   <span>${photoCount}</span>
                 </button>
               ` : ''}
-              <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95" title="คลิกเพื่อดูรายละเอียดและแก้ไขงาน">
+              <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95" title="${typeof window.isCurrentUserAdmin === 'function' && window.isCurrentUserAdmin() ? 'คลิกเพื่อดูรายละเอียดและแก้ไขงาน' : 'คลิกเพื่อดูรายละเอียดงาน'}">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <span>ดู/แก้ไข</span>
+                <span>${typeof window.isCurrentUserAdmin === 'function' && window.isCurrentUserAdmin() ? 'ดู/แก้ไข' : 'ดูรายละเอียด'}</span>
               </button>
             </div>
           </td>
@@ -361,7 +361,7 @@ export function renderTasksList(tasksList) {
             </button>
             <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="py-1.5 px-2 text-center text-xs font-semibold bg-slate-50 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-700 border border-slate-200 group-hover:border-blue-200 rounded-lg transition-all flex items-center justify-center space-x-1 shadow-2xs">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              <span>ดู/แก้ไข</span>
+              <span>${typeof window.isCurrentUserAdmin === 'function' && window.isCurrentUserAdmin() ? 'ดู/แก้ไข' : 'ดูรายละเอียด'}</span>
             </button>
           </div>
         </div>

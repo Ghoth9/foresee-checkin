@@ -51,7 +51,10 @@ export function updateQuickCardUI(task) {
     if (categoryEl) categoryEl.innerText = task.category || "ติดตั้งงานใหม่";
     if (titleEl) titleEl.innerText = task.title;
     if (descEl) descEl.innerText = task.desc && task.desc !== "-" ? task.desc : "ไม่มีรายละเอียดเพิ่มเติม";
-    if (techsEl) techsEl.innerText = techList;
+    if (techsEl) {
+      techsEl.innerText = techList;
+      techsEl.title = techList;
+    }
     if (deadlineEl) deadlineEl.innerText = formatThaiDateDisplay(task.deadline);
     if (toggleTextEl) toggleTextEl.innerText = "📋 ขยายดูรายละเอียดงาน";
     if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
@@ -149,10 +152,9 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
                 </span>
               </div>
               <div class="font-bold text-sm text-slate-950 line-clamp-1 leading-snug">${task.title}</div>
-              ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
-              <div class="text-xs text-slate-600 mt-2 font-medium flex items-center space-x-1">
-                <span>👷 ผู้ปฏิบัติงาน:</span>
-                <strong class="text-slate-800 truncate">${techList}</strong>
+              <div class="text-xs text-slate-600 mt-2 font-medium flex items-center space-x-1.5 min-w-0" title="ผู้ปฏิบัติงาน: ${techList.replace(/"/g, '&quot;')}">
+                <span class="flex-shrink-0 whitespace-nowrap font-semibold">👷 ผู้ปฏิบัติงาน:</span>
+                <strong class="text-slate-800 truncate min-w-0 font-bold block" title="${techList.replace(/"/g, '&quot;')}">${techList}</strong>
               </div>
             </div>
           `;
