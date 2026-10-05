@@ -450,6 +450,93 @@ export async function saveCheckoutApi(payload) {
   }
 }
 
+export async function deletePhotoFromSupabaseApi(photoUrl, taskId, checkinId) {
+  try {
+    if (!photoUrl) return { success: false, reason: "no_url" };
+
+    // 1. Delete from checkins table
+    try {
+      let checkinQuery = supabase.from('checkins').select('id, photos');
+      if (checkinId) checkinQuery = checkinQuery.or(`id.eq.${checkinId},task_id.eq.${checkinId}`);
+      else if (taskId) checkinQuery = checkinQuery.or(`id.eq.${taskId},task_id.eq.${taskId}`);
+      const { data: matchedCheckins } = await checkinQuery;
+
+      if (matchedCheckins && matchedCheckins.length > 0) {
+        for (const chk of matchedCheckins) {
+          if (Array.isArray(chk.photos)) {
+            const updatedPhotos = chk.photos.filter(p => {
+              const src = typeof p === 'string' ? p : (p.dataUrl || p.base64 || p.url || '');
+              return src !== photoUrl;
+            });
+            if (updatedPhotos.length !== chk.photos.length) {
+              await supabase.from('checkins').update({
+                photos: updatedPhotos,
+                updated_at: new Date().toISOString()
+              }).eq('id', chk.id);
+            }
+          }
+        }
+      }
+    } catch (cErr) {
+      console.warn("deletePhoto checkins error:", cErr);
+    }
+
+    // 2. Delete from tasks table
+    try {
+      let taskQuery = supabase.from('tasks').select('id, customer');
+      if (taskId) taskQuery = taskQuery.eq('id', taskId);
+      else if (checkinId) taskQuery = taskQuery.eq('id', checkinId);
+      const { data: matchedTasks } = await taskQuery;
+
+      if (matchedTasks && matchedTasks.length > 0) {
+        for (const t of matchedTasks) {
+          const cust = (t && typeof t.customer === 'object') ? t.customer : {};
+          if (Array.isArray(cust.progress_history)) {
+            let modified = false;
+            const updatedHistory = cust.progress_history.map(h => {
+              if (Array.isArray(h.photos)) {
+                const filtered = h.photos.filter(p => {
+                  const src = typeof p === 'string' ? p : (p.dataUrl || p.base64 || p.url || '');
+                  return src !== photoUrl;
+                });
+                if (filtered.length !== h.photos.length) modified = true;
+                return { ...h, photos: filtered };
+              }
+              return h;
+            });
+            if (modified) {
+              await supabase.from('tasks').update({
+                customer: { ...cust, progress_history: updatedHistory },
+                updated_at: new Date().toISOString()
+              }).eq('id', t.id);
+            }
+          }
+        }
+      }
+    } catch (tErr) {
+      console.warn("deletePhoto tasks error:", tErr);
+    }
+
+    // 3. Delete from Supabase Storage bucket if it is a hosted file
+    try {
+      if (photoUrl.includes('/work-photos/')) {
+        const parts = photoUrl.split('/work-photos/');
+        if (parts[1]) {
+          const storagePath = parts[1].split('?')[0];
+          await supabase.storage.from('work-photos').remove([storagePath]);
+        }
+      }
+    } catch (sErr) {
+      console.warn("deletePhoto storage remove error:", sErr);
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.warn("deletePhotoFromSupabaseApi exception:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 export async function deleteCheckinApi(id) {
   try {
     const { error } = await supabase

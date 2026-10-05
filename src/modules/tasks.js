@@ -706,6 +706,33 @@ let initialPinchDistance = 0;
 let initialPinchZoom = 1;
 let lastTapTime = 0;
 let isLightboxGesturesInit = false;
+let currentLightboxSrc = null;
+let currentLightboxTaskId = null;
+let onDeletePhotoCallback = null;
+
+export function setOnDeletePhotoCallback(fn) {
+  onDeletePhotoCallback = fn;
+}
+
+export function clampPan(x, y, zoom) {
+  if (zoom <= 1) return { x: 0, y: 0 };
+  const viewport = document.getElementById("lightboxViewport");
+  const img = document.getElementById("lightboxImg");
+  if (!viewport || !img) return { x: 0, y: 0 };
+
+  const vpW = viewport.clientWidth || window.innerWidth;
+  const vpH = viewport.clientHeight || (window.innerHeight * 0.7);
+  const renderedW = (img.offsetWidth || (vpW * 0.8)) * zoom;
+  const renderedH = (img.offsetHeight || (vpH * 0.8)) * zoom;
+
+  const maxPanX = Math.max(0, (renderedW - vpW) / 2 + 30);
+  const maxPanY = Math.max(0, (renderedH - vpH) / 2 + 30);
+
+  return {
+    x: Math.max(-maxPanX, Math.min(maxPanX, x)),
+    y: Math.max(-maxPanY, Math.min(maxPanY, y))
+  };
+}
 
 export function updateLightboxTransform(animate = true) {
   const img = document.getElementById("lightboxImg");
@@ -725,11 +752,15 @@ export function updateLightboxTransform(animate = true) {
 }
 
 export function zoomLightbox(delta) {
-  const newZoom = Math.min(5, Math.max(0.5, currentZoom + delta));
+  const newZoom = Math.min(5, Math.max(1, currentZoom + delta));
   currentZoom = Math.round(newZoom * 10) / 10;
   if (currentZoom <= 1) {
     panX = 0;
     panY = 0;
+  } else {
+    const clamped = clampPan(panX, panY, currentZoom);
+    panX = clamped.x;
+    panY = clamped.y;
   }
   updateLightboxTransform(true);
 }
@@ -757,7 +788,7 @@ export function initLightboxGestures() {
 
   // Mouse Drag / Pan
   viewport.addEventListener("mousedown", (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || currentZoom <= 1) return;
     isDragging = true;
     startDragX = e.clientX - panX;
     startDragY = e.clientY - panY;
@@ -765,9 +796,10 @@ export function initLightboxGestures() {
   });
 
   window.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-    panX = e.clientX - startDragX;
-    panY = e.clientY - startDragY;
+    if (!isDragging || currentZoom <= 1) return;
+    const clamped = clampPan(e.clientX - startDragX, e.clientY - startDragY, currentZoom);
+    panX = clamped.x;
+    panY = clamped.y;
     updateLightboxTransform(false);
   });
 
@@ -819,12 +851,17 @@ export function initLightboxGestures() {
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.hypot(dx, dy);
       const factor = dist / initialPinchDistance;
-      currentZoom = Math.min(5, Math.max(0.5, Math.round(initialPinchZoom * factor * 10) / 10));
+      const newZ = Math.min(5, Math.max(1, Math.round(initialPinchZoom * factor * 10) / 10));
+      currentZoom = newZ;
+      const clamped = clampPan(panX, panY, currentZoom);
+      panX = clamped.x;
+      panY = clamped.y;
       updateLightboxTransform(false);
-    } else if (e.touches.length === 1 && isDragging) {
+    } else if (e.touches.length === 1 && isDragging && currentZoom > 1) {
       e.preventDefault();
-      panX = e.touches[0].clientX - startDragX;
-      panY = e.touches[0].clientY - startDragY;
+      const clamped = clampPan(e.touches[0].clientX - startDragX, e.touches[0].clientY - startDragY, currentZoom);
+      panX = clamped.x;
+      panY = clamped.y;
       updateLightboxTransform(false);
     }
   }, { passive: false });
@@ -839,12 +876,15 @@ export function initLightboxGestures() {
   }, { passive: true });
 }
 
-export function openImageLightbox(src, caption = "") {
+export function openImageLightbox(src, caption = "", taskId = null) {
   const modal = document.getElementById("imageLightboxModal");
   const img = document.getElementById("lightboxImg");
   const cap = document.getElementById("lightboxCaption");
   const dl = document.getElementById("lightboxDownloadBtn");
   if (!modal || !img) return;
+
+  currentLightboxSrc = src;
+  currentLightboxTaskId = taskId;
 
   initLightboxGestures();
   resetLightboxZoom();
@@ -859,6 +899,13 @@ export function closeImageLightbox() {
   const modal = document.getElementById("imageLightboxModal");
   if (modal) modal.classList.add("hidden");
   resetLightboxZoom();
+}
+
+export function deleteCurrentLightboxImage() {
+  if (!currentLightboxSrc) return;
+  if (typeof onDeletePhotoCallback === "function") {
+    onDeletePhotoCallback(currentLightboxSrc, currentLightboxTaskId);
+  }
 }
 
 export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTab = "info") {

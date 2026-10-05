@@ -4,9 +4,9 @@
  */
 
 import './style.css';
-import { initLiff, isLineLoggedIn, getLineUserName, loginLine, logoutLine } from './liff/line.js';
+import { initLiff, isLineLoggedIn, getLineUserName, loginLine, logoutLine, createProgressFlexCard, createCheckinFlexCard, triggerLiffShare } from './liff/line.js';
 import { requestLocation, getCurrentCoords } from './utils/gps.js';
-import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheckinApi, deleteTaskApi, clearAllCheckinsApi, subscribeToRealtimeChanges } from './api/supabase.js';
+import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheckinApi, deleteTaskApi, clearAllCheckinsApi, deletePhotoFromSupabaseApi, subscribeToRealtimeChanges } from './api/supabase.js';
 import {
   renderAssignedTasksBanner,
   selectAssignedTask,
@@ -60,7 +60,8 @@ import {
   submitExtendDeadline,
   pickAssignDate,
   pickDetailDate,
-  pickExtendModalDate
+  pickExtendModalDate,
+  setOnDeletePhotoCallback
 } from './modules/tasks.js';
 import {
   openProgressModal,
@@ -416,11 +417,14 @@ export function renderActiveTaskPhotos(activeItem) {
 
   grid.innerHTML = photosList.map((p, idx) => `
     <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 cursor-pointer shadow-2xs hover:ring-2 hover:ring-blue-500 transition-all bg-slate-100 group"
-         onclick="window.openImageLightbox('${p.src.replace(/'/g, "\\'")}', '${p.caption.replace(/'/g, "\\'")}')">
+         onclick="window.openImageLightbox('${p.src.replace(/'/g, "\\'")}', '${p.caption.replace(/'/g, "\\'")}', '${activeItem.id}')">
       <img src="${p.src}" class="w-full h-full object-cover" alt="รูปที่ ${idx + 1}" loading="lazy">
       <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/0 transition-colors flex items-center justify-center">
         <svg class="w-4 h-4 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
       </div>
+      <button type="button" onclick="event.stopPropagation(); window.deletePhotoFromTask('${p.src.replace(/'/g, "\\'")}', '${activeItem.id}')" class="absolute top-1 right-1 w-5 h-5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md opacity-85 hover:opacity-100 hover:scale-110 transition-all z-10" title="ลบรูปนี้">
+        ✕
+      </button>
       <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2">
         #${idx + 1}
       </div>
@@ -477,10 +481,16 @@ export function renderActiveCheckoutList() {
             <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs">คืบหน้า ${itemProg}%</span>
             ${totalPhotos > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">📸 ${totalPhotos} รูป</span>` : ''}
           </div>
-          <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="ลบรายการเช็กอินนี้">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            <span>ลบรายการ</span>
-          </button>
+          <div class="flex items-center space-x-1.5">
+            <button type="button" onclick="event.stopPropagation(); window.shareActiveTaskToLine('${item.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-1 rounded-lg border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="แชร์ข้อมูลงานนี้เข้ากลุ่ม LINE">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
+              <span>แชร์เข้า LINE</span>
+            </button>
+            <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="ลบรายการเช็กอินนี้">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              <span>ลบรายการ</span>
+            </button>
+          </div>
         </div>
         <div class="font-bold text-sm text-slate-950">${item.task}</div>
         ${cleanNote ? `
@@ -862,79 +872,78 @@ async function bootstrapApp() {
 
   // 6. Supabase Realtime Live Synchronization across all devices!
   subscribeToRealtimeChanges({
-    onTasksChange: async () => {
-      const fresh = await fetchInitialData();
-      if (fresh && fresh.tasks) {
-        tasksList = fresh.tasks;
-        localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
-        renderTasksList(tasksList);
-        renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
-        renderTechFilterChips(tasksList, allTechnicians);
+    onTasksChange: () => refreshFromSupabase(),
+    onCheckinsChange: () => refreshFromSupabase(),
+    onTechsChange: () => refreshFromSupabase()
+  });
 
-        if (fresh.activeCheckins) {
-          activeTasks = fresh.activeCheckins.map(a => {
-            const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
-            return {
-              ...a,
-              progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0)
-            };
-          });
-          localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
-          renderActiveCheckoutList();
-        }
-
-        if (selectedActiveCheckoutId) {
-          const curActive = activeTasks.find(a => a.id === selectedActiveCheckoutId || a.taskId === selectedActiveCheckoutId);
-          const curTask = tasksList.find(t => t.id === curActive?.taskId || t.id === selectedActiveCheckoutId);
-          if (curTask && curTask.progress !== undefined) {
-            setUpdatePercent(curTask.progress);
-          } else if (curActive && curActive.progress !== undefined) {
-            setUpdatePercent(curActive.progress);
-          }
-          if (curActive) renderActiveTaskPhotos(curActive);
-        }
-      }
-    },
-    onCheckinsChange: async () => {
-      const fresh = await fetchInitialData();
-      if (fresh) {
-        activeTasks = (fresh.activeCheckins || []).map(a => {
-          const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
-          return {
-            ...a,
-            progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0)
-          };
-        });
-        dailyLogs = [...(fresh.activeCheckins || []), ...(fresh.closedCheckins || [])];
-        localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
-        localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
-        renderActiveCheckoutList();
-        renderTodayLogs();
-
-        if (selectedActiveCheckoutId) {
-          const curActive = activeTasks.find(a => a.id === selectedActiveCheckoutId || a.taskId === selectedActiveCheckoutId);
-          const curTask = tasksList.find(t => t.id === curActive?.taskId || t.id === selectedActiveCheckoutId);
-          if (curActive && curActive.progress !== undefined) {
-            setUpdatePercent(curActive.progress);
-          } else if (curTask && curTask.progress !== undefined) {
-            setUpdatePercent(curTask.progress);
-          }
-          if (curActive) renderActiveTaskPhotos(curActive);
-        }
-      }
-    },
-    onTechsChange: async () => {
-      const fresh = await fetchInitialData();
-      if (fresh && fresh.technicians) {
-        allTechnicians = fresh.technicians;
-        localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
-        renderManageTechList();
-        renderCheckinTechChips();
-        renderTechFilterChips(tasksList, allTechnicians);
-        renderAssignTechChips(allTechnicians);
-      }
+  // 7. Auto refresh on window focus / tab visibility change (PC & Mobile sync)
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      refreshFromSupabase();
     }
   });
+  window.addEventListener('focus', () => {
+    refreshFromSupabase();
+  });
+
+  // 8. Guaranteed background sync interval (every 15 seconds)
+  setInterval(refreshFromSupabase, 15000);
+}
+
+export async function refreshFromSupabase() {
+  try {
+    const fresh = await fetchInitialData();
+    if (!fresh) return;
+
+    if (fresh.technicians && Array.isArray(fresh.technicians)) {
+      allTechnicians = fresh.technicians;
+      localStorage.setItem("fs_technicians", JSON.stringify(allTechnicians));
+      renderManageTechList();
+      renderCheckinTechChips();
+      renderAssignTechChips(allTechnicians);
+    }
+
+    if (fresh.tasks && Array.isArray(fresh.tasks)) {
+      tasksList = fresh.tasks;
+      localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+      renderTasksList(tasksList);
+      renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+      renderTechFilterChips(tasksList, allTechnicians);
+    }
+
+    if (fresh.activeCheckins && Array.isArray(fresh.activeCheckins)) {
+      activeTasks = fresh.activeCheckins.map(a => {
+        const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
+        return {
+          ...a,
+          progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0)
+        };
+      });
+      localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+    }
+
+    if (fresh.activeCheckins || fresh.closedCheckins) {
+      dailyLogs = [...(fresh.activeCheckins || []), ...(fresh.closedCheckins || [])];
+      localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
+      renderTodayLogs();
+    }
+
+    renderActiveCheckoutList();
+
+    if (selectedActiveCheckoutId) {
+      const curActive = activeTasks.find(a => a.id === selectedActiveCheckoutId || a.taskId === selectedActiveCheckoutId);
+      const curTask = tasksList.find(t => t.id === curActive?.taskId || t.id === selectedActiveCheckoutId);
+      if (curActive && curActive.progress !== undefined) {
+        setUpdatePercent(curActive.progress);
+      } else if (curTask && curTask.progress !== undefined) {
+        setUpdatePercent(curTask.progress);
+      }
+      if (curActive) renderActiveTaskPhotos(curActive);
+    }
+  } catch (err) {
+    console.warn("refreshFromSupabase error:", err);
+  }
 }
 
 function updateLineStatusUI() {
@@ -1203,6 +1212,126 @@ window.deleteActiveCheckin = deleteActiveCheckin;
 window.clearAllActiveCheckins = clearAllActiveCheckins;
 window.deleteTodayLog = deleteTodayLog;
 window.renderActiveTaskPhotos = renderActiveTaskPhotos;
+
+// Lightbox callback for deleting photo
+setOnDeletePhotoCallback((photoSrc, taskId) => {
+  window.deletePhotoFromTask(photoSrc, taskId || selectedActiveCheckoutId);
+});
+
+window.deletePhotoFromTask = (photoSrc, activeTaskId) => {
+  if (!photoSrc) return;
+  showAppConfirm({
+    title: "ยืนยันการลบรูปภาพ",
+    message: "คุณต้องการลบรูปภาพนี้ออกจากรายการงานหรือไม่?",
+    confirmText: "ลบรูปภาพ",
+    cancelText: "ยกเลิก",
+    isDanger: true,
+    onConfirm: async () => {
+      if (typeof closeImageLightbox === "function") {
+        closeImageLightbox();
+      }
+
+      const activeItem = activeTasks.find(a => a.id === activeTaskId || (a.taskId && a.taskId === activeTaskId));
+      const targetTaskId = activeItem?.taskId || activeTaskId;
+      const linkedTask = tasksList.find(t => (targetTaskId && t.id === targetTaskId) || t.id === activeTaskId || (activeItem && t.title === activeItem.task));
+
+      if (activeItem && Array.isArray(activeItem.photos)) {
+        activeItem.photos = activeItem.photos.filter(p => {
+          const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
+          return src !== photoSrc;
+        });
+        localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+      }
+
+      if (linkedTask) {
+        if (Array.isArray(linkedTask.progressHistory)) {
+          linkedTask.progressHistory.forEach(h => {
+            if (Array.isArray(h.photos)) {
+              h.photos = h.photos.filter(p => {
+                const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
+                return src !== photoSrc;
+              });
+            }
+          });
+        }
+        if (linkedTask.customer && Array.isArray(linkedTask.customer.progress_history)) {
+          linkedTask.customer.progress_history.forEach(h => {
+            if (Array.isArray(h.photos)) {
+              h.photos = h.photos.filter(p => {
+                const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
+                return src !== photoSrc;
+              });
+            }
+          });
+        }
+        localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+      }
+
+      if (activeItem) {
+        renderActiveTaskPhotos(activeItem);
+      }
+      renderActiveCheckoutList();
+      renderTasksList(tasksList);
+
+      deletePhotoFromSupabaseApi(photoSrc, targetTaskId, activeItem?.id);
+
+      showAppAlert({
+        type: "success",
+        title: "ลบรูปภาพสำเร็จ",
+        message: "ลบรูปภาพออกจากระบบเรียบร้อยแล้ว"
+      });
+    }
+  });
+};
+
+window.shareActiveTaskToLine = async (activeId) => {
+  const item = activeTasks.find(a => a.id === activeId);
+  if (!item) return;
+
+  const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+  const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
+  const uniquePhotos = getUniquePhotosForActiveTask(item);
+  const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ช่างทั่วไป");
+  const rawNote = linkedTask?.latestUpdate || item.note;
+  const cleanNote = formatLatestNoteText(rawNote);
+
+  let flexCard;
+  if (itemProg > 0) {
+    flexCard = createProgressFlexCard({
+      id: item.id,
+      taskId: item.taskId || item.id,
+      taskTitle: item.task,
+      techs: item.techs,
+      progress: itemProg,
+      status: item.status || "กำลังทำ",
+      note: cleanNote || "อัปเดตสถานะงานปัจจุบัน",
+      updateBy: getLineUserName() || techList,
+      updateTime: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
+      photoCount: uniquePhotos.length,
+      totalPhotos: uniquePhotos.length
+    });
+  } else {
+    flexCard = createCheckinFlexCard({
+      id: item.id,
+      taskId: item.taskId || item.id,
+      task: item.task,
+      techs: item.techs,
+      time: formatGasTime(item.time),
+      coords: item.coords,
+      mapUrl: item.mapUrl,
+      photoCount: uniquePhotos.length
+    });
+  }
+
+  const res = await triggerLiffShare(flexCard, `แชร์ข้อมูลงาน ${item.task} เข้ากลุ่ม LINE สำเร็จ!`);
+  if (res && res.success) {
+    showAppAlert({
+      type: "success",
+      title: "แชร์เข้า LINE สำเร็จ",
+      message: `ส่งข้อมูลงาน ${item.task} เข้าห้องแชทเรียบร้อยแล้ว`
+    });
+  }
+};
 
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;

@@ -118,27 +118,32 @@ export function removeCheckoutPhoto(index) {
 }
 
 export function renderCheckoutPhotoPreviews() {
-  const containers = [
-    document.getElementById("checkoutPhotoPreviewsContainer"),
-    document.getElementById("checkoutClosePhotoPreviewsContainer")
-  ].filter(Boolean);
+  const updateContainer = document.getElementById("checkoutPhotoPreviewsContainer");
+  const closeContainer = document.getElementById("checkoutClosePhotoPreviewsContainer");
+  const updateBadge = document.getElementById("checkoutPhotoCountBadge");
+  const closeBadge = document.getElementById("checkoutClosePhotoCountBadge");
 
-  const countBadges = [
-    document.getElementById("checkoutPhotoCountBadge"),
-    document.getElementById("checkoutClosePhotoCountBadge")
-  ].filter(Boolean);
-
-  const isMet = checkoutPhotos.length >= 5;
-  countBadges.forEach(badge => {
-    badge.innerText = `${checkoutPhotos.length} รูป ${isMet ? '(✓ ครบขั้นต่ำ 5 รูป)' : '(ต้องการอย่างน้อย 5 รูป)'}`;
-    if (isMet) {
-      badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+  // 1. Update Progress Badge (requires 1-5 photos)
+  if (updateBadge) {
+    if (checkoutPhotos.length === 0) {
+      updateBadge.innerText = "0/5 รูป (ต้องแนบอย่างน้อย 1 รูป)";
+      updateBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-300";
     } else {
-      badge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+      updateBadge.innerText = `${checkoutPhotos.length}/5 รูป (✓ พร้อมส่ง)`;
+      updateBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
     }
-  });
+  }
 
-  containers.forEach(container => {
+  // 2. Final Close Badge (requires at least 5 photos)
+  if (closeBadge) {
+    const isCloseMet = checkoutPhotos.length >= 5;
+    closeBadge.innerText = `${checkoutPhotos.length}/5 รูป ${isCloseMet ? '(✓ ครบขั้นต่ำ 5 รูป)' : '(ต้องการอย่างน้อย 5 รูป)'}`;
+    closeBadge.className = isCloseMet
+      ? "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300"
+      : "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+  }
+
+  [updateContainer, closeContainer].filter(Boolean).forEach(container => {
     container.innerHTML = "";
     checkoutPhotos.forEach((photo, idx) => {
       const thumb = document.createElement("div");
@@ -146,7 +151,7 @@ export function renderCheckoutPhotoPreviews() {
       thumb.innerHTML = `
         <img src="${photo.dataUrl}" class="w-full h-full object-cover" alt="photo ${idx + 1}">
         <button type="button" onclick="window.removeCheckoutPhoto(${idx})" class="absolute top-0.5 right-0.5 w-5 h-5 bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow-xs hover:bg-rose-700 active:scale-90 transition-transform">
-          ×
+          ✕
         </button>
         <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2">
           ${photo.sizeKb}KB
@@ -163,13 +168,15 @@ export function updateCheckoutSubmitButtonsState() {
   const updateBtn = document.getElementById("submitUpdateBtn");
   const checkoutBtn = document.getElementById("submitCheckoutBtn");
 
-  // 1. Progress Update Button
+  // 1. Progress Update Button (Requires at least 1 photo)
   if (updateBtn) {
-    updateBtn.disabled = false;
-    updateBtn.className = "w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
     if (checkoutPhotos.length === 0) {
-      updateBtn.innerHTML = `<span>📊 อัปเดตความคืบหน้า & ส่งรายงานเข้ากลุ่ม LINE</span>`;
+      updateBtn.disabled = true;
+      updateBtn.className = "w-full bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-300 transition-all duration-200 flex items-center justify-center space-x-2 select-none shadow-none";
+      updateBtn.innerHTML = `<span>🔒 กรุณาแนบรูปความคืบหน้าอย่างน้อย 1 รูปก่อนส่ง (0/5 รูป)</span>`;
     } else {
+      updateBtn.disabled = false;
+      updateBtn.className = "w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
       updateBtn.innerHTML = `<span>📊 อัปเดตความคืบหน้า & ส่งรายงานเข้ากลุ่ม LINE (แนบรูป ${checkoutPhotos.length} รูป)</span>`;
     }
   }
@@ -179,7 +186,7 @@ export function updateCheckoutSubmitButtonsState() {
     if (checkoutPhotos.length < 5) {
       checkoutBtn.disabled = true;
       checkoutBtn.className = "w-full bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-300 transition-all duration-200 flex items-center justify-center space-x-2 select-none shadow-none";
-      checkoutBtn.innerHTML = `<span>🔒 แนบรูปให้ครบอย่างน้อย 5 รูปเพื่อปิดงาน (${checkoutPhotos.length}/5)</span>`;
+      checkoutBtn.innerHTML = `<span>🔒 แนบรูปให้ครบอย่างน้อย 5 รูปเพื่อปิดงาน (${checkoutPhotos.length}/5 รูป)</span>`;
     } else {
       checkoutBtn.disabled = false;
       checkoutBtn.className = "w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-emerald-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
