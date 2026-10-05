@@ -86,6 +86,7 @@ export async function fetchInitialData() {
 
     return {
       technicians,
+      techniciansList: techsRes.data || [],
       tasks,
       activeCheckins,
       closedCheckins
@@ -688,12 +689,57 @@ export async function addNewTechnicianApi(name) {
   try {
     const { error } = await supabase
       .from('technicians')
-      .insert({ name });
+      .insert({ name, role: 'technician' });
 
     if (error) throw error;
     return { success: true };
   } catch (err) {
     console.warn("addNewTechnicianApi error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function addNewTechnicianWithRoleApi(name, phone = '-', role = 'technician') {
+  try {
+    const { data, error } = await supabase
+      .from('technicians')
+      .insert({ name, phone: phone || '-', role: role || 'technician' })
+      .select();
+
+    if (error) throw error;
+    return { success: true, data: data?.[0] };
+  } catch (err) {
+    console.warn("addNewTechnicianWithRoleApi error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function updateTechnicianRoleApi(id, role) {
+  try {
+    const { error } = await supabase
+      .from('technicians')
+      .update({ role })
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (err) {
+    console.warn("updateTechnicianRoleApi error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function bindTechnicianLineUserApi(id, lineUserId) {
+  try {
+    const { error } = await supabase
+      .from('technicians')
+      .update({ line_user_id: lineUserId })
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (err) {
+    console.warn("bindTechnicianLineUserApi error:", err);
     return { success: false, error: err.message };
   }
 }

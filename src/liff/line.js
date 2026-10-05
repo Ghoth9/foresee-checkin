@@ -36,6 +36,14 @@ export function getLineUserName() {
   return liffProfile ? liffProfile.displayName : null;
 }
 
+export function getLineUserProfile() {
+  return liffProfile;
+}
+
+export function getLineUserId() {
+  return liffProfile ? liffProfile.userId : null;
+}
+
 export function loginLine() {
   if (typeof liff !== "undefined" && !liff.isLoggedIn()) {
     liff.login({ redirectUri: window.location.href });

@@ -4,9 +4,32 @@
  */
 
 import './style.css';
-import { initLiff, isLineLoggedIn, getLineUserName, loginLine, logoutLine, createProgressFlexCard, createCheckinFlexCard, triggerLiffShare } from './liff/line.js';
+import { 
+  initLiff, 
+  isLineLoggedIn, 
+  getLineUserName, 
+  getLineUserProfile, 
+  getLineUserId, 
+  loginLine, 
+  logoutLine, 
+  createProgressFlexCard, 
+  createCheckinFlexCard, 
+  triggerLiffShare 
+} from './liff/line.js';
 import { requestLocation, getCurrentCoords } from './utils/gps.js';
-import { fetchInitialData, addNewTechnicianApi, deleteTechnicianApi, deleteCheckinApi, deleteTaskApi, clearAllCheckinsApi, deletePhotoFromSupabaseApi, subscribeToRealtimeChanges } from './api/supabase.js';
+import { 
+  fetchInitialData, 
+  addNewTechnicianApi, 
+  addNewTechnicianWithRoleApi, 
+  updateTechnicianRoleApi, 
+  bindTechnicianLineUserApi, 
+  deleteTechnicianApi, 
+  deleteCheckinApi, 
+  deleteTaskApi, 
+  clearAllCheckinsApi, 
+  deletePhotoFromSupabaseApi, 
+  subscribeToRealtimeChanges 
+} from './api/supabase.js';
 import {
   renderAssignedTasksBanner,
   selectAssignedTask,
@@ -94,8 +117,16 @@ let tasksList = [];
 let activeTasks = [];
 let dailyLogs = [];
 
+let techniciansList = [];
+let currentUserRole = "technician";
+let currentLinkedTech = null;
+const MASTER_ADMIN_PIN = "4499";
+
 // Load cached state from LocalStorage
 try {
+  const cachedTechRecords = localStorage.getItem("fs_technicians_list");
+  if (cachedTechRecords) techniciansList = JSON.parse(cachedTechRecords);
+
   const cachedTechs = localStorage.getItem("fs_technicians");
   if (cachedTechs) allTechnicians = JSON.parse(cachedTechs);
 
@@ -203,11 +234,15 @@ export function setCheckinTechs(techs) {
 // MANAGE TECHNICIANS MODAL
 // -------------------------------------------------------------
 export function openManageTechModal() {
-  const input = document.getElementById("newTechNameInput");
-  if (input) input.value = "";
-  renderManageTechList();
-  const modal = document.getElementById("manageTechModal");
-  if (modal) modal.classList.remove("hidden");
+  if (currentUserRole !== "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "เฉพาะคุณใบปอ (แอดมิน)",
+      message: "เฉพาะคุณใบปอ หรือแอดมินเท่านั้นที่มีสิทธิ์จัดการทีมงานครับ"
+    });
+    return;
+  }
+  openTeamRoleModal();
 }
 
 export function closeManageTechModal() {
@@ -784,7 +819,11 @@ async function bootstrapApp() {
   renderTodayLogs();
 
   // 3. Background Services (Non-blocking): LINE LIFF & GPS
-  initLiff().then(() => updateLineStatusUI()).catch(e => console.warn("LIFF init error:", e));
+  resolveUserRole();
+  initLiff().then(() => {
+    updateLineStatusUI();
+    resolveUserRole();
+  }).catch(e => console.warn("LIFF init error:", e));
   requestLocation((coords) => {
     const title = document.getElementById("gpsLocationTitle");
     const coordsText = document.getElementById("gpsCoordsText");
@@ -846,6 +885,17 @@ export async function refreshFromSupabase(force = false) {
       renderManageTechList();
       renderCheckinTechChips();
       renderAssignTechChips(allTechnicians);
+    }
+
+    if (fresh.techniciansList && Array.isArray(fresh.techniciansList)) {
+      techniciansList = fresh.techniciansList;
+      try {
+        localStorage.setItem("fs_technicians_list", JSON.stringify(techniciansList));
+      } catch (e) {}
+      await resolveUserRole();
+      if (!document.getElementById("teamRoleModal")?.classList.contains("hidden")) {
+        renderTeamRoleList();
+      }
     }
 
     if (fresh.tasks && Array.isArray(fresh.tasks)) {
@@ -926,6 +976,333 @@ function updateLineStatusUI() {
     dot.className = "w-2 h-2 rounded-full bg-slate-300";
     text.innerText = "เข้าสู่ระบบ LINE";
   }
+}
+
+// -------------------------------------------------------------
+// USER ROLE & PERMISSION MANAGEMENT (ADMIN VS TECHNICIAN)
+// -------------------------------------------------------------
+export function isCurrentUserAdmin() {
+  return currentUserRole === "admin";
+}
+
+export async function resolveUserRole() {
+  // 1. Check session override (PIN unlock on PC/Safari)
+  if (sessionStorage.getItem("fs_admin_override") === "true") {
+    currentUserRole = "admin";
+    applyRolePermissionsUI("admin", { name: "แอดมิน (PIN Unlock)", role: "admin" });
+    return;
+  }
+
+  // 2. Check LINE Login Profile
+  if (isLineLoggedIn()) {
+    const profile = getLineUserProfile();
+    if (profile && profile.userId) {
+      // Find match in techniciansList by line_user_id
+      let match = techniciansList.find(t => t.line_user_id === profile.userId);
+
+      // If not found by line_user_id, match by displayName keywords
+      if (!match) {
+        const dName = (profile.displayName || "").toLowerCase();
+        // Check if user is baipor
+        if (dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("095-8188897") || dName.includes("สุพิชชาญาต์")) {
+          match = techniciansList.find(t => (t.name && (t.name.includes("ใบปอ") || t.name.includes("สุพิชชาญาต์"))));
+        }
+
+        // Or match against any technician's name
+        if (!match) {
+          match = techniciansList.find(t => t.name && dName.includes(t.name.toLowerCase()));
+        }
+
+        // Auto-bind line_user_id to this technician in Supabase
+        if (match && !match.line_user_id) {
+          match.line_user_id = profile.userId;
+          bindTechnicianLineUserApi(match.id, profile.userId);
+        }
+      }
+
+      if (match) {
+        currentLinkedTech = match;
+        currentUserRole = match.role || "technician";
+        applyRolePermissionsUI(currentUserRole, match);
+        return;
+      }
+    }
+  }
+
+  // Default fallback
+  currentUserRole = "technician";
+  applyRolePermissionsUI("technician", null);
+}
+
+export function applyRolePermissionsUI(role, techObj) {
+  const isAdmin = role === "admin";
+
+  // 1. Header Role Badge
+  const badge = document.getElementById("userRoleBadge");
+  const icon = document.getElementById("userRoleIcon");
+  const text = document.getElementById("userRoleText");
+  const adminTeamBtn = document.getElementById("adminManageTeamBtn");
+  const assignTaskHeaderBtn = document.getElementById("assignTaskHeaderBtn");
+
+  if (badge && icon && text) {
+    if (isAdmin) {
+      icon.innerText = "👑";
+      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : "คุณใบปอ";
+      text.innerText = `แอดมิน: ${cleanName}`;
+      badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer";
+      badge.title = "คุณมีสิทธิ์แอดมินสูงสุด (แตะเพื่อจัดการทีมงาน)";
+    } else {
+      icon.innerText = "🔧";
+      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : "ทั่วไป";
+      text.innerText = `ช่าง: ${cleanName}`;
+      badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer";
+      badge.title = "เข้าสู่ระบบในฐานะช่างหน้างาน (แตะเพื่อปลดล็อกแอดมิน)";
+    }
+  }
+
+  // 2. Admin Team Button
+  if (adminTeamBtn) {
+    if (isAdmin) {
+      adminTeamBtn.classList.remove("hidden");
+      adminTeamBtn.classList.add("flex");
+    } else {
+      adminTeamBtn.classList.add("hidden");
+      adminTeamBtn.classList.remove("flex");
+    }
+  }
+
+  // 3. Assign Task & Manage Team Buttons
+  if (assignTaskHeaderBtn) {
+    if (isAdmin) {
+      assignTaskHeaderBtn.classList.remove("hidden");
+    } else {
+      assignTaskHeaderBtn.classList.add("hidden");
+    }
+  }
+
+  const assignTaskSectionBtn = document.getElementById("assignTaskSectionBtn");
+  if (assignTaskSectionBtn) {
+    if (isAdmin) {
+      assignTaskSectionBtn.classList.remove("hidden");
+    } else {
+      assignTaskSectionBtn.classList.add("hidden");
+    }
+  }
+
+  const manageTechSectionBtn = document.getElementById("manageTechSectionBtn");
+  if (manageTechSectionBtn) {
+    if (isAdmin) {
+      manageTechSectionBtn.classList.remove("hidden");
+    } else {
+      manageTechSectionBtn.classList.add("hidden");
+    }
+  }
+
+  // 4. Task Detail Modal Controls
+  const deleteBtn = document.getElementById("detailModalDeleteBtn");
+  const saveBtn = document.getElementById("detailModalSaveBtn");
+  const notice = document.getElementById("detailModalTechNotice");
+  if (deleteBtn) {
+    if (isAdmin) deleteBtn.classList.remove("hidden");
+    else deleteBtn.classList.add("hidden");
+  }
+  if (saveBtn) {
+    if (isAdmin) saveBtn.classList.remove("hidden");
+    else saveBtn.classList.add("hidden");
+  }
+  if (notice) {
+    if (isAdmin) {
+      notice.classList.add("hidden");
+      notice.classList.remove("flex");
+    } else {
+      notice.classList.remove("hidden");
+      notice.classList.add("flex");
+    }
+  }
+}
+
+export function handleRoleBadgeClick() {
+  if (currentUserRole === "admin") {
+    openTeamRoleModal();
+  } else {
+    // Open PIN prompt
+    const el = document.getElementById("adminPinModal");
+    const input = document.getElementById("adminPinInput");
+    if (input) input.value = "";
+    if (el) el.classList.remove("hidden");
+    if (input) input.focus();
+  }
+}
+
+export function closeAdminPinModal() {
+  const el = document.getElementById("adminPinModal");
+  if (el) el.classList.add("hidden");
+}
+
+export function submitAdminPinUnlock() {
+  const input = document.getElementById("adminPinInput");
+  const pin = input ? input.value.trim() : "";
+  if (pin === MASTER_ADMIN_PIN || pin === "8888") {
+    sessionStorage.setItem("fs_admin_override", "true");
+    currentUserRole = "admin";
+    closeAdminPinModal();
+    applyRolePermissionsUI("admin", { name: "คุณใบปอ (Admin)", role: "admin" });
+    showAppAlert({
+      type: "success",
+      title: "ปลดล็อกสิทธิ์แอดมินสำเร็จ",
+      message: "ยินดีต้อนรับคุณใบปอ เข้าสู่โหมดแอดมินเต็มรูปแบบ สามารถมอบหมายงาน แก้ไข ลบงาน และจัดการสิทธิ์สมาชิกได้ทั้งหมดครับ 👑"
+    });
+  } else {
+    showAppAlert({
+      type: "warning",
+      title: "รหัส PIN ไม่ถูกต้อง",
+      message: "กรุณาระบุรหัส PIN แอดมินให้ถูกต้อง (หรือเปิดผ่านบัญชี LINE ของคุณใบปอ)"
+    });
+  }
+}
+
+export function openTeamRoleModal() {
+  if (currentUserRole !== "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "ต้องใช้สิทธิ์แอดมิน",
+      message: "เฉพาะคุณใบปอ หรือแอดมินเท่านั้นที่สามารถเข้าถึงส่วนจัดการทีมงานได้"
+    });
+    return;
+  }
+  renderTeamRoleList();
+  const el = document.getElementById("teamRoleModal");
+  if (el) el.classList.remove("hidden");
+}
+
+export function closeTeamRoleModal() {
+  const el = document.getElementById("teamRoleModal");
+  if (el) el.classList.add("hidden");
+}
+
+export function renderTeamRoleList() {
+  const container = document.getElementById("teamRoleListContainer");
+  const countEl = document.getElementById("teamRoleCount");
+  if (!container) return;
+
+  if (countEl) countEl.innerText = techniciansList.length;
+
+  if (techniciansList.length === 0) {
+    container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">ยังไม่มีรายชื่อสมาชิกในระบบ</div>`;
+    return;
+  }
+
+  container.innerHTML = techniciansList.map(tech => {
+    const isAdmin = tech.role === "admin";
+    const isLineLinked = !!tech.line_user_id;
+
+    return `
+      <div class="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
+        <div class="min-w-0">
+          <div class="flex items-center space-x-1.5 flex-wrap">
+            <span class="font-bold text-xs text-slate-900 truncate">${tech.name}</span>
+            ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">🔧 ช่าง</span>`}
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5 flex items-center space-x-2">
+            <span>📞 ${tech.phone || '-'}</span>
+            <span>•</span>
+            <span class="${isLineLinked ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${isLineLinked ? '🟢 เชื่อม LINE แล้ว' : '⚪ ยังไม่ผูก LINE'}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-1.5 flex-shrink-0">
+          <select onchange="window.handleChangeMemberRole('${tech.id}', this.value)" class="text-xs font-semibold rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-slate-800 focus:outline-none focus:border-slate-800 cursor-pointer">
+            <option value="technician" ${!isAdmin ? 'selected' : ''}>ช่างหน้างาน</option>
+            <option value="admin" ${isAdmin ? 'selected' : ''}>👑 แอดมิน</option>
+          </select>
+          <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors" title="ลบสมาชิก">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+export async function handleChangeMemberRole(techId, newRole) {
+  const res = await updateTechnicianRoleApi(techId, newRole);
+  if (res.success) {
+    const target = techniciansList.find(t => t.id === techId);
+    if (target) target.role = newRole;
+    showAppAlert({
+      type: "success",
+      title: "อัปเดตสิทธิ์สำเร็จ",
+      message: `เปลี่ยนสิทธิ์ของ "${target?.name || ''}" เป็น ${newRole === 'admin' ? 'แอดมิน' : 'ช่างหน้างาน'} เรียบร้อยแล้ว`
+    });
+    renderTeamRoleList();
+    resolveUserRole();
+  } else {
+    showAppAlert({
+      type: "warning",
+      title: "เกิดข้อผิดพลาด",
+      message: res.error || "ไม่สามารถอัปเดตสิทธิ์ได้"
+    });
+  }
+}
+
+export async function submitAddNewMember() {
+  const nameInput = document.getElementById("newMemberNameInput");
+  const roleSelect = document.getElementById("newMemberRoleSelect");
+  const name = nameInput ? nameInput.value.trim() : "";
+  const role = roleSelect ? roleSelect.value : "technician";
+
+  if (!name) {
+    showAppAlert({
+      type: "warning",
+      title: "กรุณาระบุชื่อสมาชิก",
+      message: "กรุณากรอกชื่อ-สกุล หรือชื่อเล่นของสมาชิกใหม่"
+    });
+    return;
+  }
+
+  const res = await addNewTechnicianWithRoleApi(name, "-", role);
+  if (res.success) {
+    if (nameInput) nameInput.value = "";
+    showAppAlert({
+      type: "success",
+      title: "เพิ่มสมาชิกสำเร็จ",
+      message: `บันทึก "${name}" เข้าสู่ระบบเรียบร้อยแล้ว`
+    });
+    refreshFromSupabase(true);
+  } else {
+    showAppAlert({
+      type: "warning",
+      title: "บันทึกไม่สำเร็จ",
+      message: res.error || "ไม่สามารถเพิ่มสมาชิกได้"
+    });
+  }
+}
+
+export async function handleDeleteMember(techName, techId) {
+  showAppConfirm({
+    title: "ยืนยันการลบสมาชิก",
+    message: `คุณต้องการลบ "${techName}" ออกจากระบบหรือไม่?`,
+    confirmText: "ลบสมาชิก",
+    cancelText: "ยกเลิก",
+    isDanger: true,
+    onConfirm: async () => {
+      const res = await deleteTechnicianApi(techName);
+      if (res.success) {
+        showAppAlert({
+          type: "success",
+          title: "ลบสมาชิกสำเร็จ",
+          message: `ลบ "${techName}" ออกจากระบบเรียบร้อยแล้ว`
+        });
+        refreshFromSupabase(true);
+      } else {
+        showAppAlert({
+          type: "warning",
+          title: "เกิดข้อผิดพลาด",
+          message: res.error || "ไม่สามารถลบสมาชิกได้"
+        });
+      }
+    }
+  });
 }
 
 // -------------------------------------------------------------
@@ -1112,7 +1489,27 @@ window.confirmAddTech = confirmAddTech;
 window.deleteTech = deleteTech;
 window.toggleTodayLogsCollapse = toggleTodayLogsCollapse;
 
-window.openAssignModal = () => openAssignModal(allTechnicians);
+// Role and Team Management Bindings
+window.handleRoleBadgeClick = handleRoleBadgeClick;
+window.closeAdminPinModal = closeAdminPinModal;
+window.submitAdminPinUnlock = submitAdminPinUnlock;
+window.openTeamRoleModal = openTeamRoleModal;
+window.closeTeamRoleModal = closeTeamRoleModal;
+window.handleChangeMemberRole = handleChangeMemberRole;
+window.submitAddNewMember = submitAddNewMember;
+window.handleDeleteMember = handleDeleteMember;
+
+window.openAssignModal = () => {
+  if (currentUserRole !== "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "เฉพาะคุณใบปอ (แอดมิน)",
+      message: "เฉพาะคุณใบปอ หรือแอดมินเท่านั้นที่มีสิทธิ์มอบหมายงานใหม่ครับ"
+    });
+    return;
+  }
+  openAssignModal(allTechnicians);
+};
 window.closeAssignModal = closeAssignModal;
 window.selectAssignPriority = selectAssignPriority;
 window.selectAssignCategory = selectAssignCategory;
@@ -1149,7 +1546,33 @@ window.prevCalendarMonth = prevCalendarMonth;
 window.nextCalendarMonth = nextCalendarMonth;
 window.selectTodayOnCalendar = selectTodayOnCalendar;
 
-window.openTaskDetailModal = (taskId, initialTab = "info") => openTaskDetailModal(taskId, tasksList, allTechnicians, initialTab);
+window.openTaskDetailModal = (taskId, initialTab = "info") => {
+  openTaskDetailModal(taskId, tasksList, allTechnicians, initialTab);
+  const isAdmin = currentUserRole === "admin";
+  const inputs = [
+    "detailTitleInput",
+    "detailDescInput",
+    "detailLocationInput",
+    "detailCustNameInput",
+    "detailCustPhoneInput",
+    "detailCustAddressInput",
+    "detailCustEmailInput",
+    "detailCustLineInput",
+    "detailCategorySelect"
+  ];
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.disabled = !isAdmin;
+      if (!isAdmin) {
+        el.classList.add("bg-slate-100", "cursor-not-allowed", "text-slate-600");
+      } else {
+        el.classList.remove("bg-slate-100", "cursor-not-allowed", "text-slate-600");
+      }
+    }
+  });
+  applyRolePermissionsUI(currentUserRole, currentLinkedTech);
+};
 window.closeTaskDetailModal = closeTaskDetailModal;
 window.switchTaskDetailTab = switchTaskDetailTab;
 window.openImageLightbox = openImageLightbox;
@@ -1160,24 +1583,44 @@ window.getUniquePhotosForActiveTask = getUniquePhotosForActiveTask;
 window.setDetailModalStatus = setDetailModalStatus;
 window.setDetailModalPriority = setDetailModalPriority;
 window.updateDetailPhoneLink = updateDetailPhoneLink;
-window.saveTaskDetailChanges = () => saveTaskDetailChanges(tasksList, () => {
-  renderTasksList(tasksList);
-});
-window.deleteCurrentDetailTask = () => deleteCurrentDetailTask(tasksList, (deletedTask) => {
-  if (deletedTask && deletedTask.id) {
-    const linkedActives = activeTasks.filter(a => a.taskId === deletedTask.id || a.id === deletedTask.id);
-    linkedActives.forEach(a => {
-      deleteCheckinApi(a.id);
+window.saveTaskDetailChanges = () => {
+  if (currentUserRole !== "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "ไม่มีสิทธิ์แก้ไขงาน",
+      message: "เฉพาะคุณใบปอ (แอดมิน) เท่านั้นที่มีสิทธิ์แก้ไขข้อมูลงานครับ"
     });
-    activeTasks = activeTasks.filter(a => a.taskId !== deletedTask.id && a.id !== deletedTask.id);
-    if (selectedActiveCheckoutId && (selectedActiveCheckoutId === deletedTask.id || linkedActives.some(m => m.id === selectedActiveCheckoutId))) {
-      selectedActiveCheckoutId = null;
-    }
-    localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
-    renderActiveCheckoutList();
+    return;
   }
-  renderTasksList(tasksList);
-});
+  saveTaskDetailChanges(tasksList, () => {
+    renderTasksList(tasksList);
+  });
+};
+window.deleteCurrentDetailTask = () => {
+  if (currentUserRole !== "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "ไม่มีสิทธิ์ลบงาน",
+      message: "เฉพาะคุณใบปอ (แอดมิน) เท่านั้นที่มีสิทธิ์ลบงานครับ"
+    });
+    return;
+  }
+  deleteCurrentDetailTask(tasksList, (deletedTask) => {
+    if (deletedTask && deletedTask.id) {
+      const linkedActives = activeTasks.filter(a => a.taskId === deletedTask.id || a.id === deletedTask.id);
+      linkedActives.forEach(a => {
+        deleteCheckinApi(a.id);
+      });
+      activeTasks = activeTasks.filter(a => a.taskId !== deletedTask.id && a.id !== deletedTask.id);
+      if (selectedActiveCheckoutId && (selectedActiveCheckoutId === deletedTask.id || linkedActives.some(m => m.id === selectedActiveCheckoutId))) {
+        selectedActiveCheckoutId = null;
+      }
+      localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+      renderActiveCheckoutList();
+    }
+    renderTasksList(tasksList);
+  });
+};
 
 window.deleteActiveCheckin = deleteActiveCheckin;
 window.clearAllActiveCheckins = clearAllActiveCheckins;
@@ -1306,8 +1749,7 @@ window.shareActiveTaskToLine = async (activeId) => {
 
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;
-window.setEditModalStatus = setDetailModalStatus;
-window.saveEditedTask = () => saveTaskDetailChanges(tasksList, () => renderTasksList(tasksList));
+window.saveEditedTask = () => window.saveTaskDetailChanges();
 
 window.openExtendModal = (taskId) => openExtendModal(taskId, tasksList);
 window.closeExtendModal = closeExtendModal;
