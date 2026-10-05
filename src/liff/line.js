@@ -68,18 +68,32 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
       return { success: false, reason: "not_logged_in" };
     }
 
+    // 1. If inside a LINE chat (1-on-1, room, or group), send directly to current chat without popup!
+    if (liff.isInClient()) {
+      const context = typeof liff.getContext === "function" ? liff.getContext() : null;
+      if (context && (context.type === "utou" || context.type === "room" || context.type === "group")) {
+        try {
+          await liff.sendMessages([flexCard]);
+          return { success: true, method: "sendMessages" };
+        } catch (sendErr) {
+          console.warn("Direct sendMessages failed, falling back to shareTargetPicker:", sendErr);
+        }
+      }
+    }
+
+    // 2. Share Target Picker (external browser or when outside active chat)
     if (liff.isApiAvailable("shareTargetPicker")) {
       const res = await liff.shareTargetPicker([flexCard]);
       if (res) {
-        return { success: true };
+        return { success: true, method: "shareTargetPicker" };
       }
       return { success: false, reason: "cancelled" };
     } else {
-      // In-app 1-on-1 fallback
+      // In-app fallback
       if (liff.isInClient()) {
         try {
           await liff.sendMessages([flexCard]);
-          return { success: true };
+          return { success: true, method: "sendMessages" };
         } catch (sendErr) {
           console.warn("sendMessages failed:", sendErr);
           return { success: false, reason: "send_error", error: sendErr.message };

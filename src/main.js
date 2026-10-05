@@ -335,6 +335,79 @@ export function selectJobType(type) {
 let selectedActiveCheckoutId = null;
 let selectedCheckoutOutcome = "ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด";
 
+export function renderActiveTaskPhotos(activeItem) {
+  const container = document.getElementById("activeTaskExistingPhotosContainer");
+  const grid = document.getElementById("activeTaskPhotosGrid");
+  const badge = document.getElementById("activeTaskPhotosBadge");
+  if (!container || !grid) return;
+
+  if (!activeItem) {
+    container.classList.add("hidden");
+    grid.innerHTML = "";
+    return;
+  }
+
+  const linkedTask = tasksList.find(t => 
+    (activeItem.taskId && t.id === activeItem.taskId) || 
+    t.id === activeItem.id || 
+    t.title === activeItem.task
+  );
+
+  const photosList = [];
+
+  // 1. Photos in active checkin
+  if (Array.isArray(activeItem.photos)) {
+    activeItem.photos.forEach((p, idx) => {
+      const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
+      if (src && !photosList.some(existing => existing.src === src)) {
+        photosList.push({
+          src,
+          caption: `${activeItem.task} • รูปหน้างาน #${idx + 1}`
+        });
+      }
+    });
+  }
+
+  // 2. Photos in task progress history
+  if (linkedTask && Array.isArray(linkedTask.progressHistory)) {
+    linkedTask.progressHistory.forEach(h => {
+      if (Array.isArray(h.photos)) {
+        h.photos.forEach((hp, idx) => {
+          const src = hp.dataUrl || hp.base64 || hp.url || (typeof hp === "string" ? hp : null);
+          if (src && !photosList.some(existing => existing.src === src)) {
+            photosList.push({
+              src,
+              caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || 'ช่าง'})`
+            });
+          }
+        });
+      }
+    });
+  }
+
+  if (photosList.length === 0) {
+    container.classList.add("hidden");
+    grid.innerHTML = "";
+    return;
+  }
+
+  container.classList.remove("hidden");
+  if (badge) badge.innerText = `${photosList.length} รูป`;
+
+  grid.innerHTML = photosList.map((p, idx) => `
+    <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 cursor-pointer shadow-2xs hover:ring-2 hover:ring-blue-500 transition-all bg-slate-100 group"
+         onclick="window.openImageLightbox('${p.src.replace(/'/g, "\\'")}', '${p.caption.replace(/'/g, "\\'")}')">
+      <img src="${p.src}" class="w-full h-full object-cover" alt="รูปที่ ${idx + 1}" loading="lazy">
+      <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/0 transition-colors flex items-center justify-center">
+        <svg class="w-4 h-4 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
+      </div>
+      <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2">
+        #${idx + 1}
+      </div>
+    </div>
+  `).join("");
+}
+
 export function renderActiveCheckoutList() {
   const container = document.getElementById("activeListContainer");
   const outcomeSection = document.getElementById("checkoutOutcomeSection");
@@ -356,6 +429,7 @@ export function renderActiveCheckoutList() {
       </div>
     `;
     if (outcomeSection) outcomeSection.classList.add("hidden");
+    renderActiveTaskPhotos(null);
     return;
   }
 
@@ -363,6 +437,10 @@ export function renderActiveCheckoutList() {
     const isSelected = selectedActiveCheckoutId === item.id;
     const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ช่างทั่วไป");
     const displayTaskId = item.taskId ? `${item.taskId} (${item.id})` : item.id;
+    const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+    const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
+    const totalPhotos = (item.photos?.length || 0) + (linkedTask?.progressHistory?.reduce((sum, h) => sum + (h.photos?.length || 0), 0) || 0);
+
     return `
       <div onclick="window.selectActiveTaskForCheckout('${item.id}')" class="p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
         isSelected
@@ -373,6 +451,8 @@ export function renderActiveCheckoutList() {
           <div class="flex items-center space-x-2 flex-wrap gap-y-1">
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
             <span class="text-xs text-emerald-800 font-bold font-mono">⏰ เข้างาน: ${formatGasTime(item.time)} น.</span>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs">คืบหน้า ${itemProg}%</span>
+            ${totalPhotos > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">📸 ${totalPhotos} รูป</span>` : ''}
           </div>
           <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="ลบรายการเช็กอินนี้">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -380,6 +460,11 @@ export function renderActiveCheckoutList() {
           </button>
         </div>
         <div class="font-bold text-sm text-slate-950">${item.task}</div>
+        ${linkedTask?.latestUpdate || item.note ? `
+          <div class="text-[11px] text-blue-900 bg-blue-50/80 rounded-lg px-2 py-1 mt-1 font-medium border border-blue-100 line-clamp-1">
+            📌 ล่าสุด: ${item.note || linkedTask?.latestUpdate}
+          </div>
+        ` : ''}
         <div class="text-slate-600 mt-1.5 flex items-center justify-between font-medium">
           <span>👷 ช่าง: <strong class="text-slate-900">${techList}</strong></span>
           <span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>
@@ -392,9 +477,12 @@ export function renderActiveCheckoutList() {
     if (selectedActiveCheckoutId) {
       outcomeSection.classList.remove("hidden");
       outcomeSection.classList.add("animate-fade-in");
+      const activeObj = activeTasks.find(a => a.id === selectedActiveCheckoutId);
+      if (activeObj) renderActiveTaskPhotos(activeObj);
     } else {
       outcomeSection.classList.add("hidden");
       outcomeSection.classList.remove("animate-fade-in");
+      renderActiveTaskPhotos(null);
     }
   }
 }
@@ -654,8 +742,7 @@ async function bootstrapApp() {
     }
     if (gasData.tasks && Array.isArray(gasData.tasks)) {
       tasksList = gasData.tasks.map(gt => {
-        const localCached = tasksList.find(lt => lt.id === gt.id);
-        let prog = localCached && localCached.progress !== undefined ? localCached.progress : 0;
+        let prog = gt.progress !== undefined ? gt.progress : 0;
         if (gt.status === "เสร็จสิ้น") {
           prog = 100;
         } else if (gt.reason) {
@@ -667,20 +754,26 @@ async function bootstrapApp() {
         return {
           ...gt,
           progress: prog,
-          latestUpdate: gt.reason && gt.reason !== '-' ? gt.reason : (localCached ? localCached.latestUpdate : '')
+          latestUpdate: gt.latestUpdate || (gt.reason && gt.reason !== '-' ? gt.reason : '')
         };
       });
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
     }
     if (gasData.activeCheckins && Array.isArray(gasData.activeCheckins)) {
-      activeTasks = gasData.activeCheckins.map(a => ({
-        id: a.id,
-        taskId: a.taskId || null,
-        task: a.task,
-        techs: [a.tech],
-        time: formatGasTime(a.time) || "09:00",
-        date: formatGasDate(a.date)
-      }));
+      activeTasks = gasData.activeCheckins.map(a => {
+        const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
+        return {
+          id: a.id,
+          taskId: a.taskId || null,
+          task: a.task,
+          techs: Array.isArray(a.techs) && a.techs.length > 0 ? a.techs : (a.tech ? [a.tech] : ["ช่างทั่วไป"]),
+          time: formatGasTime(a.time) || "09:00",
+          date: formatGasDate(a.date),
+          progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0),
+          photos: a.photos || [],
+          note: a.note || ''
+        };
+      });
       // Merge in-progress tasks from tasksList into activeTasks so they are ready for updating
       tasksList.forEach(t => {
         if (t.status === "กำลังทำ" && !activeTasks.some(a => a.taskId === t.id || a.id === t.id || a.task === t.title)) {
@@ -691,19 +784,21 @@ async function bootstrapApp() {
             techs: Array.isArray(t.techs) ? t.techs : (t.assignee ? t.assignee.split(", ") : ["ช่างประจำทีม"]),
             time: "09:00",
             date: "วันนี้",
-            progress: t.progress || 0
+            progress: t.progress || 0,
+            photos: [],
+            note: t.latestUpdate || ''
           });
         }
       });
       localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
     }
 
-    // 3. Daily Logs (ALWAYS SYNC FROM GOOGLE SHEET AS SINGLE SOURCE OF TRUTH)
+    // 3. Daily Logs (ALWAYS SYNC FROM SUPABASE/GAS AS SINGLE SOURCE OF TRUTH)
     const allSheetCheckins = [
       ...(gasData.activeCheckins || []).map(a => ({
         id: a.id,
         task: a.task,
-        techs: [a.tech],
+        techs: a.techs || [a.tech],
         checkinTime: formatGasTime(a.time),
         checkoutTime: a.outTime && a.outTime !== '-' ? formatGasTime(a.outTime) : null,
         status: a.status === "กำลังปฏิบัติงาน" ? "กำลังทำ" : "เสร็จสิ้น"
@@ -711,7 +806,7 @@ async function bootstrapApp() {
       ...(gasData.closedCheckins || []).map(c => ({
         id: c.id,
         task: c.task,
-        techs: [c.tech],
+        techs: c.techs || [c.tech],
         checkinTime: formatGasTime(c.time),
         checkoutTime: formatGasTime(c.outTime),
         status: "เสร็จสิ้น"
@@ -751,17 +846,57 @@ async function bootstrapApp() {
         renderTasksList(tasksList);
         renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
         renderTechFilterChips(tasksList, allTechnicians);
+
+        if (fresh.activeCheckins) {
+          activeTasks = fresh.activeCheckins.map(a => {
+            const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
+            return {
+              ...a,
+              progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0)
+            };
+          });
+          localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
+          renderActiveCheckoutList();
+        }
+
+        if (selectedActiveCheckoutId) {
+          const curActive = activeTasks.find(a => a.id === selectedActiveCheckoutId || a.taskId === selectedActiveCheckoutId);
+          const curTask = tasksList.find(t => t.id === curActive?.taskId || t.id === selectedActiveCheckoutId);
+          if (curTask && curTask.progress !== undefined) {
+            setUpdatePercent(curTask.progress);
+          } else if (curActive && curActive.progress !== undefined) {
+            setUpdatePercent(curActive.progress);
+          }
+          if (curActive) renderActiveTaskPhotos(curActive);
+        }
       }
     },
     onCheckinsChange: async () => {
       const fresh = await fetchInitialData();
       if (fresh) {
-        activeTasks = fresh.activeCheckins || [];
+        activeTasks = (fresh.activeCheckins || []).map(a => {
+          const linkedT = tasksList.find(t => t.id === a.taskId || t.title === a.task);
+          return {
+            ...a,
+            progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0)
+          };
+        });
         dailyLogs = [...(fresh.activeCheckins || []), ...(fresh.closedCheckins || [])];
         localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
         localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
         renderActiveCheckoutList();
         renderTodayLogs();
+
+        if (selectedActiveCheckoutId) {
+          const curActive = activeTasks.find(a => a.id === selectedActiveCheckoutId || a.taskId === selectedActiveCheckoutId);
+          const curTask = tasksList.find(t => t.id === curActive?.taskId || t.id === selectedActiveCheckoutId);
+          if (curActive && curActive.progress !== undefined) {
+            setUpdatePercent(curActive.progress);
+          } else if (curTask && curTask.progress !== undefined) {
+            setUpdatePercent(curTask.progress);
+          }
+          if (curActive) renderActiveTaskPhotos(curActive);
+        }
       }
     },
     onTechsChange: async () => {
@@ -851,6 +986,9 @@ window.submitOngoingUpdate = () => {
       if (act) {
         act.status = updatedInfo.status;
         act.progress = updatedInfo.progress;
+        if (Array.isArray(updatedInfo.photos) && updatedInfo.photos.length > 0) {
+          act.photos = [...(act.photos || []), ...updatedInfo.photos];
+        }
       }
       const log = dailyLogs.find(l => l.id === updatedInfo.id);
       if (log) {
@@ -880,8 +1018,10 @@ window.submitOngoingUpdate = () => {
 
       localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
       localStorage.setItem("fs_daily_logs", JSON.stringify(dailyLogs));
+      if (noteInput) noteInput.value = "";
       renderTodayLogs();
       renderActiveCheckoutList();
+      if (act) renderActiveTaskPhotos(act);
 
       if (updatedInfo.lineShared) {
         showAppAlert({
@@ -1028,6 +1168,7 @@ window.deleteCurrentDetailTask = () => deleteCurrentDetailTask(tasksList, (delet
 window.deleteActiveCheckin = deleteActiveCheckin;
 window.clearAllActiveCheckins = clearAllActiveCheckins;
 window.deleteTodayLog = deleteTodayLog;
+window.renderActiveTaskPhotos = renderActiveTaskPhotos;
 
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;

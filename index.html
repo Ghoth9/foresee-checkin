@@ -229,6 +229,20 @@
               </button>
             </div>
 
+            <!-- Existing Photos Gallery of Active Task -->
+            <div id="activeTaskExistingPhotosContainer" class="hidden bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-xs font-bold text-slate-800">📸 รูปถ่ายที่บันทึกแล้วของงานนี้</span>
+                  <span id="activeTaskPhotosBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">0 รูป</span>
+                </div>
+                <span class="text-[10px] text-slate-500 font-medium">แตะรูปเพื่อดูภาพขยาย</span>
+              </div>
+              <div id="activeTaskPhotosGrid" class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
             <!-- PANEL 1: UPDATE PROGRESS (MODE 1: งานยังไม่เสร็จ) -->
             <div id="actionPanelUpdate" class="space-y-3.5 pt-1">
               <div>

@@ -165,14 +165,12 @@ export function updateCheckoutSubmitButtonsState() {
 
   // 1. Progress Update Button
   if (updateBtn) {
+    updateBtn.disabled = false;
+    updateBtn.className = "w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
     if (checkoutPhotos.length === 0) {
-      updateBtn.disabled = true;
-      updateBtn.className = "w-full bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-300 transition-all duration-200 flex items-center justify-center space-x-2 select-none shadow-none";
-      updateBtn.innerHTML = `<span>🔒 แนบรูปความคืบหน้าอย่างน้อย 1 รูปก่อนส่ง (0/5)</span>`;
+      updateBtn.innerHTML = `<span>📊 อัปเดตความคืบหน้า & ส่งรายงานเข้ากลุ่ม LINE</span>`;
     } else {
-      updateBtn.disabled = false;
-      updateBtn.className = "w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
-      updateBtn.innerHTML = `<span>📊 อัปเดตความคืบหน้า & ส่งรายงานเข้ากลุ่ม LINE (แนบแล้ว ${checkoutPhotos.length} รูป)</span>`;
+      updateBtn.innerHTML = `<span>📊 อัปเดตความคืบหน้า & ส่งรายงานเข้ากลุ่ม LINE (แนบรูป ${checkoutPhotos.length} รูป)</span>`;
     }
   }
 
