@@ -47,13 +47,53 @@
         </button>
       </nav>
 
-      <!-- Right Actions: Role Badge, Manage Team (Admin), LINE Login, GPS Status, New Task -->
+      <!-- Right Actions: Role Badge & Dropdown, Manage Team (Admin), LINE Login, GPS Status, New Task -->
       <div class="flex items-center space-x-1.5 sm:space-x-2">
-        <!-- User Role Badge -->
-        <button id="userRoleBadge" type="button" onclick="handleRoleBadgeClick()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95" title="แตะเพื่อดูสถานะสิทธิ์หรือปลดล็อกแอดมิน">
-          <span id="userRoleIcon">🔧</span>
-          <span id="userRoleText">ช่างหน้างาน</span>
-        </button>
+        <!-- User Role Badge & Switcher Dropdown -->
+        <div class="relative">
+          <button id="userRoleBadge" type="button" onclick="handleRoleBadgeClick()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95" title="แตะเพื่อเลือกมุมมองหรือจัดการสิทธิ์">
+            <span id="userRoleIcon">👷</span>
+            <span id="userRoleText">ผู้ปฏิบัติงาน</span>
+            <svg id="userRoleArrow" class="w-3 h-3 opacity-60 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+
+          <!-- Dropdown Menu for Role Switching & Team Management -->
+          <div id="userRoleDropdownMenu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 animate-modal-in">
+            <div class="px-2.5 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+              <span>สลับมุมมองหน้าจอ</span>
+              <span class="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold border border-amber-200">ตรวจสอบระบบ</span>
+            </div>
+
+            <button type="button" onclick="switchSimulatedRole('admin')" id="roleMenuAdminBtn" class="w-full text-left p-2 rounded-xl hover:bg-amber-50/80 transition-colors flex items-center justify-between group mt-1">
+              <div class="flex items-center space-x-2">
+                <span class="text-base">👑</span>
+                <div>
+                  <div class="text-xs font-bold text-slate-900 group-hover:text-amber-950">มุมมอง: แอดมิน (Admin)</div>
+                  <div class="text-[10px] text-slate-500">มอบหมายงาน, แก้ไข, ลบงาน, จัดการสิทธิ์</div>
+                </div>
+              </div>
+              <span id="roleCheckAdmin" class="text-xs text-amber-600 font-bold hidden">✓</span>
+            </button>
+
+            <button type="button" onclick="switchSimulatedRole('technician')" id="roleMenuTechBtn" class="w-full text-left p-2 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-between group mt-0.5">
+              <div class="flex items-center space-x-2">
+                <span class="text-base">👷</span>
+                <div>
+                  <div class="text-xs font-bold text-slate-900">มุมมอง: ผู้ปฏิบัติงาน (Staff)</div>
+                  <div class="text-[10px] text-slate-500">เช็กอิน, อัปเดตงาน, ปิดงาน (ล็อกลบ/แก้)</div>
+                </div>
+              </div>
+              <span id="roleCheckTech" class="text-xs text-emerald-600 font-bold hidden">✓</span>
+            </button>
+
+            <div class="border-t border-slate-100 my-1"></div>
+
+            <button type="button" onclick="closeRoleDropdownMenu(); openTeamRoleModal();" class="w-full text-left p-2 rounded-xl hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center space-x-2 transition-colors">
+              <span>👥</span>
+              <span>จัดการสิทธิ์ทีมงาน & เพิ่มสมาชิก</span>
+            </button>
+          </div>
+        </div>
 
         <!-- Admin Only: Manage Team & Permissions -->
         <button id="adminManageTeamBtn" type="button" onclick="openTeamRoleModal()" class="hidden items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs active:scale-95" title="จัดการทีมงานและสิทธิ์ผู้ใช้งาน">
@@ -75,9 +115,19 @@
           <span>+ มอบหมายงาน</span>
         </button>
       </div>
-
     </div>
   </header>
+
+  <!-- Role Simulation Banner (Shown when simulating Technician/Staff view) -->
+  <div id="simulatedRoleBanner" class="hidden bg-amber-400 text-slate-950 px-4 py-2 text-xs font-bold items-center justify-between shadow-xs sticky top-14 z-30">
+    <div class="flex items-center space-x-2">
+      <span class="text-base">👁️</span>
+      <span>คุณกำลังดูในมุมมอง: <strong class="underline">ผู้ปฏิบัติงาน</strong> (ปุ่มมอบหมายงานและปุ่มลบงานจะถูกซ่อน)</span>
+    </div>
+    <button type="button" onclick="switchSimulatedRole('admin')" class="bg-slate-950 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-2xs">
+      👑 สลับกลับเป็นแอดมิน
+    </button>
+  </div>
 
   <main class="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-4 md:py-6 flex-1 space-y-4 md:space-y-6">
 
@@ -1072,12 +1122,25 @@
         <button type="button" onclick="closeTeamRoleModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">✕</button>
       </div>
 
-      <!-- Current Admin Banner -->
-      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-xl p-3 flex items-center space-x-3 text-xs">
-        <span class="text-xl">👑</span>
-        <div>
-          <div class="font-bold text-amber-950">สิทธิ์ของคุณ: แอดมินผู้ดูแลระบบ (Admin)</div>
-          <div class="text-[11px] text-amber-800 mt-0.5">สามารถมอบหมายงาน แก้ไข ลบงาน และจัดการสิทธิ์สมาชิกทุกคน</div>
+      <!-- Current Admin Banner & Quick View Switcher -->
+      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-xl p-3 text-xs space-y-2">
+        <div class="flex items-center space-x-3">
+          <span class="text-xl">👑</span>
+          <div>
+            <div class="font-bold text-amber-950">สิทธิ์ของคุณ: แอดมินผู้ดูแลระบบ (Admin)</div>
+            <div class="text-[11px] text-amber-800 mt-0.5">สามารถมอบหมายงาน แก้ไข ลบงาน และจัดการสิทธิ์สมาชิกทุกคน</div>
+          </div>
+        </div>
+        <div class="pt-2 border-t border-amber-200/60 flex items-center justify-between flex-wrap gap-2">
+          <span class="text-[11px] font-bold text-amber-900">🔍 ทดสอบสลับมุมมองหน้าจอ:</span>
+          <div class="flex items-center space-x-1.5">
+            <button type="button" onclick="switchSimulatedRole('admin')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-2xs transition-all active:scale-95">
+              👑 มุมมองแอดมิน
+            </button>
+            <button type="button" onclick="switchSimulatedRole('technician')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95">
+              👷 มุมมองผู้ปฏิบัติงาน
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1100,12 +1163,12 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">ชื่อ - สกุล / ชื่อเล่น <span class="text-rose-500">*</span></label>
-            <input type="text" id="newMemberNameInput" placeholder="เช่น K.สมชาย (ช่างแอร์)" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-800">
+            <input type="text" id="newMemberNameInput" placeholder="เช่น K.สมชาย (ผู้ปฏิบัติงาน)" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-800">
           </div>
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">กำหนดสิทธิ์เริ่มต้น</label>
             <select id="newMemberRoleSelect" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-800">
-              <option value="technician">🔧 ช่างหน้างาน (Technician)</option>
+              <option value="technician">👷 ผู้ปฏิบัติงาน (Staff/Technician)</option>
               <option value="admin">👑 แอดมิน (Admin)</option>
             </select>
           </div>

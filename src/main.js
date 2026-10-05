@@ -361,16 +361,18 @@ export function selectJobType(type) {
   let targetType = type || "ติดตั้งงานใหม่";
 
   // Alias / fuzzy matching
-  if (targetType === "ติดตั้งกล้องวงจรปิด") {
+  if (targetType === "ติดตั้งกล้องวงจรปิด" || targetType === "ติดตั้งงานใหม่") {
     targetType = "ติดตั้งงานใหม่";
+  } else if (targetType.includes("ไม่มีค่าใช้จ่าย") || targetType.includes("ในประกัน") || targetType.includes("ฟรี") || targetType === "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)") {
+    targetType = "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)";
   } else if (targetType.includes("มีค่าใช้จ่าย")) {
     targetType = "งานเซอร์วิส (มีค่าใช้จ่าย)";
-  } else if (targetType.includes("ซ่อม") || targetType.includes("ปรับมุม") || targetType.includes("เซอร์วิส") || targetType.includes("ประกัน")) {
-    targetType = "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)";
   } else if (targetType.toUpperCase().includes("PM") || targetType.includes("บำรุง")) {
     targetType = "งาน PM (Preventive Maintenance)";
   } else if (targetType.includes("สำรวจ") || targetType.includes("ตรวจสอบ")) {
     targetType = "เข้าตรวจสอบหน้างาน / สำรวจ";
+  } else if (targetType.includes("ซ่อม") || targetType.includes("ปรับมุม") || targetType.includes("เซอร์วิส") || targetType.includes("ประกัน")) {
+    targetType = "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)";
   } else if (!standardTypes.includes(targetType)) {
     const customInput = document.getElementById("customJobTypeInput");
     if (customInput && targetType !== "custom") {
@@ -1034,6 +1036,60 @@ export async function resolveUserRole() {
   applyRolePermissionsUI("technician", null);
 }
 
+let simulatedRole = null;
+
+export function isUserAdminActual() {
+  if (sessionStorage.getItem("fs_admin_override") === "true") return true;
+  if (isLineLoggedIn()) {
+    const profile = getLineUserProfile();
+    if (profile && profile.userId) {
+      const match = techniciansList.find(t => t.line_user_id === profile.userId);
+      if (match && match.role === "admin") return true;
+    }
+  }
+  return false;
+}
+
+export function switchSimulatedRole(mode) {
+  if (mode === "admin" && !isUserAdminActual() && currentUserRole !== "admin") {
+    closeRoleDropdownMenu();
+    const el = document.getElementById("adminPinModal");
+    const input = document.getElementById("adminPinInput");
+    if (input) input.value = "";
+    if (el) el.classList.remove("hidden");
+    if (input) input.focus();
+    return;
+  }
+
+  simulatedRole = mode;
+  currentUserRole = mode;
+  closeRoleDropdownMenu();
+  applyRolePermissionsUI(currentUserRole, currentLinkedTech);
+
+  showAppAlert({
+    type: "info",
+    title: mode === "admin" ? "สลับเป็น: มุมมองแอดมิน 👑" : "สลับเป็น: มุมมองผู้ปฏิบัติงาน 👷",
+    message: mode === "admin"
+      ? "แสดงผลแบบแอดมินเต็มรูปแบบ (มอบหมายงาน, แก้ไข, ลบงาน, จัดการสิทธิ์)"
+      : "แสดงผลแบบผู้ปฏิบัติงาน (ซ่อนปุ่มมอบหมายงานและปุ่มลบงาน ฟิลด์ข้อมูลหลักเป็นแบบอ่านอย่างเดียว)"
+  });
+
+  if (currentTab === "tasks") {
+    renderTasksList(tasksList);
+  }
+}
+
+export function toggleRoleDropdownMenu() {
+  const menu = document.getElementById("userRoleDropdownMenu");
+  if (!menu) return;
+  menu.classList.toggle("hidden");
+}
+
+export function closeRoleDropdownMenu() {
+  const menu = document.getElementById("userRoleDropdownMenu");
+  if (menu) menu.classList.add("hidden");
+}
+
 export function applyRolePermissionsUI(role, techObj) {
   const isAdmin = role === "admin";
 
@@ -1050,17 +1106,41 @@ export function applyRolePermissionsUI(role, techObj) {
       const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : "คุณใบปอ";
       text.innerText = `แอดมิน: ${cleanName}`;
       badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer";
-      badge.title = "คุณมีสิทธิ์แอดมินสูงสุด (แตะเพื่อจัดการทีมงาน)";
+      badge.title = "คุณมีสิทธิ์แอดมิน (แตะเพื่อสลับมุมมองหรือจัดการสิทธิ์)";
     } else {
-      icon.innerText = "🔧";
+      icon.innerText = "👷";
       const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : "ทั่วไป";
-      text.innerText = `ช่าง: ${cleanName}`;
+      text.innerText = `ผู้ปฏิบัติงาน: ${cleanName}`;
       badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer";
-      badge.title = "เข้าสู่ระบบในฐานะช่างหน้างาน (แตะเพื่อปลดล็อกแอดมิน)";
+      badge.title = "เข้าสู่ระบบในฐานะผู้ปฏิบัติงาน (แตะเพื่อปลดล็อกแอดมินหรือสลับมุมมอง)";
     }
   }
 
-  // 2. Admin Team Button
+  // 2. Dropdown checks
+  const checkAdmin = document.getElementById("roleCheckAdmin");
+  const checkTech = document.getElementById("roleCheckTech");
+  if (checkAdmin) {
+    if (isAdmin) checkAdmin.classList.remove("hidden");
+    else checkAdmin.classList.add("hidden");
+  }
+  if (checkTech) {
+    if (!isAdmin) checkTech.classList.remove("hidden");
+    else checkTech.classList.add("hidden");
+  }
+
+  // 3. Simulated role banner
+  const banner = document.getElementById("simulatedRoleBanner");
+  if (banner) {
+    if (!isAdmin && (isUserAdminActual() || sessionStorage.getItem("fs_admin_override") === "true")) {
+      banner.classList.remove("hidden");
+      banner.classList.add("flex");
+    } else {
+      banner.classList.add("hidden");
+      banner.classList.remove("flex");
+    }
+  }
+
+  // 4. Admin Team Button
   if (adminTeamBtn) {
     if (isAdmin) {
       adminTeamBtn.classList.remove("hidden");
@@ -1071,7 +1151,7 @@ export function applyRolePermissionsUI(role, techObj) {
     }
   }
 
-  // 3. Assign Task & Manage Team Buttons
+  // 5. Assign Task & Manage Team Buttons
   if (assignTaskHeaderBtn) {
     if (isAdmin) {
       assignTaskHeaderBtn.classList.remove("hidden");
@@ -1098,7 +1178,7 @@ export function applyRolePermissionsUI(role, techObj) {
     }
   }
 
-  // 4. Task Detail Modal Controls
+  // 6. Task Detail Modal Controls
   const deleteBtn = document.getElementById("detailModalDeleteBtn");
   const saveBtn = document.getElementById("detailModalSaveBtn");
   const notice = document.getElementById("detailModalTechNotice");
@@ -1122,8 +1202,9 @@ export function applyRolePermissionsUI(role, techObj) {
 }
 
 export function handleRoleBadgeClick() {
-  if (currentUserRole === "admin") {
-    openTeamRoleModal();
+  const isAdmin = isUserAdminActual() || currentUserRole === "admin";
+  if (isAdmin) {
+    toggleRoleDropdownMenu();
   } else {
     // Open PIN prompt
     const el = document.getElementById("adminPinModal");
@@ -1150,7 +1231,7 @@ export function submitAdminPinUnlock() {
     showAppAlert({
       type: "success",
       title: "ปลดล็อกสิทธิ์แอดมินสำเร็จ",
-      message: "ยินดีต้อนรับคุณใบปอ เข้าสู่โหมดแอดมินเต็มรูปแบบ สามารถมอบหมายงาน แก้ไข ลบงาน และจัดการสิทธิ์สมาชิกได้ทั้งหมดครับ 👑"
+      message: "ยินดีต้อนรับ เข้าสู่โหมดแอดมินเต็มรูปแบบ สามารถมอบหมายงาน แก้ไข ลบงาน จัดการสิทธิ์ และสลับมุมมองหน้าจอได้ทันทีครับ 👑"
     });
   } else {
     showAppAlert({
@@ -1162,7 +1243,7 @@ export function submitAdminPinUnlock() {
 }
 
 export function openTeamRoleModal() {
-  if (currentUserRole !== "admin") {
+  if (currentUserRole !== "admin" && !isUserAdminActual()) {
     showAppAlert({
       type: "warning",
       title: "ต้องใช้สิทธิ์แอดมิน",
@@ -1201,7 +1282,7 @@ export function renderTeamRoleList() {
         <div class="min-w-0">
           <div class="flex items-center space-x-1.5 flex-wrap">
             <span class="font-bold text-xs text-slate-900 truncate">${tech.name}</span>
-            ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">🔧 ช่าง</span>`}
+            ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">👷 ผู้ปฏิบัติงาน</span>`}
           </div>
           <div class="text-[11px] text-slate-400 mt-0.5 flex items-center space-x-2">
             <span>📞 ${tech.phone || '-'}</span>
@@ -1212,7 +1293,7 @@ export function renderTeamRoleList() {
 
         <div class="flex items-center space-x-1.5 flex-shrink-0">
           <select onchange="window.handleChangeMemberRole('${tech.id}', this.value)" class="text-xs font-semibold rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-slate-800 focus:outline-none focus:border-slate-800 cursor-pointer">
-            <option value="technician" ${!isAdmin ? 'selected' : ''}>ช่างหน้างาน</option>
+            <option value="technician" ${!isAdmin ? 'selected' : ''}>ผู้ปฏิบัติงาน</option>
             <option value="admin" ${isAdmin ? 'selected' : ''}>👑 แอดมิน</option>
           </select>
           <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors" title="ลบสมาชิก">
@@ -1232,7 +1313,7 @@ export async function handleChangeMemberRole(techId, newRole) {
     showAppAlert({
       type: "success",
       title: "อัปเดตสิทธิ์สำเร็จ",
-      message: `เปลี่ยนสิทธิ์ของ "${target?.name || ''}" เป็น ${newRole === 'admin' ? 'แอดมิน' : 'ช่างหน้างาน'} เรียบร้อยแล้ว`
+      message: `เปลี่ยนสิทธิ์ของ "${target?.name || ''}" เป็น ${newRole === 'admin' ? 'แอดมิน' : 'ผู้ปฏิบัติงาน'} เรียบร้อยแล้ว`
     });
     renderTeamRoleList();
     resolveUserRole();
@@ -1491,6 +1572,9 @@ window.toggleTodayLogsCollapse = toggleTodayLogsCollapse;
 
 // Role and Team Management Bindings
 window.handleRoleBadgeClick = handleRoleBadgeClick;
+window.switchSimulatedRole = switchSimulatedRole;
+window.toggleRoleDropdownMenu = toggleRoleDropdownMenu;
+window.closeRoleDropdownMenu = closeRoleDropdownMenu;
 window.closeAdminPinModal = closeAdminPinModal;
 window.submitAdminPinUnlock = submitAdminPinUnlock;
 window.openTeamRoleModal = openTeamRoleModal;
@@ -1794,6 +1878,17 @@ window.handleLineLoginToggle = () => {
 };
 
 window.requestLocation = () => requestLocation();
+
+// Global outside click for role dropdown
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("userRoleDropdownMenu");
+  const badge = document.getElementById("userRoleBadge");
+  if (menu && !menu.classList.contains("hidden")) {
+    if (!menu.contains(e.target) && !badge?.contains(e.target)) {
+      menu.classList.add("hidden");
+    }
+  }
+});
 
 // Run bootstrap when DOM is ready
 document.addEventListener("DOMContentLoaded", bootstrapApp);
