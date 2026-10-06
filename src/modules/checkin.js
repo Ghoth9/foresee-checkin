@@ -109,18 +109,28 @@ export function toggleCheckinFormDetails() {
   }
 }
 
-export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTask) {
+export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTask, currentOperatorName = null, isAdmin = false) {
   if (Array.isArray(tasksList)) cachedTasksList = tasksList;
   const container = document.getElementById("assignedTasksCheckinContainer");
   if (!container) return;
 
   // Filter tasks that are in progress or pending
-  const pendingTasks = tasksList.filter(t => t.status !== "เสร็จสิ้น");
+  let pendingTasks = tasksList.filter(t => t.status !== "เสร็จสิ้น");
+
+  // If Operator (non-admin) and operator name is known, filter to ONLY their assigned tasks!
+  if (!isAdmin && currentOperatorName) {
+    pendingTasks = pendingTasks.filter(t => {
+      const techs = Array.isArray(t.techs) ? t.techs : (typeof t.techs === 'string' ? [t.techs] : []);
+      return techs.includes(currentOperatorName);
+    });
+  }
 
   if (pendingTasks.length === 0) {
     container.innerHTML = `
       <div class="text-xs text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-3 text-center">
-        ไม่มีงานมอบหมายค้างอยู่ สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย
+        ${!isAdmin && currentOperatorName
+          ? `ไม่มีงานมอบหมายค้างอยู่ของ <strong>${currentOperatorName}</strong> ในขณะนี้ (สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย)`
+          : `ไม่มีงานมอบหมายค้างอยู่ สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย`}
       </div>
     `;
     return;
@@ -131,7 +141,7 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
       <div class="flex items-center justify-between text-xs">
         <span class="font-bold text-slate-800 flex items-center space-x-1.5">
           <span>📋</span>
-          <span>งานที่ได้รับมอบหมาย (แตะเพื่อเช็กอินทันที):</span>
+          <span>${!isAdmin && currentOperatorName ? `งานที่คุณได้รับมอบหมาย (${currentOperatorName}):` : `งานที่ได้รับมอบหมาย (แตะเพื่อเช็กอินทันที):`}</span>
         </span>
         <span class="text-[11px] text-blue-600 font-semibold">${pendingTasks.length} งาน</span>
       </div>
@@ -153,7 +163,7 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
               </div>
               <div class="font-bold text-sm text-slate-950 line-clamp-1 leading-snug">${task.title}</div>
               <div class="text-xs text-slate-600 mt-2 font-medium flex items-center space-x-1.5 min-w-0" title="ผู้ปฏิบัติงาน: ${techList.replace(/"/g, '&quot;')}">
-                <span class="flex-shrink-0 whitespace-nowrap font-semibold">👷 ผู้ปฏิบัติงาน:</span>
+                <span class="flex-shrink-0 whitespace-nowrap font-semibold">👤 ผู้ปฏิบัติงาน:</span>
                 <strong class="text-slate-800 truncate min-w-0 font-bold block" title="${techList.replace(/"/g, '&quot;')}">${techList}</strong>
               </div>
             </div>

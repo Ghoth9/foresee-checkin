@@ -105,10 +105,20 @@ export function setTaskSearchQuery(q) {
   taskSearchQuery = q || "";
 }
 
-export function renderTasksList(tasksList) {
+export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = false) {
   const container = document.getElementById("tasksListContainer");
   if (!container) return;
-  const techFiltered = tasksList.filter(t => {
+
+  // 1. Role-based scoping: non-admin operators only see tasks assigned to them!
+  let baseTasks = tasksList;
+  if (!isAdmin && activeOperatorName) {
+    baseTasks = baseTasks.filter(t => {
+      const techs = getTaskTechs(t);
+      return techs.includes(activeOperatorName);
+    });
+  }
+
+  const techFiltered = baseTasks.filter(t => {
     if (currentTechFilter === "ทั้งหมด") return true;
     const techs = getTaskTechs(t);
     return techs.includes(currentTechFilter);
@@ -1561,7 +1571,7 @@ export async function submitExtendDeadline(tasksList, currentLineUserName, onCom
   task.deadline = newDeadline;
   task.reason = reason;
   task.latestUpdate = `ขยายกำหนดส่งเป็น ${newDeadline} (เหตุผล: ${reason})`;
-  task.updateBy = currentLineUserName || "ช่างหน้างาน";
+  task.updateBy = currentLineUserName || "ผู้ปฏิบัติงานหน้างาน";
   task.updateTime = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
   closeExtendModal();
@@ -1573,7 +1583,7 @@ export async function submitExtendDeadline(tasksList, currentLineUserName, onCom
     newDeadline: newDeadline,
     oldDeadline: oldDeadline,
     reason: reason,
-    updateBy: currentLineUserName || "ช่างหน้างาน"
+    updateBy: currentLineUserName || "ผู้ปฏิบัติงานหน้างาน"
   });
 
   // Client Requirement: Always alert LINE group / supervisor when extending deadline
@@ -1584,7 +1594,7 @@ export async function submitExtendDeadline(tasksList, currentLineUserName, onCom
     oldDeadline: oldDeadline,
     newDeadline: newDeadline,
     reason: reason,
-    requestBy: currentLineUserName || "ช่างหน้างาน"
+    requestBy: currentLineUserName || "ผู้ปฏิบัติงานหน้างาน"
   });
   await triggerLiffShare(flexCard, "ส่งคำขอขยายเวลางานเข้ากลุ่ม LINE สำเร็จ!");
 

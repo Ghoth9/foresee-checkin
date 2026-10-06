@@ -209,13 +209,13 @@ export function switchTab(tab) {
   });
 
   if (tab === "checkin") {
-    renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+    renderAssignedTasksBannerScoped();
     renderCheckinTechChips();
   } else if (tab === "checkout") {
     renderActiveCheckoutList();
   } else if (tab === "tasks") {
     renderTechFilterChips(tasksList, allTechnicians);
-    renderTasksList(tasksList);
+    renderTasksListScoped();
   }
 }
 
@@ -227,16 +227,29 @@ export function renderCheckinTechChips() {
   if (!container) return;
   container.innerHTML = "";
 
-  allTechnicians.forEach(tName => {
+  if (selectedCheckinTechs.length === 0 && currentLinkedTech && currentLinkedTech.name) {
+    selectedCheckinTechs = [currentLinkedTech.name];
+  }
+
+  // Smart sort: Selected operator to the front
+  const sorted = [...allTechnicians].sort((a, b) => {
+    const aSel = selectedCheckinTechs.includes(a);
+    const bSel = selectedCheckinTechs.includes(b);
+    if (aSel && !bSel) return -1;
+    if (!aSel && bSel) return 1;
+    return a.localeCompare(b, 'th');
+  });
+
+  sorted.forEach(tName => {
     const isSelected = selectedCheckinTechs.includes(tName);
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+    btn.className = `px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center space-x-1 ${
       isSelected
-        ? "bg-slate-900 text-white font-semibold shadow-xs"
-        : "bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100"
+        ? "bg-slate-900 text-white font-bold shadow-xs ring-1 ring-slate-800"
+        : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 shadow-2xs"
     }`;
-    btn.innerHTML = `${isSelected ? '✓ ' : ''}${tName}`;
+    btn.innerHTML = `${isSelected ? '<span>✓</span>' : ''}<span>${tName}</span>`;
     btn.onclick = () => {
       if (selectedCheckinTechs.includes(tName)) {
         selectedCheckinTechs = selectedCheckinTechs.filter(t => t !== tName);
@@ -462,7 +475,7 @@ export function getUniquePhotosForActiveTask(activeItem) {
           if (src) {
             photosList.push({
               src,
-              caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || h.tech || 'ช่าง'}) #${idx + 1}`
+              caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || h.tech || 'ผู้ปฏิบัติงาน'}) #${idx + 1}`
             });
           }
         });
@@ -867,11 +880,11 @@ async function bootstrapApp() {
   }
 
   // 2. INSTANT ZERO-MILLISECOND RENDER FROM LOCAL CACHE (0ms delay)
-  renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+  renderAssignedTasksBannerScoped();
   renderCheckinTechChips();
   renderActiveCheckoutList();
   renderTechFilterChips(tasksList, allTechnicians);
-  renderTasksList(tasksList);
+  renderTasksListScoped();
   renderTodayLogs();
 
   // 3. Background Services (Non-blocking): LINE LIFF & GPS
@@ -960,8 +973,8 @@ export async function refreshFromSupabase(force = false) {
       const recentLocal = tasksList.filter(t => !serverMap.has(t.id) && (Date.now() - (t.createdAt || 0) < 180000));
       tasksList = [...recentLocal, ...fresh.tasks];
       localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
-      renderTasksList(tasksList);
-      renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+      renderTasksListScoped();
+      renderAssignedTasksBannerScoped();
       renderTechFilterChips(tasksList, allTechnicians);
     }
 
@@ -1051,6 +1064,20 @@ export function isCurrentUserAdmin() {
   return currentUserRole === "admin";
 }
 
+export function renderTasksListScoped() {
+  const isAdmin = currentUserRole === "admin";
+  const opName = currentLinkedTech ? currentLinkedTech.name : null;
+  renderTasksList(tasksList, opName, isAdmin);
+}
+window.renderTasksListScoped = renderTasksListScoped;
+
+export function renderAssignedTasksBannerScoped() {
+  const isAdmin = currentUserRole === "admin";
+  const opName = currentLinkedTech ? currentLinkedTech.name : null;
+  renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs), opName, isAdmin);
+}
+window.renderAssignedTasksBannerScoped = renderAssignedTasksBannerScoped;
+
 export async function resolveUserRole() {
   // 1. Identify LINE Login Profile and perform Auto-Bind
   let matchedTech = null;
@@ -1094,7 +1121,31 @@ export async function resolveUserRole() {
     }
   }
 
-  // 2. Determine actual role
+  // 2. Fallback to localStorage operator profile (for PC, iPad, or when not auto-matched)
+  if (!matchedTech) {
+    const storedId = localStorage.getItem("fs_current_operator_id");
+    const storedName = localStorage.getItem("fs_current_operator_name");
+    if (storedId || storedName) {
+      const match = techniciansList.find(t => (storedId && t.id === storedId) || (storedName && t.name === storedName));
+      if (match) {
+        currentLinkedTech = match;
+        matchedTech = match;
+      }
+    }
+  }
+
+  // Persist matched operator and auto-select in check-in form
+  if (matchedTech) {
+    currentLinkedTech = matchedTech;
+    localStorage.setItem("fs_current_operator_id", matchedTech.id);
+    localStorage.setItem("fs_current_operator_name", matchedTech.name);
+    if (!selectedCheckinTechs || selectedCheckinTechs.length === 0) {
+      selectedCheckinTechs = [matchedTech.name];
+      renderCheckinTechChips();
+    }
+  }
+
+  // 3. Determine actual role
   let actualRole = "technician";
   if (matchedTech && matchedTech.role === "admin") {
     actualRole = "admin";
@@ -1102,22 +1153,36 @@ export async function resolveUserRole() {
     actualRole = "admin";
   }
 
-  // 3. Check active simulation (persisted in sessionStorage)
+  // 4. Check active simulation (persisted in sessionStorage)
   const sim = sessionStorage.getItem("fs_simulated_role");
   if (sim) {
     simulatedRole = sim;
     currentUserRole = sim;
     applyRolePermissionsUI(currentUserRole, currentLinkedTech);
+    renderTasksListScoped();
+    renderAssignedTasksBannerScoped();
     return;
   }
 
-  // 4. Normal role application
+  // 5. Normal role application
   currentUserRole = actualRole;
   applyRolePermissionsUI(currentUserRole, currentLinkedTech);
+  renderTasksListScoped();
+  renderAssignedTasksBannerScoped();
 
   // If Admin and no active tab stored yet, default to tasks management!
   if (currentUserRole === "admin" && (!sessionStorage.getItem("fs_active_tab") || sessionStorage.getItem("fs_active_tab") === "checkin")) {
     switchTab("tasks");
+  }
+
+  // 6. If no operator has been chosen yet, and not admin override -> prompt selection
+  if (!currentLinkedTech && !isUserAdminActual() && !sessionStorage.getItem("fs_operator_prompted")) {
+    sessionStorage.setItem("fs_operator_prompted", "true");
+    setTimeout(() => {
+      if (!currentLinkedTech && !isUserAdminActual()) {
+        openSelectOperatorModal();
+      }
+    }, 400);
   }
 }
 
@@ -1160,8 +1225,8 @@ export function switchSimulatedRole(mode) {
   }
 
   // Sync tasks view and check-in banner immediately
-  renderTasksList(tasksList);
-  renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+  renderTasksListScoped();
+  renderAssignedTasksBannerScoped();
 
   showAppAlert({
     type: "info",
@@ -1352,28 +1417,56 @@ export function applyRolePermissionsUI(role, techObj) {
     taskTitle.innerText = isAdmin ? "งานมอบหมายและติดตามงาน" : "รายการงานที่ได้รับมอบหมาย";
   }
   if (taskDesc) {
+    const opName = (techObj || currentLinkedTech)?.name;
     taskDesc.innerText = isAdmin
       ? "จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ"
-      : "ตรวจสอบรายละเอียดงานและกำหนดส่งของทีมผู้ปฏิบัติงาน";
+      : (opName ? `รายการงานที่คุณ (${opName}) ได้รับมอบหมายและต้องอัปเดตความคืบหน้า` : "ตรวจสอบรายละเอียดงานและกำหนดส่งของทีมผู้ปฏิบัติงาน");
   }
 
-  // 10. Re-render Today Logs & Active Checkout List to sync delete buttons
+  // 10. Dropdown Operator Name & Role Control visibility
+  const dropOpName = document.getElementById("dropdownCurrentOperatorName");
+  if (dropOpName) {
+    dropOpName.innerText = (techObj || currentLinkedTech)?.name || "ยังไม่ได้เลือกชื่อ";
+  }
+
+  const adminControls = document.getElementById("roleDropdownAdminControls");
+  const unlockSection = document.getElementById("roleDropdownUnlockAdminSection");
+  const isRealAdmin = isUserAdminActual() || sessionStorage.getItem("fs_admin_override") === "true";
+  if (adminControls && unlockSection) {
+    if (isRealAdmin) {
+      adminControls.classList.remove("hidden");
+      unlockSection.classList.add("hidden");
+    } else {
+      adminControls.classList.add("hidden");
+      unlockSection.classList.remove("hidden");
+    }
+  }
+
+  // 11. Company-wide Technician Filter row visibility (Admin only)
+  const techFilterRow = document.getElementById("taskTechFilterRow");
+  if (techFilterRow) {
+    if (isAdmin) {
+      techFilterRow.classList.remove("hidden");
+    } else {
+      techFilterRow.classList.add("hidden");
+    }
+  }
+
+  // 12. Re-render Today Logs & Active Checkout List to sync delete buttons
   renderTodayLogs();
   renderActiveCheckoutList();
 }
 
 export function handleRoleBadgeClick() {
-  const isAdmin = isUserAdminActual() || currentUserRole === "admin";
-  if (isAdmin) {
-    toggleRoleDropdownMenu();
-  } else {
-    // Open PIN prompt
-    const el = document.getElementById("adminPinModal");
-    const input = document.getElementById("adminPinInput");
-    if (input) input.value = "";
-    if (el) el.classList.remove("hidden");
-    if (input) input.focus();
-  }
+  toggleRoleDropdownMenu();
+}
+
+export function openAdminPinModal() {
+  const el = document.getElementById("adminPinModal");
+  const input = document.getElementById("adminPinInput");
+  if (input) input.value = "";
+  if (el) el.classList.remove("hidden");
+  if (input) input.focus();
 }
 
 export function closeAdminPinModal() {
@@ -1634,42 +1727,123 @@ export async function unbindTechLineUser(techId) {
   });
 }
 
-export function openLinkLineAccountModal() {
-  const el = document.getElementById("linkLineAccountModal");
-  const nameEl = document.getElementById("linkLineDisplayNameText");
-  const listEl = document.getElementById("linkLineMemberListContainer");
-  if (!el || !listEl) return;
+let selectOperatorSearchQuery = "";
 
-  const currentName = getLineUserName() || "LINE User";
-  if (nameEl) nameEl.innerText = currentName;
+export function openSelectOperatorModal() {
+  const el = document.getElementById("selectOperatorModal");
+  if (!el) return;
+  selectOperatorSearchQuery = "";
+  const input = document.getElementById("selectOperatorSearchInput");
+  if (input) input.value = "";
+  const clearBtn = document.getElementById("selectOperatorSearchClearBtn");
+  if (clearBtn) clearBtn.classList.add("hidden");
+  renderSelectOperatorList();
+  el.classList.remove("hidden");
+}
 
-  listEl.innerHTML = techniciansList.map(tech => {
-    const isBound = !!tech.line_user_id;
+export function closeSelectOperatorModal() {
+  const el = document.getElementById("selectOperatorModal");
+  if (el) el.classList.add("hidden");
+}
+
+export function filterSelectOperatorList(query) {
+  selectOperatorSearchQuery = (query || "").trim().toLowerCase();
+  const clearBtn = document.getElementById("selectOperatorSearchClearBtn");
+  if (clearBtn) {
+    if (selectOperatorSearchQuery) clearBtn.classList.remove("hidden");
+    else clearBtn.classList.add("hidden");
+  }
+  renderSelectOperatorList();
+}
+
+export function clearSelectOperatorSearch() {
+  const input = document.getElementById("selectOperatorSearchInput");
+  if (input) input.value = "";
+  filterSelectOperatorList("");
+}
+
+export function renderSelectOperatorList() {
+  const listEl = document.getElementById("selectOperatorListContainer");
+  if (!listEl) return;
+
+  let list = techniciansList || [];
+  if (selectOperatorSearchQuery) {
+    list = list.filter(t => t.name && t.name.toLowerCase().includes(selectOperatorSearchQuery));
+  }
+
+  if (list.length === 0) {
+    listEl.innerHTML = `
+      <div class="text-center py-6 text-xs text-slate-400">
+        ไม่พบรายชื่อที่ตรงกับ "${selectOperatorSearchQuery}"
+      </div>
+    `;
+    return;
+  }
+
+  const currentName = currentLinkedTech?.name;
+
+  listEl.innerHTML = list.map(tech => {
+    const isCurrent = currentName === tech.name;
+    const isAdmin = tech.role === "admin";
     return `
-      <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-2 shadow-2xs">
-        <div class="min-w-0">
-          <div class="font-bold text-xs text-slate-900 truncate">${tech.name}</div>
-          <div class="text-[10px] text-slate-500">${tech.role === 'admin' ? '👑 แอดมิน' : '👷 ผู้ปฏิบัติงาน'} ${isBound ? '• ผูก LINE แล้ว' : '• ยังไม่ผูก LINE'}</div>
+      <div onclick="window.chooseOperatorProfile('${tech.id}')" class="p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 shadow-2xs hover:scale-[1.01] active:scale-[0.99] ${
+        isCurrent 
+          ? 'bg-blue-50 border-2 border-blue-600 ring-2 ring-blue-100' 
+          : 'bg-white hover:bg-slate-50 border-slate-200'
+      }">
+        <div class="min-w-0 flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-full ${isAdmin ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'} flex items-center justify-center font-bold text-xs flex-shrink-0">
+            ${isAdmin ? '👑' : '👤'}
+          </div>
+          <div class="min-w-0">
+            <div class="font-bold text-xs text-slate-900 truncate">${tech.name}</div>
+            <div class="text-[10px] text-slate-500">${isAdmin ? '👑 แอดมิน (Admin)' : '👤 ผู้ปฏิบัติงาน'}</div>
+          </div>
         </div>
-        <button type="button" onclick="window.selectTechToBindLine('${tech.id}')" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs active:scale-95 transition-all flex-shrink-0">
-          เลือกฉัน
+        <button type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex-shrink-0 cursor-pointer ${
+          isCurrent 
+            ? 'bg-blue-600 text-white shadow-2xs' 
+            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+        }">
+          ${isCurrent ? '✓ กำลังใช้งาน' : 'เลือกฉัน'}
         </button>
       </div>
     `;
   }).join("");
-
-  el.classList.remove("hidden");
 }
 
-export function closeLinkLineAccountModal() {
-  const el = document.getElementById("linkLineAccountModal");
-  if (el) el.classList.add("hidden");
-  sessionStorage.setItem("fs_link_modal_dismissed", "true");
-}
+export async function chooseOperatorProfile(techId) {
+  const tech = techniciansList.find(t => t.id === techId);
+  if (!tech) return;
 
-export async function selectTechToBindLine(techId) {
-  await bindCurrentLineUserToTech(techId);
-  closeLinkLineAccountModal();
+  currentLinkedTech = tech;
+  localStorage.setItem("fs_current_operator_id", tech.id);
+  localStorage.setItem("fs_current_operator_name", tech.name);
+
+  // If LINE is logged in and tech has no line_user_id yet, auto-bind to Supabase!
+  if (isLineLoggedIn()) {
+    const profile = getLineUserProfile();
+    if (profile && profile.userId) {
+      tech.line_user_id = profile.userId;
+      bindTechnicianLineUserApi(tech.id, profile.userId);
+    }
+  }
+
+  // Auto-select their own name in check-in form
+  selectedCheckinTechs = [tech.name];
+  renderCheckinTechChips();
+
+  closeSelectOperatorModal();
+  await resolveUserRole();
+
+  renderTasksListScoped();
+  renderAssignedTasksBannerScoped();
+
+  showAppAlert({
+    type: "success",
+    title: "บันทึกตัวตนสำเร็จ",
+    message: `คุณเข้าใช้งานในฐานะ "${tech.name}" เรียบร้อยแล้ว ระบบจะแสดงเฉพาะงานที่คุณได้รับมอบหมายครับ 👍`
+  });
 }
 
 export async function handleChangeMemberRole(techId, newRole) {
@@ -1904,10 +2078,10 @@ window.submitCheckout = () => {
             linkedTask.progress = 100;
             linkedTask.latestUpdate = `ปิดงานเรียบร้อย: ${closedRecord.outcome}`;
           } else {
-            linkedTask.latestUpdate = `[ติดปัญหา] ${closedRecord.note ? closedRecord.note : 'พบปัญหาหน้างาน'} (โดย ${closedRecord.closedBy || 'ช่าง'})`;
+            linkedTask.latestUpdate = `[ติดปัญหา] ${closedRecord.note ? closedRecord.note : 'พบปัญหาหน้างาน'} (โดย ${closedRecord.closedBy || 'ผู้ปฏิบัติงาน'})`;
           }
           localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
-          renderTasksList(tasksList);
+          renderTasksListScoped();
         }
       }
 
@@ -1936,7 +2110,7 @@ window.handleTaskSearch = (query) => {
     if (query && query.trim()) clearBtn.classList.remove("hidden");
     else clearBtn.classList.add("hidden");
   }
-  renderTasksList(tasksList);
+  renderTasksListScoped();
 };
 
 window.clearTaskSearch = () => {
@@ -1956,6 +2130,7 @@ window.handleRoleBadgeClick = handleRoleBadgeClick;
 window.switchSimulatedRole = switchSimulatedRole;
 window.toggleRoleDropdownMenu = toggleRoleDropdownMenu;
 window.closeRoleDropdownMenu = closeRoleDropdownMenu;
+window.openAdminPinModal = openAdminPinModal;
 window.closeAdminPinModal = closeAdminPinModal;
 window.submitAdminPinUnlock = submitAdminPinUnlock;
 window.openTeamRoleModal = openTeamRoleModal;
@@ -1966,9 +2141,14 @@ window.setNewMemberRole = setNewMemberRole;
 window.handleDeleteMember = handleDeleteMember;
 window.bindCurrentLineUserToTech = bindCurrentLineUserToTech;
 window.unbindTechLineUser = unbindTechLineUser;
-window.openLinkLineAccountModal = openLinkLineAccountModal;
-window.closeLinkLineAccountModal = closeLinkLineAccountModal;
-window.selectTechToBindLine = selectTechToBindLine;
+
+// Select Operator Modal Bindings
+window.openSelectOperatorModal = openSelectOperatorModal;
+window.closeSelectOperatorModal = closeSelectOperatorModal;
+window.filterSelectOperatorList = filterSelectOperatorList;
+window.clearSelectOperatorSearch = clearSelectOperatorSearch;
+window.renderSelectOperatorList = renderSelectOperatorList;
+window.chooseOperatorProfile = chooseOperatorProfile;
 
 window.openAssignModal = () => {
   if (currentUserRole !== "admin") {
@@ -2002,8 +2182,8 @@ window.fetchCurrentCoordsForAssign = () => {
 window.submitAssignModal = () => submitAssignForm({
   tasksList: tasksList,
   onComplete: () => {
-    renderTasksList(tasksList);
-    renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
+    renderTasksListScoped();
+    renderAssignedTasksBannerScoped();
   }
 });
 
@@ -2097,7 +2277,7 @@ window.saveTaskDetailChanges = () => {
     return;
   }
   saveTaskDetailChanges(tasksList, () => {
-    renderTasksList(tasksList);
+    renderTasksListScoped();
   });
 };
 window.deleteCurrentDetailTask = () => {
@@ -2122,7 +2302,7 @@ window.deleteCurrentDetailTask = () => {
       localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
       renderActiveCheckoutList();
     }
-    renderTasksList(tasksList);
+    renderTasksListScoped();
   });
 };
 
@@ -2189,7 +2369,7 @@ window.deletePhotoFromTask = (photoSrc, activeTaskId) => {
         renderActiveTaskPhotos(activeItem);
       }
       renderActiveCheckoutList();
-      renderTasksList(tasksList);
+      renderTasksListScoped();
 
       deletePhotoFromSupabaseApi(photoSrc, targetTaskId, activeItem?.id);
 
@@ -2257,7 +2437,7 @@ window.saveEditedTask = () => window.saveTaskDetailChanges();
 
 window.openExtendModal = (taskId) => openExtendModal(taskId, tasksList);
 window.closeExtendModal = closeExtendModal;
-window.submitExtendDeadline = () => submitExtendDeadline(tasksList, getLineUserName(), () => renderTasksList(tasksList));
+window.submitExtendDeadline = () => submitExtendDeadline(tasksList, getLineUserName(), () => renderTasksListScoped());
 
 window.openProgressModalForTask = (taskId) => {
   switchTab("checkout");
@@ -2289,7 +2469,10 @@ window.setUpdateStatus = setProgressStatus;
 window.submitUpdateProgress = () => submitProgressUpdate({
   tasksList: tasksList,
   currentLineUserName: getLineUserName(),
-  onComplete: () => renderTasksList(tasksList)
+  onComplete: () => {
+    renderTasksListScoped();
+    renderAssignedTasksBannerScoped();
+  }
 });
 
 window.handleLineLoginToggle = () => {
