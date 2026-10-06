@@ -1364,14 +1364,7 @@ export function renderTeamRoleList() {
                 <button type="button" onclick="window.unbindTechLineUser('${tech.id}')" class="text-slate-400 hover:text-rose-600 text-[10px] ml-1 p-0.5 rounded hover:bg-rose-50" title="ยกเลิกการผูก LINE">✕ ยกเลิกผูก</button>
               </span>
             ` : `
-              <div class="flex items-center space-x-1.5 flex-wrap gap-1">
-                <span class="text-slate-400">⚪ ยังไม่ผูก LINE</span>
-                ${isLineLoggedIn() ? `
-                  <button type="button" onclick="window.bindCurrentLineUserToTech('${tech.id}')" class="text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded-md transition-all active:scale-95 shadow-2xs">
-                    🔗 ผูกกับ LINE ฉัน (${currentLineName || 'ฉัน'})
-                  </button>
-                ` : ''}
-              </div>
+              <span class="text-slate-400">⚪ ยังไม่ผูก LINE</span>
             `}
           </div>
         </div>
