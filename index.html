@@ -1014,7 +1014,7 @@
   </div>
 
   <!-- 6. APP DIALOG MODAL (Replaces native browser alert & confirm) -->
-  <div id="appDialogModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
+  <div id="appDialogModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-[2000] overflow-y-auto modal-scroll-container">
     <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 my-auto space-y-4 animate-modal-in text-center">
       <div id="appDialogIconContainer" class="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-2xs bg-blue-50 text-blue-600 border border-blue-200">
         ℹ️
@@ -1030,7 +1030,7 @@
   </div>
 
   <!-- 7. CUSTOM ENTERPRISE THAI CALENDAR MODAL -->
-  <div id="customCalendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-50 overflow-y-auto modal-scroll-container">
+  <div id="customCalendarModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-4 z-[70] overflow-y-auto modal-scroll-container">
     <div class="bg-white rounded-2xl p-4 max-w-[320px] w-full shadow-2xl border border-slate-200 my-auto animate-modal-in">
       
       <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
@@ -1172,10 +1172,15 @@
           </div>
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">กำหนดสิทธิ์เริ่มต้น</label>
-            <select id="newMemberRoleSelect" class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-800 cursor-pointer">
-              <option value="technician">👷 ผู้ปฏิบัติงาน</option>
-              <option value="admin">👑 แอดมิน</option>
-            </select>
+            <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+              <button type="button" id="newMemberRoleBtnTech" onclick="window.setNewMemberRole('technician')" class="py-1.5 rounded-lg transition-all bg-white text-slate-900 shadow-2xs flex items-center justify-center space-x-1 cursor-pointer">
+                <span>👷</span><span>ผู้ปฏิบัติงาน</span>
+              </button>
+              <button type="button" id="newMemberRoleBtnAdmin" onclick="window.setNewMemberRole('admin')" class="py-1.5 rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1 cursor-pointer">
+                <span>👑</span><span>แอดมิน</span>
+              </button>
+            </div>
+            <input type="hidden" id="newMemberRoleSelect" value="technician">
           </div>
         </div>
         <div>

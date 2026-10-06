@@ -1370,17 +1370,37 @@ export function renderTeamRoleList() {
         </div>
 
         <div class="flex items-center space-x-1.5 flex-shrink-0">
-          <select onchange="window.handleChangeMemberRole('${tech.id}', this.value)" class="text-xs font-semibold rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-slate-800 focus:outline-none focus:border-slate-800 cursor-pointer">
-            <option value="technician" ${!isAdmin ? 'selected' : ''}>👷 ผู้ปฏิบัติงาน</option>
-            <option value="admin" ${isAdmin ? 'selected' : ''}>👑 แอดมิน</option>
-          </select>
-          <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors" title="ลบสมาชิก">
+          <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold shadow-2xs">
+            <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'technician')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${!isAdmin ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'}" title="กำหนดสิทธิ์เป็นผู้ปฏิบัติงาน">
+              👷 ช่าง
+            </button>
+            <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'admin')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${isAdmin ? 'bg-amber-400 text-slate-950 shadow-2xs' : 'text-slate-400 hover:text-amber-700'}" title="กำหนดสิทธิ์เป็นแอดมิน">
+              👑 แอดมิน
+            </button>
+          </div>
+          <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="ลบสมาชิก">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
       </div>
     `;
   }).join("");
+}
+
+export function setNewMemberRole(role) {
+  const input = document.getElementById("newMemberRoleSelect");
+  const btnTech = document.getElementById("newMemberRoleBtnTech");
+  const btnAdmin = document.getElementById("newMemberRoleBtnAdmin");
+  if (input) input.value = role;
+  if (btnTech && btnAdmin) {
+    if (role === "admin") {
+      btnAdmin.className = "py-1.5 rounded-lg transition-all bg-amber-400 text-slate-950 shadow-2xs font-bold flex items-center justify-center space-x-1 cursor-pointer";
+      btnTech.className = "py-1.5 rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1 cursor-pointer";
+    } else {
+      btnTech.className = "py-1.5 rounded-lg transition-all bg-white text-slate-900 shadow-2xs font-bold flex items-center justify-center space-x-1 cursor-pointer";
+      btnAdmin.className = "py-1.5 rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1 cursor-pointer";
+    }
+  }
 }
 
 export async function bindCurrentLineUserToTech(techId) {
@@ -1474,9 +1494,11 @@ export async function selectTechToBindLine(techId) {
 }
 
 export async function handleChangeMemberRole(techId, newRole) {
+  const target = techniciansList.find(t => t.id === techId);
+  if (target && target.role === newRole) return; // Already this role
+
   const res = await updateTechnicianRoleApi(techId, newRole);
   if (res.success) {
-    const target = techniciansList.find(t => t.id === techId);
     if (target) target.role = newRole;
     showAppAlert({
       type: "success",
@@ -1512,6 +1534,7 @@ export async function submitAddNewMember() {
   const res = await addNewTechnicianWithRoleApi(name, "-", role);
   if (res.success) {
     if (nameInput) nameInput.value = "";
+    setNewMemberRole("technician");
     showAppAlert({
       type: "success",
       title: "เพิ่มสมาชิกสำเร็จ",
@@ -1749,6 +1772,7 @@ window.openTeamRoleModal = openTeamRoleModal;
 window.closeTeamRoleModal = closeTeamRoleModal;
 window.handleChangeMemberRole = handleChangeMemberRole;
 window.submitAddNewMember = submitAddNewMember;
+window.setNewMemberRole = setNewMemberRole;
 window.handleDeleteMember = handleDeleteMember;
 window.bindCurrentLineUserToTech = bindCurrentLineUserToTech;
 window.unbindTechLineUser = unbindTechLineUser;
