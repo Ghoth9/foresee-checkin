@@ -41,10 +41,6 @@
           <span>📊</span>
           <span>ตรวจสอบงาน & ปิดงาน</span>
         </button>
-        <button type="button" onclick="openTeamRoleModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap">
-          <span>👥</span>
-          <span>สิทธิ์ทีมงาน</span>
-        </button>
         <button id="deskTabBtnAdminCheckin" type="button" onclick="switchTab('checkin')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-800 hover:bg-amber-100 bg-amber-50 border border-amber-200 transition-all flex items-center space-x-1 whitespace-nowrap" title="สลับไปหน้าเช็กอินหน้างาน">
           <span>📍</span>
           <span>เช็กอิน</span>
@@ -154,17 +150,17 @@
 
   <main class="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-4 md:py-6 flex-1 space-y-4 md:space-y-6">
 
-    <!-- ==================== MOBILE SEGMENTED TABS ==================== -->
+    <!-- ==================== MOBILE SEGMENTED TABS (MOBILE ONLY) ==================== -->
     <!-- Admin Mobile Nav -->
-    <div id="adminMobileTabs" class="hidden bg-slate-300 p-1 rounded-xl grid-cols-3 gap-1 text-xs font-bold text-slate-700 shadow-inner">
+    <div id="adminMobileTabs" class="hidden md:hidden bg-slate-300 p-1 rounded-xl grid-cols-3 gap-1 text-xs font-bold text-slate-700 shadow-inner">
       <button id="mobAdminTabTasks" onclick="switchTab('tasks')" class="py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 whitespace-nowrap">
         <span>📋 จัดการงาน</span>
       </button>
       <button id="mobAdminTabCheckout" onclick="switchTab('checkout')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 whitespace-nowrap">
         <span>📊 ตรวจสอบงาน</span>
       </button>
-      <button onclick="openTeamRoleModal()" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 whitespace-nowrap">
-        <span>👥 ทีมงาน</span>
+      <button id="mobAdminTabCheckin" onclick="switchTab('checkin')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 whitespace-nowrap">
+        <span>📍 เช็กอิน</span>
       </button>
     </div>
 
@@ -1176,19 +1172,38 @@
               👑 มุมมองแอดมิน
             </button>
             <button type="button" onclick="switchSimulatedRole('technician')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95">
-              👷 มุมมองผู้ปฏิบัติงาน
+              👤 มุมมองผู้ปฏิบัติงาน
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Member List -->
-      <div class="space-y-2">
-        <div class="text-xs font-bold text-slate-800 flex items-center justify-between">
-          <span>รายชื่อสมาชิกในระบบ (<span id="teamRoleCount">0</span> คน)</span>
+      <!-- Member List with Separated Role Tabs -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div class="text-xs font-bold text-slate-800">
+            <span>แบ่งตามกลุ่มสิทธิ์ (<span id="teamRoleCount">0</span> คน)</span>
+          </div>
           <span class="text-[11px] text-slate-400 font-normal">สิทธิ์ซิงก์ Realtime ทันที</span>
         </div>
-        <div id="teamRoleListContainer" class="space-y-2 max-h-[35vh] overflow-y-auto pr-1">
+
+        <!-- Role Filter Tabs (Separating Admins and Operators) -->
+        <div class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+          <button type="button" onclick="window.setTeamRoleFilter('admin')" id="teamFilterTabAdmin" class="py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1 cursor-pointer">
+            <span>👑 แอดมิน</span>
+            <span id="teamFilterAdminCount" class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded-full font-mono font-bold">0</span>
+          </button>
+          <button type="button" onclick="window.setTeamRoleFilter('technician')" id="teamFilterTabTech" class="py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1 cursor-pointer">
+            <span>👤 ผู้ปฏิบัติงาน</span>
+            <span id="teamFilterTechCount" class="text-[10px] bg-slate-200 text-slate-800 px-1.5 py-0.2 rounded-full font-mono font-bold">0</span>
+          </button>
+          <button type="button" onclick="window.setTeamRoleFilter('all')" id="teamFilterTabAll" class="py-1.5 rounded-lg transition-all bg-white text-slate-900 shadow-2xs font-extrabold flex items-center justify-center space-x-1 cursor-pointer">
+            <span>ทั้งหมด</span>
+            <span id="teamFilterAllCount" class="text-[10px] bg-slate-200 text-slate-800 px-1.5 py-0.2 rounded-full font-mono font-bold">0</span>
+          </button>
+        </div>
+
+        <div id="teamRoleListContainer" class="space-y-2 max-h-[38vh] overflow-y-auto pr-1">
           <!-- Rendered dynamically -->
         </div>
       </div>

@@ -1291,13 +1291,13 @@ export function applyRolePermissionsUI(role, techObj) {
   if (isAdmin) {
     if (adminNav) { adminNav.classList.remove("hidden"); adminNav.classList.add("md:flex"); }
     if (operatorNav) { operatorNav.classList.add("hidden"); operatorNav.classList.remove("md:flex"); }
-    if (adminMobNav) { adminMobNav.classList.remove("hidden"); adminMobNav.classList.add("grid"); }
-    if (operatorMobNav) { operatorMobNav.classList.add("hidden"); operatorMobNav.classList.remove("grid"); }
+    if (adminMobNav) { adminMobNav.className = "grid md:hidden grid-cols-3 gap-1 bg-slate-300 p-1 rounded-xl text-xs font-bold text-slate-700 shadow-inner"; }
+    if (operatorMobNav) { operatorMobNav.className = "hidden md:hidden"; }
   } else {
     if (adminNav) { adminNav.classList.add("hidden"); adminNav.classList.remove("md:flex"); }
     if (operatorNav) { operatorNav.classList.remove("hidden"); operatorNav.classList.add("md:flex"); }
-    if (adminMobNav) { adminMobNav.classList.add("hidden"); adminMobNav.classList.remove("grid"); }
-    if (operatorMobNav) { operatorMobNav.classList.remove("hidden"); operatorMobNav.classList.add("grid"); }
+    if (adminMobNav) { adminMobNav.className = "hidden md:hidden"; }
+    if (operatorMobNav) { operatorMobNav.className = "grid md:hidden grid-cols-3 gap-1 bg-slate-300 p-1 rounded-xl text-xs font-bold text-slate-700 shadow-inner"; }
   }
 
   // 6. Header Subtitle and Role Badge
@@ -1422,11 +1422,93 @@ export function closeTeamRoleModal() {
   if (el) el.classList.add("hidden");
 }
 
+let currentTeamRoleFilter = "all";
+
+export function setTeamRoleFilter(filter) {
+  currentTeamRoleFilter = filter;
+  const tabAdmin = document.getElementById("teamFilterTabAdmin");
+  const tabTech = document.getElementById("teamFilterTabTech");
+  const tabAll = document.getElementById("teamFilterTabAll");
+
+  if (tabAdmin && tabTech && tabAll) {
+    if (filter === "admin") {
+      tabAdmin.className = "py-1.5 rounded-lg transition-all bg-amber-400 text-slate-950 shadow-2xs font-extrabold flex items-center justify-center space-x-1 cursor-pointer";
+      tabTech.className = "py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1 cursor-pointer";
+      tabAll.className = "py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1 cursor-pointer";
+    } else if (filter === "technician") {
+      tabAdmin.className = "py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1 cursor-pointer";
+      tabTech.className = "py-1.5 rounded-lg transition-all bg-white text-slate-900 shadow-2xs font-extrabold flex items-center justify-center space-x-1 cursor-pointer";
+      tabAll.className = "py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1 cursor-pointer";
+    } else {
+      tabAdmin.className = "py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1 cursor-pointer";
+      tabTech.className = "py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center space-x-1 cursor-pointer";
+      tabAll.className = "py-1.5 rounded-lg transition-all bg-white text-slate-900 shadow-2xs font-extrabold flex items-center justify-center space-x-1 cursor-pointer";
+    }
+  }
+
+  renderTeamRoleList();
+}
+window.setTeamRoleFilter = setTeamRoleFilter;
+
+function renderMemberCard(tech, currentLineId) {
+  const isAdmin = tech.role === "admin";
+  const isLineLinked = !!tech.line_user_id;
+  const isLinkedToMe = isLineLinked && currentLineId && tech.line_user_id === currentLineId;
+
+  return `
+    <div class="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
+      <div class="min-w-0">
+        <div class="flex items-center space-x-1.5 flex-wrap">
+          <span class="font-bold text-xs text-slate-900 truncate">${tech.name}</span>
+          ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">👤 ผู้ปฏิบัติงาน</span>`}
+          ${isLinkedToMe ? `<span class="px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">บัญชีของคุณ</span>` : ''}
+        </div>
+        <div class="text-[11px] text-slate-400 mt-1 flex items-center space-x-2 flex-wrap gap-y-1">
+          <span>📞 ${tech.phone || '-'}</span>
+          <span>•</span>
+          ${isLineLinked ? `
+            <span class="text-emerald-600 font-semibold flex items-center space-x-1">
+              <span>🟢 เชื่อม LINE แล้ว</span>
+              <button type="button" onclick="window.unbindTechLineUser('${tech.id}')" class="text-slate-400 hover:text-rose-600 text-[10px] ml-1 p-0.5 rounded hover:bg-rose-50" title="ยกเลิกการผูก LINE">✕ ยกเลิกผูก</button>
+            </span>
+          ` : `
+            <span class="text-slate-400">⚪ ยังไม่ผูก LINE</span>
+          `}
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-1.5 flex-shrink-0">
+        <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold shadow-2xs">
+          <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'technician')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${!isAdmin ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'}" title="กำหนดสิทธิ์เป็นผู้ปฏิบัติงาน">
+            👤 ผู้ปฏิบัติงาน
+          </button>
+          <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'admin')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${isAdmin ? 'bg-amber-400 text-slate-950 shadow-2xs' : 'text-slate-400 hover:text-amber-700'}" title="กำหนดสิทธิ์เป็นแอดมิน">
+            👑 แอดมิน
+          </button>
+        </div>
+        <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="ลบสมาชิก">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 export function renderTeamRoleList() {
   const container = document.getElementById("teamRoleListContainer");
   const countEl = document.getElementById("teamRoleCount");
   if (!container) return;
 
+  const adminList = techniciansList.filter(t => t.role === "admin");
+  const techList = techniciansList.filter(t => t.role !== "admin");
+
+  const adminCountEl = document.getElementById("teamFilterAdminCount");
+  const techCountEl = document.getElementById("teamFilterTechCount");
+  const allCountEl = document.getElementById("teamFilterAllCount");
+
+  if (adminCountEl) adminCountEl.innerText = adminList.length;
+  if (techCountEl) techCountEl.innerText = techList.length;
+  if (allCountEl) allCountEl.innerText = techniciansList.length;
   if (countEl) countEl.innerText = techniciansList.length;
 
   if (techniciansList.length === 0) {
@@ -1434,52 +1516,54 @@ export function renderTeamRoleList() {
     return;
   }
 
-  const currentLineName = getLineUserName();
   const currentLineId = getLineUserId();
 
-  container.innerHTML = techniciansList.map(tech => {
-    const isAdmin = tech.role === "admin";
-    const isLineLinked = !!tech.line_user_id;
-    const isLinkedToMe = isLineLinked && currentLineId && tech.line_user_id === currentLineId;
-
-    return `
-      <div class="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
-        <div class="min-w-0">
-          <div class="flex items-center space-x-1.5 flex-wrap">
-            <span class="font-bold text-xs text-slate-900 truncate">${tech.name}</span>
-            ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">👤 ผู้ปฏิบัติงาน</span>`}
-            ${isLinkedToMe ? `<span class="px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">บัญชีของคุณ</span>` : ''}
+  if (currentTeamRoleFilter === "admin") {
+    if (adminList.length === 0) {
+      container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-xl">ไม่มีสมาชิกในกลุ่มแอดมิน</div>`;
+    } else {
+      container.innerHTML = `<div class="space-y-2">${adminList.map(t => renderMemberCard(t, currentLineId)).join("")}</div>`;
+    }
+  } else if (currentTeamRoleFilter === "technician") {
+    if (techList.length === 0) {
+      container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-xl">ไม่มีสมาชิกในกลุ่มผู้ปฏิบัติงาน</div>`;
+    } else {
+      container.innerHTML = `<div class="space-y-2">${techList.map(t => renderMemberCard(t, currentLineId)).join("")}</div>`;
+    }
+  } else {
+    // Both sections clearly separated
+    container.innerHTML = `
+      <div class="space-y-3">
+        <!-- 1. ADMINS GROUP -->
+        <div class="space-y-1.5">
+          <div class="flex items-center space-x-2 px-1">
+            <span class="text-[11px] font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md flex items-center space-x-1">
+              <span>👑</span>
+              <span>กลุ่มผู้ดูแลระบบ / แอดมิน (${adminList.length} คน)</span>
+            </span>
+            <div class="h-px bg-amber-200 flex-1"></div>
           </div>
-          <div class="text-[11px] text-slate-400 mt-1 flex items-center space-x-2 flex-wrap gap-y-1">
-            <span>📞 ${tech.phone || '-'}</span>
-            <span>•</span>
-            ${isLineLinked ? `
-              <span class="text-emerald-600 font-semibold flex items-center space-x-1">
-                <span>🟢 เชื่อม LINE แล้ว</span>
-                <button type="button" onclick="window.unbindTechLineUser('${tech.id}')" class="text-slate-400 hover:text-rose-600 text-[10px] ml-1 p-0.5 rounded hover:bg-rose-50" title="ยกเลิกการผูก LINE">✕ ยกเลิกผูก</button>
-              </span>
-            ` : `
-              <span class="text-slate-400">⚪ ยังไม่ผูก LINE</span>
-            `}
+          <div class="space-y-1.5">
+            ${adminList.length === 0 ? `<div class="text-xs text-slate-400 p-2 text-center bg-slate-50 rounded-lg">ยังไม่มีผู้ดูแลระบบ</div>` : adminList.map(t => renderMemberCard(t, currentLineId)).join("")}
           </div>
         </div>
 
-        <div class="flex items-center space-x-1.5 flex-shrink-0">
-          <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold shadow-2xs">
-            <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'technician')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${!isAdmin ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'}" title="กำหนดสิทธิ์เป็นผู้ปฏิบัติงาน">
-              👤 ผู้ปฏิบัติงาน
-            </button>
-            <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'admin')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${isAdmin ? 'bg-amber-400 text-slate-950 shadow-2xs' : 'text-slate-400 hover:text-amber-700'}" title="กำหนดสิทธิ์เป็นแอดมิน">
-              👑 แอดมิน
-            </button>
+        <!-- 2. OPERATORS GROUP -->
+        <div class="space-y-1.5 pt-2">
+          <div class="flex items-center space-x-2 px-1">
+            <span class="text-[11px] font-black text-slate-800 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded-md flex items-center space-x-1">
+              <span>👤</span>
+              <span>กลุ่มผู้ปฏิบัติงาน (${techList.length} คน)</span>
+            </span>
+            <div class="h-px bg-slate-200 flex-1"></div>
           </div>
-          <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="ลบสมาชิก">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
+          <div class="space-y-1.5">
+            ${techList.length === 0 ? `<div class="text-xs text-slate-400 p-2 text-center bg-slate-50 rounded-lg">ยังไม่มีผู้ปฏิบัติงาน</div>` : techList.map(t => renderMemberCard(t, currentLineId)).join("")}
+          </div>
         </div>
       </div>
     `;
-  }).join("");
+  }
 }
 
 export function setNewMemberRole(role) {
