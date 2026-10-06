@@ -1931,7 +1931,18 @@ window.setStatusFilter = (st) => setStatusFilter(st, tasksList);
 window.setTaskTechFilter = (tech) => setTechFilter(tech, tasksList, allTechnicians);
 window.handleTaskSearch = (query) => {
   setTaskSearchQuery(query);
+  const clearBtn = document.getElementById("taskSearchClearBtn");
+  if (clearBtn) {
+    if (query && query.trim()) clearBtn.classList.remove("hidden");
+    else clearBtn.classList.add("hidden");
+  }
   renderTasksList(tasksList);
+};
+
+window.clearTaskSearch = () => {
+  const input = document.getElementById("taskSearchInput");
+  if (input) input.value = "";
+  window.handleTaskSearch("");
 };
 
 window.openManageTechModal = openManageTechModal;

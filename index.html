@@ -531,8 +531,11 @@
           <h1 id="tasksSectionTitle" class="text-xl md:text-2xl font-bold tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
           <p id="tasksSectionDesc" class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
         </div>
-        <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-          <input id="taskSearchInput" type="text" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน, ไซต์งาน..." class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 w-36 sm:w-52 shadow-2xs">
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
+            <input id="taskSearchInput" type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน..." class="bg-white border border-slate-200 rounded-lg pl-7 pr-7 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 w-40 sm:w-56 shadow-2xs">
+            <button type="button" id="taskSearchClearBtn" onclick="window.clearTaskSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
+          </div>
           <button id="manageTechSectionBtn" type="button" onclick="openManageTechModal()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-2xs active:scale-95">
             <span>👥 จัดการทีมผู้ปฏิบัติงาน</span>
           </button>
@@ -716,7 +719,7 @@
         <!-- Search Input for Assignees -->
         <div class="relative">
           <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-          <input type="text" id="assignTechSearchInput" oninput="window.filterAssignTechChips(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น เปิ้ล, พี่อาร์ม, ใบปอ)..." class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
+          <input type="text" id="assignTechSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" oninput="window.filterAssignTechChips(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น เปิ้ล, พี่อาร์ม, ใบปอ)..." class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
           <button type="button" id="assignTechSearchClearBtn" onclick="window.clearAssignTechSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs cursor-pointer font-bold">✕</button>
         </div>
 
@@ -889,7 +892,7 @@
           <!-- Search Input for Detail Assignees -->
           <div class="relative">
             <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-            <input type="text" id="detailTechSearchInput" oninput="window.filterDetailTechChips(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น เปิ้ล, พี่อาร์ม, ใบปอ)..." class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
+            <input type="text" id="detailTechSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" oninput="window.filterDetailTechChips(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น เปิ้ล, พี่อาร์ม, ใบปอ)..." class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
             <button type="button" id="detailTechSearchClearBtn" onclick="window.clearDetailTechSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs cursor-pointer font-bold">✕</button>
           </div>
 
