@@ -17,44 +17,65 @@
 
   <!-- ==================== DESKTOP & MOBILE HEADER ==================== -->
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-300/90 shadow-xs">
-    <div class="max-w-[1600px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+    <div class="max-w-[1600px] mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
       
       <!-- Brand & Logo -->
-      <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="switchTab('checkin')">
-        <img src="/foresee-logo.png" alt="Foresee Technology" class="h-9 md:h-10 w-auto object-contain select-none flex-shrink-0">
-        <div class="flex flex-col sm:border-l sm:border-slate-300 sm:pl-3 min-w-0">
+      <div class="flex items-center space-x-2.5 cursor-pointer select-none flex-shrink-0" onclick="window.handleBrandClick()">
+        <img src="/foresee-logo.png" alt="Foresee Technology" class="h-8 w-auto object-contain select-none flex-shrink-0">
+        <div class="flex flex-col sm:border-l sm:border-slate-300 sm:pl-2.5 min-w-0">
           <div class="flex items-center space-x-1.5">
-            <span class="font-black text-sm md:text-base tracking-tight text-slate-950">FORESEE</span>
-            <span class="text-[10px] bg-slate-900 text-white font-extrabold px-1.5 py-0.5 rounded shadow-2xs">FIELD 2.0</span>
+            <span class="font-black text-xs sm:text-sm tracking-tight text-slate-950 whitespace-nowrap">FORESEE</span>
+            <span id="appRoleBadgeTitle" class="text-[9px] bg-slate-900 text-white font-extrabold px-1.5 py-0.5 rounded shadow-2xs whitespace-nowrap">FIELD 2.0</span>
           </div>
-          <div id="appHeaderSubtitle" class="text-[10px] md:text-[11px] text-slate-600 font-semibold">ระบบมอบหมายงาน</div>
+          <div id="appHeaderSubtitle" class="text-[10px] text-slate-500 font-semibold whitespace-nowrap truncate max-w-[120px] sm:max-w-none">ระบบมอบหมายงาน</div>
         </div>
       </div>
 
-      <!-- Desktop Nav Tabs -->
-      <nav class="hidden md:flex items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300">
-        <button id="deskTabBtnCheckin" type="button" onclick="switchTab('checkin')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5">
+      <!-- Desktop Nav: ADMIN NAV (Visible when admin) -->
+      <nav id="adminNavTabs" class="hidden items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 flex-shrink-0">
+        <button id="deskTabBtnAdminTasks" type="button" onclick="switchTab('tasks')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5 whitespace-nowrap">
+          <span>📋</span>
+          <span>จัดการ & มอบหมายงาน</span>
+        </button>
+        <button id="deskTabBtnAdminCheckout" type="button" onclick="switchTab('checkout')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap">
+          <span>📊</span>
+          <span>ตรวจสอบงาน & ปิดงาน</span>
+        </button>
+        <button type="button" onclick="openTeamRoleModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap">
+          <span>👥</span>
+          <span>สิทธิ์ทีมงาน</span>
+        </button>
+        <button id="deskTabBtnAdminCheckin" type="button" onclick="switchTab('checkin')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-800 hover:bg-amber-100 bg-amber-50 border border-amber-200 transition-all flex items-center space-x-1 whitespace-nowrap" title="สลับไปหน้าเช็กอินหน้างาน">
+          <span>📍</span>
+          <span>เช็กอิน</span>
+        </button>
+      </nav>
+
+      <!-- Desktop Nav: OPERATOR NAV (Visible when technician) -->
+      <nav id="operatorNavTabs" class="hidden md:flex items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 flex-shrink-0">
+        <button id="deskTabBtnCheckin" type="button" onclick="switchTab('checkin')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5 whitespace-nowrap">
           <span>📍</span>
           <span>เช็กอินหน้างาน</span>
         </button>
-        <button id="deskTabBtnCheckout" type="button" onclick="switchTab('checkout')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5">
+        <button id="deskTabBtnCheckout" type="button" onclick="switchTab('checkout')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap">
           <span>📊</span>
           <span>อัปเดต & ปิดงาน</span>
         </button>
-        <button id="deskTabBtnTasks" type="button" onclick="switchTab('tasks')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5">
+        <button id="deskTabBtnTasks" type="button" onclick="switchTab('tasks')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap">
           <span>📋</span>
           <span id="deskTabBtnTasksText">รายการงาน</span>
         </button>
       </nav>
 
-      <!-- Right Actions: Role Badge & Dropdown, Manage Team (Admin), LINE Login, GPS Status, New Task -->
-      <div class="flex items-center space-x-1.5 sm:space-x-2">
-        <!-- User Role Badge & Switcher Dropdown -->
-        <div class="relative">
-          <button id="userRoleBadge" type="button" onclick="handleRoleBadgeClick()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95" title="แตะเพื่อเลือกมุมมองหรือจัดการสิทธิ์">
-            <span id="userRoleIcon">👷</span>
+      <!-- Right Actions: Role Badge & Dropdown, + มอบหมายงาน, LINE Login -->
+      <div class="flex items-center space-x-1.5 flex-shrink-0">
+        
+        <!-- Role Badge & Switcher Dropdown -->
+        <div class="relative flex-shrink-0">
+          <button id="userRoleBadge" type="button" onclick="handleRoleBadgeClick()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 whitespace-nowrap" title="แตะเพื่อเลือกมุมมองหรือจัดการสิทธิ์">
+            <span id="userRoleIcon">👤</span>
             <span id="userRoleText">ผู้ปฏิบัติงาน</span>
-            <svg id="userRoleArrow" class="w-3 h-3 opacity-60 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg id="userRoleArrow" class="w-3 h-3 opacity-60 ml-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
 
           <!-- Dropdown Menu for Role Switching & Team Management -->
@@ -77,10 +98,10 @@
 
             <button type="button" onclick="switchSimulatedRole('technician')" id="roleMenuTechBtn" class="w-full text-left p-2 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-between group mt-0.5">
               <div class="flex items-center space-x-2">
-                <span class="text-base">👷</span>
+                <span class="text-base">👤</span>
                 <div>
                   <div class="text-xs font-bold text-slate-900">มุมมอง: ผู้ปฏิบัติงาน (Staff)</div>
-                  <div class="text-[10px] text-slate-500">เช็กอิน, อัปเดตงาน, ปิดงาน (ล็อกลบ/แก้)</div>
+                  <div class="text-[10px] text-slate-500">เช็กอิน, อัปเดตงาน, ปิดงาน</div>
                 </div>
               </div>
               <span id="roleCheckTech" class="text-xs text-emerald-600 font-bold hidden">✓</span>
@@ -92,32 +113,18 @@
               <span>👥</span>
               <span>จัดการสิทธิ์ทีมงาน & เพิ่มสมาชิก</span>
             </button>
-
-            <button type="button" onclick="closeRoleDropdownMenu(); openLinkLineAccountModal();" class="w-full text-left p-2 rounded-xl hover:bg-emerald-50 text-xs font-semibold text-emerald-800 flex items-center space-x-2 transition-colors">
-              <span>💬</span>
-              <span>ทดสอบหน้าต่างเลือกโปรไฟล์ช่าง (Link LINE)</span>
-            </button>
           </div>
         </div>
 
-        <!-- Admin Only: Manage Team & Permissions -->
-        <button id="adminManageTeamBtn" type="button" onclick="openTeamRoleModal()" class="hidden items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs active:scale-95" title="จัดการทีมงานและสิทธิ์ผู้ใช้งาน">
-          <span>👥</span>
-          <span class="hidden sm:inline">จัดการสิทธิ์ทีม</span>
-        </button>
-
-        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="flex items-center space-x-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-colors">
-          <span id="lineLoginDot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-          <span id="lineLoginText">เข้าสู่ระบบ LINE</span>
-        </button>
-
-        <div id="gpsStatusBadge" class="text-xs px-3 py-1.5 rounded-xl font-bold bg-white border border-slate-300 text-slate-800 shadow-2xs flex items-center space-x-1.5">
-          <span id="gpsDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-          <span id="gpsStatusText" class="hidden md:inline text-xs text-slate-700">GPS</span>
-        </div>
-
-        <button id="assignTaskHeaderBtn" type="button" onclick="openAssignModal()" class="hidden md:flex items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-sm active:scale-95 transition-all">
+        <!-- Admin Only: + มอบหมายงาน (Compact & Sleek) -->
+        <button id="assignTaskHeaderBtn" type="button" onclick="openAssignModal()" class="hidden items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
           <span>+ มอบหมายงาน</span>
+        </button>
+
+        <!-- Compact LINE Status -->
+        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-colors whitespace-nowrap flex-shrink-0">
+          <span id="lineLoginDot" class="w-2 h-2 rounded-full bg-slate-400 flex-shrink-0"></span>
+          <span id="lineLoginText">LINE</span>
         </button>
       </div>
     </div>
@@ -148,14 +155,28 @@
   <main class="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-4 md:py-6 flex-1 space-y-4 md:space-y-6">
 
     <!-- ==================== MOBILE SEGMENTED TABS ==================== -->
-    <div class="block md:hidden bg-slate-300 p-1 rounded-xl grid grid-cols-3 gap-1 text-xs font-bold text-slate-700 shadow-inner">
-      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1">
+    <!-- Admin Mobile Nav -->
+    <div id="adminMobileTabs" class="hidden bg-slate-300 p-1 rounded-xl grid-cols-3 gap-1 text-xs font-bold text-slate-700 shadow-inner">
+      <button id="mobAdminTabTasks" onclick="switchTab('tasks')" class="py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 whitespace-nowrap">
+        <span>📋 จัดการงาน</span>
+      </button>
+      <button id="mobAdminTabCheckout" onclick="switchTab('checkout')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 whitespace-nowrap">
+        <span>📊 ตรวจสอบงาน</span>
+      </button>
+      <button onclick="openTeamRoleModal()" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 whitespace-nowrap">
+        <span>👥 ทีมงาน</span>
+      </button>
+    </div>
+
+    <!-- Operator Mobile Nav -->
+    <div id="operatorMobileTabs" class="block md:hidden bg-slate-300 p-1 rounded-xl grid grid-cols-3 gap-1 text-xs font-bold text-slate-700 shadow-inner">
+      <button id="tabBtnCheckin" onclick="switchTab('checkin')" class="py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 whitespace-nowrap">
         <span>📍 เช็กอิน</span>
       </button>
-      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1">
-        <span>📊 อัปเดต & ปิดงาน</span>
+      <button id="tabBtnCheckout" onclick="switchTab('checkout')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 whitespace-nowrap">
+        <span>📊 อัปเดตงาน</span>
       </button>
-      <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1">
+      <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 whitespace-nowrap">
         <span>📋</span>
         <span id="tabBtnTasksText">รายการงาน</span>
       </button>
@@ -1186,7 +1207,7 @@
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">กำหนดสิทธิ์เริ่มต้น</label>
             <div class="grid grid-cols-2 gap-1 p-0.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
               <button type="button" id="newMemberRoleBtnTech" onclick="window.setNewMemberRole('technician')" class="py-1.5 rounded-lg transition-all bg-white text-slate-900 shadow-2xs flex items-center justify-center space-x-1 cursor-pointer">
-                <span>👷</span><span>ผู้ปฏิบัติงาน</span>
+                <span>👤</span><span>ผู้ปฏิบัติงาน</span>
               </button>
               <button type="button" id="newMemberRoleBtnAdmin" onclick="window.setNewMemberRole('admin')" class="py-1.5 rounded-lg transition-all text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1 cursor-pointer">
                 <span>👑</span><span>แอดมิน</span>

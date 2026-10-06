@@ -163,23 +163,47 @@ export function switchTab(tab) {
       }
     }
 
-    // Desktop nav buttons
+    // Operator Desktop nav buttons
     const deskBtn = document.getElementById(`deskTabBtn${s.charAt(0).toUpperCase() + s.slice(1)}`);
     if (deskBtn) {
       if (s === tab) {
-        deskBtn.className = "px-3.5 py-1.5 rounded-md text-xs font-semibold text-slate-900 bg-white shadow-2xs transition-all flex items-center space-x-1.5";
+        deskBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5 whitespace-nowrap";
       } else {
-        deskBtn.className = "px-3.5 py-1.5 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center space-x-1.5";
+        deskBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap";
       }
     }
 
-    // Mobile nav buttons
+    // Admin Desktop nav buttons
+    const adminDeskBtn = document.getElementById(`deskTabBtnAdmin${s.charAt(0).toUpperCase() + s.slice(1)}`);
+    if (adminDeskBtn) {
+      if (s === tab) {
+        adminDeskBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5 whitespace-nowrap";
+      } else {
+        if (s === "checkin") {
+          adminDeskBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-800 hover:bg-amber-100 bg-amber-50 border border-amber-200 transition-all flex items-center space-x-1 whitespace-nowrap";
+        } else {
+          adminDeskBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap";
+        }
+      }
+    }
+
+    // Operator Mobile nav buttons
     const mobBtn = document.getElementById(`tabBtn${s.charAt(0).toUpperCase() + s.slice(1)}`);
     if (mobBtn) {
       if (s === tab) {
-        mobBtn.className = "py-2 rounded-lg transition-all bg-white text-slate-900 shadow-sm font-semibold flex items-center justify-center space-x-1";
+        mobBtn.className = "py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 whitespace-nowrap";
       } else {
-        mobBtn.className = "py-2 rounded-lg transition-all hover:text-slate-900 flex items-center justify-center space-x-1 text-slate-600";
+        mobBtn.className = "py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 text-slate-600 whitespace-nowrap";
+      }
+    }
+
+    // Admin Mobile nav buttons
+    const adminMobBtn = document.getElementById(`mobAdminTab${s.charAt(0).toUpperCase() + s.slice(1)}`);
+    if (adminMobBtn) {
+      if (s === tab) {
+        adminMobBtn.className = "py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 whitespace-nowrap";
+      } else {
+        adminMobBtn.className = "py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 text-slate-600 whitespace-nowrap";
       }
     }
   });
@@ -1003,14 +1027,15 @@ function updateLineStatusUI() {
 
   if (isLineLoggedIn()) {
     const name = getLineUserName();
-    dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-    text.innerText = name ? `LINE: ${name}` : "LINE เชื่อมต่อแล้ว";
+    dot.className = "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0";
+    const shortName = name && name.length > 8 ? name.slice(0, 7) + '…' : name;
+    text.innerText = shortName ? `LINE: ${shortName}` : "LINE เชื่อมต่อแล้ว";
     if (banner) {
       banner.classList.add("hidden");
       banner.classList.remove("flex");
     }
   } else {
-    dot.className = "w-2 h-2 rounded-full bg-slate-300";
+    dot.className = "w-2 h-2 rounded-full bg-slate-300 flex-shrink-0";
     text.innerText = "เข้าสู่ระบบ LINE";
     if (banner) {
       banner.classList.remove("hidden");
@@ -1089,6 +1114,11 @@ export async function resolveUserRole() {
   // 4. Normal role application
   currentUserRole = actualRole;
   applyRolePermissionsUI(currentUserRole, currentLinkedTech);
+
+  // If Admin and no active tab stored yet, default to tasks management!
+  if (currentUserRole === "admin" && (!sessionStorage.getItem("fs_active_tab") || sessionStorage.getItem("fs_active_tab") === "checkin")) {
+    switchTab("tasks");
+  }
 }
 
 let simulatedRole = null;
@@ -1122,18 +1152,33 @@ export function switchSimulatedRole(mode) {
   closeRoleDropdownMenu();
   applyRolePermissionsUI(currentUserRole, currentLinkedTech);
 
+  // Switch to appropriate primary workspace
+  if (mode === "admin") {
+    switchTab("tasks");
+  } else {
+    switchTab("checkin");
+  }
+
   // Sync tasks view and check-in banner immediately
   renderTasksList(tasksList);
   renderAssignedTasksBanner(tasksList, allTechnicians, (tId) => selectAssignedTask(tId, tasksList, setCheckinTechs));
 
   showAppAlert({
     type: "info",
-    title: mode === "admin" ? "สลับเป็น: มุมมองแอดมิน 👑" : "สลับเป็น: มุมมองผู้ปฏิบัติงาน 👷",
+    title: mode === "admin" ? "สลับเป็น: เมนูแอดมิน 👑" : "สลับเป็น: เมนูผู้ปฏิบัติงาน 👤",
     message: mode === "admin"
-      ? "แสดงผลแบบแอดมินเต็มรูปแบบ (มอบหมายงาน, แก้ไข, ลบงาน, จัดการสิทธิ์)"
-      : "แสดงผลแบบผู้ปฏิบัติงาน (ซ่อนปุ่มมอบหมายงานและปุ่มลบงาน ดูรายละเอียดงานอย่างเดียว)"
+      ? "แสดงผลเมนูแอดมินเต็มรูปแบบ (จัดการงาน, มอบหมายงาน, ตรวจสอบงาน, จัดการสิทธิ์ทีม)"
+      : "แสดงผลเมนูผู้ปฏิบัติงานหน้างาน (เช็กอิน, อัปเดตงาน, ปิดงาน ซ่อนปุ่มแอดมินทั้งหมด)"
   });
 }
+
+window.handleBrandClick = function() {
+  if (currentUserRole === "admin") {
+    switchTab("tasks");
+  } else {
+    switchTab("checkin");
+  }
+};
 
 export function toggleRoleDropdownMenu() {
   const menu = document.getElementById("userRoleDropdownMenu");
@@ -1160,14 +1205,16 @@ export function applyRolePermissionsUI(role, techObj) {
     if (isAdmin) {
       icon.innerText = "👑";
       const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : (getLineUserName() || "แอดมิน");
-      text.innerText = `แอดมิน: ${cleanName}`;
-      badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer";
+      const shortName = cleanName && cleanName.length > 8 ? cleanName.slice(0, 7) + '…' : cleanName;
+      text.innerText = `แอดมิน: ${shortName}`;
+      badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0";
       badge.title = "คุณมีสิทธิ์แอดมิน (แตะเพื่อสลับมุมมองหรือจัดการสิทธิ์)";
     } else {
-      icon.innerText = "👷";
+      icon.innerText = "👤";
       const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : (getLineUserName() || "ทั่วไป");
-      text.innerText = `ผู้ปฏิบัติงาน: ${cleanName}`;
-      badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer";
+      const shortName = cleanName && cleanName.length > 8 ? cleanName.slice(0, 7) + '…' : cleanName;
+      text.innerText = `ผู้ปฏิบัติงาน: ${shortName}`;
+      badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0";
       badge.title = "เข้าสู่ระบบในฐานะผู้ปฏิบัติงาน (แตะเพื่อปลดล็อกแอดมินหรือสลับมุมมอง)";
     }
   }
@@ -1196,7 +1243,7 @@ export function applyRolePermissionsUI(role, techObj) {
     }
   }
 
-  // 4. Admin Team Button
+  // 4. Header Actions Visibility
   if (adminTeamBtn) {
     if (isAdmin) {
       adminTeamBtn.classList.remove("hidden");
@@ -1207,12 +1254,13 @@ export function applyRolePermissionsUI(role, techObj) {
     }
   }
 
-  // 5. Assign Task & Manage Team Buttons
   if (assignTaskHeaderBtn) {
     if (isAdmin) {
       assignTaskHeaderBtn.classList.remove("hidden");
+      assignTaskHeaderBtn.classList.add("flex");
     } else {
       assignTaskHeaderBtn.classList.add("hidden");
+      assignTaskHeaderBtn.classList.remove("flex");
     }
   }
 
@@ -1234,7 +1282,38 @@ export function applyRolePermissionsUI(role, techObj) {
     }
   }
 
-  // 6. Task Detail Modal Controls
+  // 5. Separate Navigation Bars between Admin and Operator
+  const adminNav = document.getElementById("adminNavTabs");
+  const operatorNav = document.getElementById("operatorNavTabs");
+  const adminMobNav = document.getElementById("adminMobileTabs");
+  const operatorMobNav = document.getElementById("operatorMobileTabs");
+
+  if (isAdmin) {
+    if (adminNav) { adminNav.classList.remove("hidden"); adminNav.classList.add("md:flex"); }
+    if (operatorNav) { operatorNav.classList.add("hidden"); operatorNav.classList.remove("md:flex"); }
+    if (adminMobNav) { adminMobNav.classList.remove("hidden"); adminMobNav.classList.add("grid"); }
+    if (operatorMobNav) { operatorMobNav.classList.add("hidden"); operatorMobNav.classList.remove("grid"); }
+  } else {
+    if (adminNav) { adminNav.classList.add("hidden"); adminNav.classList.remove("md:flex"); }
+    if (operatorNav) { operatorNav.classList.remove("hidden"); operatorNav.classList.add("md:flex"); }
+    if (adminMobNav) { adminMobNav.classList.add("hidden"); adminMobNav.classList.remove("grid"); }
+    if (operatorMobNav) { operatorMobNav.classList.remove("hidden"); operatorMobNav.classList.add("grid"); }
+  }
+
+  // 6. Header Subtitle and Role Badge
+  const appRoleBadgeTitle = document.getElementById("appRoleBadgeTitle");
+  if (appRoleBadgeTitle) {
+    appRoleBadgeTitle.innerText = isAdmin ? "ADMIN" : "FIELD 2.0";
+    appRoleBadgeTitle.className = isAdmin
+      ? "text-[9px] bg-amber-500 text-slate-950 font-extrabold px-1.5 py-0.5 rounded shadow-2xs whitespace-nowrap"
+      : "text-[9px] bg-slate-900 text-white font-extrabold px-1.5 py-0.5 rounded shadow-2xs whitespace-nowrap";
+  }
+  const appSubtitle = document.getElementById("appHeaderSubtitle");
+  if (appSubtitle) {
+    appSubtitle.innerText = isAdmin ? "ระบบจัดการ & มอบหมายงาน" : "ระบบบันทึกงาน & เช็กอิน";
+  }
+
+  // 7. Task Detail Modal Controls
   const deleteBtn = document.getElementById("detailModalDeleteBtn");
   const saveBtn = document.getElementById("detailModalSaveBtn");
   const notice = document.getElementById("detailModalTechNotice");
@@ -1256,7 +1335,7 @@ export function applyRolePermissionsUI(role, techObj) {
     }
   }
 
-  // 7. Clear all checkins button in Checkout tab
+  // 8. Clear all checkins button in Checkout tab
   const clearAllBtn = document.getElementById("clearAllCheckinsBtn");
   if (clearAllBtn) {
     if (isAdmin && activeTasks.length > 0) {
@@ -1266,34 +1345,21 @@ export function applyRolePermissionsUI(role, techObj) {
     }
   }
 
-  // 8. Re-render Today Logs & Active Checkout List to sync delete buttons
-  renderTodayLogs();
-  renderActiveCheckoutList();
-
-  // 9. Separate Navigation Tabs & Section Labels between Admin and Technician
-  const deskTaskText = document.getElementById("deskTabBtnTasksText");
-  const mobTaskText = document.getElementById("tabBtnTasksText");
+  // 9. Section Headings for Tasks
   const taskTitle = document.getElementById("tasksSectionTitle");
   const taskDesc = document.getElementById("tasksSectionDesc");
-  const appSubtitle = document.getElementById("appHeaderSubtitle");
-
-  if (deskTaskText) {
-    deskTaskText.innerText = isAdmin ? "จัดการ & มอบหมายงาน" : "รายการงาน";
-  }
-  if (mobTaskText) {
-    mobTaskText.innerText = isAdmin ? "จัดการงาน" : "รายการงาน";
-  }
   if (taskTitle) {
     taskTitle.innerText = isAdmin ? "งานมอบหมายและติดตามงาน" : "รายการงานที่ได้รับมอบหมาย";
   }
   if (taskDesc) {
     taskDesc.innerText = isAdmin
       ? "จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ"
-      : "ตรวจสอบรายละเอียดงานและกำหนดส่งของทีมช่าง";
+      : "ตรวจสอบรายละเอียดงานและกำหนดส่งของทีมผู้ปฏิบัติงาน";
   }
-  if (appSubtitle) {
-    appSubtitle.innerText = isAdmin ? "ระบบมอบหมาย & จัดการงาน" : "ระบบบันทึกงาน & เช็กอิน";
-  }
+
+  // 10. Re-render Today Logs & Active Checkout List to sync delete buttons
+  renderTodayLogs();
+  renderActiveCheckoutList();
 }
 
 export function handleRoleBadgeClick() {
@@ -1381,7 +1447,7 @@ export function renderTeamRoleList() {
         <div class="min-w-0">
           <div class="flex items-center space-x-1.5 flex-wrap">
             <span class="font-bold text-xs text-slate-900 truncate">${tech.name}</span>
-            ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">👷 ผู้ปฏิบัติงาน</span>`}
+            ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">👤 ผู้ปฏิบัติงาน</span>`}
             ${isLinkedToMe ? `<span class="px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">บัญชีของคุณ</span>` : ''}
           </div>
           <div class="text-[11px] text-slate-400 mt-1 flex items-center space-x-2 flex-wrap gap-y-1">
@@ -1400,10 +1466,10 @@ export function renderTeamRoleList() {
 
         <div class="flex items-center space-x-1.5 flex-shrink-0">
           <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold shadow-2xs">
-            <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'technician')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${!isAdmin ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'}" title="กำหนดสิทธิ์เป็นผู้ปฏิบัติงาน">
-              👷 ช่าง
+            <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'technician')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${!isAdmin ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'}" title="กำหนดสิทธิ์เป็นผู้ปฏิบัติงาน">
+              👤 ผู้ปฏิบัติงาน
             </button>
-            <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'admin')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${isAdmin ? 'bg-amber-400 text-slate-950 shadow-2xs' : 'text-slate-400 hover:text-amber-700'}" title="กำหนดสิทธิ์เป็นแอดมิน">
+            <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'admin')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${isAdmin ? 'bg-amber-400 text-slate-950 shadow-2xs' : 'text-slate-400 hover:text-amber-700'}" title="กำหนดสิทธิ์เป็นแอดมิน">
               👑 แอดมิน
             </button>
           </div>
