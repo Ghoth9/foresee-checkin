@@ -27,7 +27,7 @@
             <span class="font-black text-sm md:text-base tracking-tight text-slate-950">FORESEE</span>
             <span class="text-[10px] bg-slate-900 text-white font-extrabold px-1.5 py-0.5 rounded shadow-2xs">FIELD 2.0</span>
           </div>
-          <div class="text-[10px] md:text-[11px] text-slate-600 font-semibold">ระบบมอบหมายงาน</div>
+          <div id="appHeaderSubtitle" class="text-[10px] md:text-[11px] text-slate-600 font-semibold">ระบบมอบหมายงาน</div>
         </div>
       </div>
 
@@ -43,7 +43,7 @@
         </button>
         <button id="deskTabBtnTasks" type="button" onclick="switchTab('tasks')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5">
           <span>📋</span>
-          <span>มอบหมายงาน</span>
+          <span id="deskTabBtnTasksText">รายการงาน</span>
         </button>
       </nav>
 
@@ -106,7 +106,7 @@
           <span class="hidden sm:inline">จัดการสิทธิ์ทีม</span>
         </button>
 
-        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="hidden sm:flex items-center space-x-1.5 text-xs px-3 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-colors">
+        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="flex items-center space-x-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-colors">
           <span id="lineLoginDot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
           <span id="lineLoginText">เข้าสู่ระบบ LINE</span>
         </button>
@@ -134,6 +134,17 @@
     </button>
   </div>
 
+  <!-- External Browser / PC / iPad LINE Login Notice Banner -->
+  <div id="lineNotLoggedInBanner" class="hidden bg-emerald-800 text-white px-4 py-2.5 text-xs font-semibold items-center justify-between shadow-sm sticky top-14 z-30 animate-fade-in">
+    <div class="flex items-center space-x-2">
+      <span class="text-base">💬</span>
+      <span>คุณยังไม่ได้เข้าสู่ระบบ LINE บนอุปกรณ์นี้ (สามารถเช็กอินได้ แต่จะไม่สามารถแชร์การ์ดเข้ากลุ่มได้)</span>
+    </div>
+    <button type="button" onclick="handleLineLoginToggle()" class="bg-white text-emerald-900 px-3 py-1 rounded-lg text-xs font-bold hover:bg-emerald-50 transition-all active:scale-95 shadow-2xs whitespace-nowrap ml-2">
+      เข้าสู่ระบบ LINE ทันที
+    </button>
+  </div>
+
   <main class="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-4 md:py-6 flex-1 space-y-4 md:space-y-6">
 
     <!-- ==================== MOBILE SEGMENTED TABS ==================== -->
@@ -145,7 +156,8 @@
         <span>📊 อัปเดต & ปิดงาน</span>
       </button>
       <button id="tabBtnTasks" onclick="switchTab('tasks')" class="py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1">
-        <span>📋 มอบงาน</span>
+        <span>📋</span>
+        <span id="tabBtnTasksText">รายการงาน</span>
       </button>
     </div>
 
@@ -499,8 +511,8 @@
       <!-- Operations Header -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-200/90">
         <div>
-          <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
-          <p class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
+          <h1 id="tasksSectionTitle" class="text-xl md:text-2xl font-bold tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
+          <p id="tasksSectionDesc" class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
         </div>
         <div class="flex items-center space-x-2 flex-wrap gap-y-2">
           <input id="taskSearchInput" type="text" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน, ไซต์งาน..." class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 w-36 sm:w-52 shadow-2xs">

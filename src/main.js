@@ -998,15 +998,24 @@ export async function refreshFromSupabase(force = false) {
 function updateLineStatusUI() {
   const dot = document.getElementById("lineLoginDot");
   const text = document.getElementById("lineLoginText");
+  const banner = document.getElementById("lineNotLoggedInBanner");
   if (!dot || !text) return;
 
   if (isLineLoggedIn()) {
     const name = getLineUserName();
     dot.className = "w-2 h-2 rounded-full bg-emerald-500";
     text.innerText = name ? `LINE: ${name}` : "LINE เชื่อมต่อแล้ว";
+    if (banner) {
+      banner.classList.add("hidden");
+      banner.classList.remove("flex");
+    }
   } else {
     dot.className = "w-2 h-2 rounded-full bg-slate-300";
     text.innerText = "เข้าสู่ระบบ LINE";
+    if (banner) {
+      banner.classList.remove("hidden");
+      banner.classList.add("flex");
+    }
   }
 }
 
@@ -1056,11 +1065,6 @@ export async function resolveUserRole() {
       if (match) {
         currentLinkedTech = match;
         matchedTech = match;
-      } else {
-        // Logged in via LINE, but no profile linked yet! Prompt link modal once!
-        if (sessionStorage.getItem("fs_link_modal_dismissed") !== "true") {
-          setTimeout(() => openLinkLineAccountModal(), 600);
-        }
       }
     }
   }
@@ -1265,6 +1269,31 @@ export function applyRolePermissionsUI(role, techObj) {
   // 8. Re-render Today Logs & Active Checkout List to sync delete buttons
   renderTodayLogs();
   renderActiveCheckoutList();
+
+  // 9. Separate Navigation Tabs & Section Labels between Admin and Technician
+  const deskTaskText = document.getElementById("deskTabBtnTasksText");
+  const mobTaskText = document.getElementById("tabBtnTasksText");
+  const taskTitle = document.getElementById("tasksSectionTitle");
+  const taskDesc = document.getElementById("tasksSectionDesc");
+  const appSubtitle = document.getElementById("appHeaderSubtitle");
+
+  if (deskTaskText) {
+    deskTaskText.innerText = isAdmin ? "จัดการ & มอบหมายงาน" : "รายการงาน";
+  }
+  if (mobTaskText) {
+    mobTaskText.innerText = isAdmin ? "จัดการงาน" : "รายการงาน";
+  }
+  if (taskTitle) {
+    taskTitle.innerText = isAdmin ? "งานมอบหมายและติดตามงาน" : "รายการงานที่ได้รับมอบหมาย";
+  }
+  if (taskDesc) {
+    taskDesc.innerText = isAdmin
+      ? "จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ"
+      : "ตรวจสอบรายละเอียดงานและกำหนดส่งของทีมช่าง";
+  }
+  if (appSubtitle) {
+    appSubtitle.innerText = isAdmin ? "ระบบมอบหมาย & จัดการงาน" : "ระบบบันทึกงาน & เช็กอิน";
+  }
 }
 
 export function handleRoleBadgeClick() {

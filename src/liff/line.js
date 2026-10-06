@@ -68,9 +68,9 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
     await liff.ready;
     if (!liff.isLoggedIn()) {
       showAppAlert({
-        type: "warning",
-        title: "กรุณาเข้าสู่ระบบ LINE",
-        message: "กรุณากด 'เข้าสู่ระบบ LINE' เพื่อแชร์การ์ดเข้ากลุ่ม",
+        type: "info",
+        title: "บันทึกข้อมูลเรียบร้อย (ยังไม่ได้แชร์เข้า LINE)",
+        message: "ระบบบันทึกข้อมูลเข้าฐานข้อมูลแล้วครับ แต่ยังไม่ได้ส่งการ์ดเข้ากลุ่ม LINE เนื่องจากยังไม่ได้เข้าสู่ระบบ LINE บนอุปกรณ์นี้ คุณสามารถกด 'เข้าสู่ระบบ LINE' เพื่อแชร์การ์ดเข้ากลุ่มได้ครับ",
         onOk: () => liff.login({ redirectUri: window.location.href })
       });
       return { success: false, reason: "not_logged_in" };
