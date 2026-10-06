@@ -453,6 +453,12 @@ export function openAssignModal(allTechnicians) {
   if (startText) startText.innerText = formatThaiDateDisplay(today);
   if (deadText) deadText.innerText = formatThaiDateDisplay(next7Days);
 
+  assignTechSearchQuery = "";
+  const assignSearchInput = document.getElementById("assignTechSearchInput");
+  if (assignSearchInput) assignSearchInput.value = "";
+  const assignClearBtn = document.getElementById("assignTechSearchClearBtn");
+  if (assignClearBtn) assignClearBtn.classList.add("hidden");
+
   renderAssignTechChips(allTechnicians);
 
   const modal = document.getElementById("assignModal");
@@ -516,20 +522,82 @@ export function selectAssignCategory(cat) {
   }
 }
 
+let assignTechSearchQuery = "";
+let cachedAssignTechsList = [];
+
+export function filterAssignTechChips(query) {
+  assignTechSearchQuery = (query || "").trim().toLowerCase();
+  const clearBtn = document.getElementById("assignTechSearchClearBtn");
+  if (clearBtn) {
+    if (assignTechSearchQuery) clearBtn.classList.remove("hidden");
+    else clearBtn.classList.add("hidden");
+  }
+  renderAssignTechChips(cachedAssignTechsList);
+}
+window.filterAssignTechChips = filterAssignTechChips;
+
+export function clearAssignTechSearch() {
+  const input = document.getElementById("assignTechSearchInput");
+  if (input) input.value = "";
+  filterAssignTechChips("");
+}
+window.clearAssignTechSearch = clearAssignTechSearch;
+
 export function renderAssignTechChips(allTechnicians) {
   const container = document.getElementById("assignTechChipsContainer");
+  const countBadge = document.getElementById("assignTechSelectedCount");
   if (!container) return;
+
+  if (allTechnicians && allTechnicians.length > 0) {
+    cachedAssignTechsList = allTechnicians;
+  }
+  const sourceList = cachedAssignTechsList.length > 0 ? cachedAssignTechsList : (allTechnicians || []);
+
+  if (countBadge) {
+    if (selectedAssignTechs.length > 0) {
+      countBadge.innerText = `เลือกแล้ว ${selectedAssignTechs.length} คน`;
+      countBadge.classList.remove("hidden");
+    } else {
+      countBadge.classList.add("hidden");
+    }
+  }
+
   container.innerHTML = "";
 
-  allTechnicians.forEach(tName => {
+  let displayList = sourceList;
+  if (assignTechSearchQuery) {
+    displayList = displayList.filter(t => t && t.toLowerCase().includes(assignTechSearchQuery));
+  }
+
+  // Smart sort: Put selected at top, then Thai alphabetical
+  displayList = [...displayList].sort((a, b) => {
+    const aSel = selectedAssignTechs.includes(a);
+    const bSel = selectedAssignTechs.includes(b);
+    if (aSel && !bSel) return -1;
+    if (!aSel && bSel) return 1;
+    return a.localeCompare(b, 'th');
+  });
+
+  if (displayList.length === 0) {
+    container.innerHTML = `
+      <div class="w-full text-center py-3 text-xs text-slate-400">
+        ไม่พบชื่อที่ตรงกับ "${assignTechSearchQuery}"
+      </div>
+    `;
+    return;
+  }
+
+  displayList.forEach(tName => {
     const isSelected = selectedAssignTechs.includes(tName);
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-      isSelected ? "bg-slate-900 text-white font-semibold shadow-xs" : "bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700"
+    btn.className = `px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center space-x-1 ${
+      isSelected
+        ? "bg-slate-900 text-white font-bold shadow-xs ring-1 ring-slate-800"
+        : "bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 shadow-2xs"
     }`;
-    btn.innerHTML = `${isSelected ? '✓ ' : ''}${tName}`;
-    btn.onclick = () => toggleAssignTech(tName, allTechnicians);
+    btn.innerHTML = `${isSelected ? '<span>✓</span>' : ''}<span>${tName}</span>`;
+    btn.onclick = () => toggleAssignTech(tName, sourceList);
     container.appendChild(btn);
   });
 }
@@ -1012,6 +1080,11 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
 
   // Technicians
   currentDetailTechs = [...getTaskTechs(task)];
+  detailTechSearchQuery = "";
+  const detailSearchInput = document.getElementById("detailTechSearchInput");
+  if (detailSearchInput) detailSearchInput.value = "";
+  const detailClearBtn = document.getElementById("detailTechSearchClearBtn");
+  if (detailClearBtn) detailClearBtn.classList.add("hidden");
   renderDetailTechChips(allTechnicians);
 
   // Dates
@@ -1226,21 +1299,81 @@ export function updateDetailPhoneLink(phone) {
   }
 }
 
+let detailTechSearchQuery = "";
+let cachedDetailTechsList = [];
+
+export function filterDetailTechChips(query) {
+  detailTechSearchQuery = (query || "").trim().toLowerCase();
+  const clearBtn = document.getElementById("detailTechSearchClearBtn");
+  if (clearBtn) {
+    if (detailTechSearchQuery) clearBtn.classList.remove("hidden");
+    else clearBtn.classList.add("hidden");
+  }
+  renderDetailTechChips(cachedDetailTechsList);
+}
+window.filterDetailTechChips = filterDetailTechChips;
+
+export function clearDetailTechSearch() {
+  const input = document.getElementById("detailTechSearchInput");
+  if (input) input.value = "";
+  filterDetailTechChips("");
+}
+window.clearDetailTechSearch = clearDetailTechSearch;
+
 export function renderDetailTechChips(allTechnicians) {
   const container = document.getElementById("detailTechChipsContainer");
+  const countBadge = document.getElementById("detailTechSelectedCount");
   if (!container) return;
+
+  if (allTechnicians && allTechnicians.length > 0) {
+    cachedDetailTechsList = allTechnicians;
+  }
+  const sourceList = cachedDetailTechsList.length > 0 ? cachedDetailTechsList : (allTechnicians || []);
+
+  if (countBadge) {
+    if (currentDetailTechs.length > 0) {
+      countBadge.innerText = `เลือกแล้ว ${currentDetailTechs.length} คน`;
+      countBadge.classList.remove("hidden");
+    } else {
+      countBadge.classList.add("hidden");
+    }
+  }
+
   container.innerHTML = "";
 
-  (allTechnicians || []).forEach(tName => {
+  let displayList = sourceList;
+  if (detailTechSearchQuery) {
+    displayList = displayList.filter(t => t && t.toLowerCase().includes(detailTechSearchQuery));
+  }
+
+  // Smart sort: Put selected at top, then Thai alphabetical
+  displayList = [...displayList].sort((a, b) => {
+    const aSel = currentDetailTechs.includes(a);
+    const bSel = currentDetailTechs.includes(b);
+    if (aSel && !bSel) return -1;
+    if (!aSel && bSel) return 1;
+    return a.localeCompare(b, 'th');
+  });
+
+  if (displayList.length === 0) {
+    container.innerHTML = `
+      <div class="w-full text-center py-3 text-xs text-slate-400">
+        ไม่พบชื่อที่ตรงกับ "${detailTechSearchQuery}"
+      </div>
+    `;
+    return;
+  }
+
+  displayList.forEach(tName => {
     const isSelected = currentDetailTechs.includes(tName);
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+    btn.className = `px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center space-x-1 ${
       isSelected
-        ? "bg-slate-900 text-white shadow-2xs"
-        : "bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100"
+        ? "bg-slate-900 text-white font-bold shadow-xs ring-1 ring-slate-800"
+        : "bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 shadow-2xs"
     }`;
-    btn.innerHTML = `${isSelected ? '✓ ' : ''}${tName}`;
+    btn.innerHTML = `${isSelected ? '<span>✓</span>' : ''}<span>${tName}</span>`;
     btn.onclick = () => {
       if (currentDetailTechs.includes(tName)) {
         if (currentDetailTechs.length > 1) {
@@ -1249,13 +1382,13 @@ export function renderDetailTechChips(allTechnicians) {
           showAppAlert({
             type: "warning",
             title: "ไม่สามารถลบได้",
-            message: "ต้องมีช่างผู้รับผิดชอบงานอย่างน้อย 1 คน"
+            message: "ต้องมีผู้ปฏิบัติงานที่รับผิดชอบงานอย่างน้อย 1 คน"
           });
         }
       } else {
         currentDetailTechs.push(tName);
       }
-      renderDetailTechChips(allTechnicians);
+      renderDetailTechChips(sourceList);
     };
     container.appendChild(btn);
   });
