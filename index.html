@@ -426,9 +426,19 @@
                   <span class="text-xs font-bold text-slate-800">📸 รูปถ่ายที่บันทึกแล้วของงานนี้</span>
                   <span id="activeTaskPhotosBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">0 รูป</span>
                 </div>
-                <span class="text-[10px] text-slate-500 font-medium">แตะรูปเพื่อดูภาพขยาย</span>
+                <div class="flex items-center space-x-2">
+                  <span class="text-[10px] text-slate-400 font-medium hidden sm:inline">หมุนลูกกลิ้งหรือกดปุ่มเพื่อเลื่อน</span>
+                  <div class="flex items-center space-x-1">
+                    <button type="button" onclick="window.scrollActivePhotos(-220)" class="w-6 h-6 rounded-md bg-white border border-slate-200 hover:bg-slate-100 active:scale-90 text-slate-700 flex items-center justify-center text-[10px] font-bold transition-all shadow-2xs cursor-pointer select-none" title="เลื่อนซ้าย">
+                      ◀
+                    </button>
+                    <button type="button" onclick="window.scrollActivePhotos(220)" class="w-6 h-6 rounded-md bg-white border border-slate-200 hover:bg-slate-100 active:scale-90 text-slate-700 flex items-center justify-center text-[10px] font-bold transition-all shadow-2xs cursor-pointer select-none" title="เลื่อนขวา">
+                      ▶
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div id="activeTaskPhotosGrid" class="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
+              <div id="activeTaskPhotosGrid" class="flex items-center space-x-2 overflow-x-auto py-1 scroll-smooth cursor-grab active:cursor-grabbing select-none" style="scrollbar-width: thin;">
                 <!-- Rendered dynamically -->
               </div>
             </div>

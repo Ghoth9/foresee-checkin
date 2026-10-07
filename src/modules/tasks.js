@@ -99,6 +99,16 @@ export function renderTechFilterChips(tasksList, allTechnicians = []) {
       </button>
     `;
   }).join('');
+
+  if (!container._hasHWheel) {
+    container._hasHWheel = true;
+    container.addEventListener("wheel", (e) => {
+      if (e.deltaY !== 0 && container.scrollWidth > container.clientWidth) {
+        e.preventDefault();
+        container.scrollBy({ left: e.deltaY * 1.5, behavior: "auto" });
+      }
+    }, { passive: false });
+  }
 }
 
 export function setTaskSearchQuery(q) {

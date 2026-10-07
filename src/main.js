@@ -497,6 +497,61 @@ export function formatLatestNoteText(rawText) {
   return rawText.trim();
 }
 
+export function enableSmoothHorizontalDragScroll(container) {
+  if (!container || container._hasSmoothDrag) return;
+  container._hasSmoothDrag = true;
+
+  // 1. Mouse wheel horizontal scrolling (no shift key needed!)
+  container.addEventListener("wheel", (e) => {
+    if (e.deltaY !== 0 && container.scrollWidth > container.clientWidth) {
+      e.preventDefault();
+      container.scrollBy({ left: e.deltaY * 1.5, behavior: "auto" });
+    }
+  }, { passive: false });
+
+  // 2. Drag-to-scroll with mouse
+  let isDown = false;
+  let startX = 0;
+  let scrollLeft = 0;
+  let dragDistance = 0;
+
+  container.addEventListener("mousedown", (e) => {
+    if (e.target.closest("button") || e.target.closest("input")) return;
+    isDown = true;
+    dragDistance = 0;
+    startX = e.pageX - container.offsetLeft;
+    scrollLeft = container.scrollLeft;
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDown = false;
+  });
+
+  container.addEventListener("mouseleave", () => {
+    isDown = false;
+  });
+
+  container.addEventListener("mousemove", (e) => {
+    if (!isDown) return;
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - startX);
+    dragDistance += Math.abs(walk);
+    if (Math.abs(walk) > 3) {
+      e.preventDefault();
+      container.scrollLeft = scrollLeft - walk;
+    }
+  });
+
+  // Suppress lightbox click if user was dragging
+  container.addEventListener("click", (e) => {
+    if (dragDistance > 8) {
+      e.stopPropagation();
+      e.preventDefault();
+      dragDistance = 0;
+    }
+  }, true);
+}
+
 export function renderActiveTaskPhotos(activeItem) {
   const container = document.getElementById("activeTaskExistingPhotosContainer");
   const grid = document.getElementById("activeTaskPhotosGrid");
@@ -521,20 +576,22 @@ export function renderActiveTaskPhotos(activeItem) {
   if (badge) badge.innerText = `${photosList.length} รูป`;
 
   grid.innerHTML = photosList.map((p, idx) => `
-    <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 cursor-pointer shadow-2xs hover:ring-2 hover:ring-blue-500 transition-all bg-slate-100 group"
+    <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 cursor-pointer shadow-2xs hover:ring-2 hover:ring-blue-500 transition-all bg-slate-100 group select-none"
          onclick="window.openImageLightbox('${p.src.replace(/'/g, "\\'")}', '${p.caption.replace(/'/g, "\\'")}', '${activeItem.id}')">
-      <img src="${p.src}" class="w-full h-full object-cover" alt="รูปที่ ${idx + 1}" loading="lazy">
-      <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/0 transition-colors flex items-center justify-center">
+      <img src="${p.src}" class="w-full h-full object-cover pointer-events-none" alt="รูปที่ ${idx + 1}" loading="lazy" draggable="false">
+      <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/0 transition-colors flex items-center justify-center pointer-events-none">
         <svg class="w-4 h-4 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
       </div>
-      <button type="button" onclick="event.stopPropagation(); window.deletePhotoFromTask('${p.src.replace(/'/g, "\\'")}', '${activeItem.id}')" class="absolute top-1 right-1 w-5 h-5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md opacity-85 hover:opacity-100 hover:scale-110 transition-all z-10" title="ลบรูปนี้">
+      <button type="button" onclick="event.stopPropagation(); window.deletePhotoFromTask('${p.src.replace(/'/g, "\\'")}', '${activeItem.id}')" class="absolute top-1 right-1 w-5 h-5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md opacity-85 hover:opacity-100 hover:scale-110 transition-all z-10 cursor-pointer" title="ลบรูปนี้">
         ✕
       </button>
-      <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2">
+      <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2 pointer-events-none">
         #${idx + 1}
       </div>
     </div>
   `).join("");
+
+  enableSmoothHorizontalDragScroll(grid);
 }
 
 export function renderActiveCheckoutList() {
@@ -2276,6 +2333,12 @@ window.closeImageLightbox = closeImageLightbox;
 window.zoomLightbox = zoomLightbox;
 window.resetLightboxZoom = resetLightboxZoom;
 window.getUniquePhotosForActiveTask = getUniquePhotosForActiveTask;
+window.scrollActivePhotos = (delta) => {
+  const grid = document.getElementById("activeTaskPhotosGrid");
+  if (grid) {
+    grid.scrollBy({ left: delta, behavior: "smooth" });
+  }
+};
 window.setDetailModalStatus = setDetailModalStatus;
 window.setDetailModalPriority = setDetailModalPriority;
 window.updateDetailPhoneLink = updateDetailPhoneLink;
