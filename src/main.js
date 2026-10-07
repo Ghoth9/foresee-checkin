@@ -880,6 +880,13 @@ async function bootstrapApp() {
   }
 
   // 2. INSTANT ZERO-MILLISECOND RENDER FROM LOCAL CACHE (0ms delay)
+  // Ensure search input is cleared and not restoring cached text
+  const taskSearchInput = document.getElementById("taskSearchInput");
+  if (taskSearchInput) taskSearchInput.value = "";
+  setTaskSearchQuery("");
+  const taskSearchClearBtn = document.getElementById("taskSearchClearBtn");
+  if (taskSearchClearBtn) taskSearchClearBtn.classList.add("hidden");
+
   renderAssignedTasksBannerScoped();
   renderCheckinTechChips();
   renderActiveCheckoutList();
@@ -1766,7 +1773,8 @@ export function renderSelectOperatorList() {
   const listEl = document.getElementById("selectOperatorListContainer");
   if (!listEl) return;
 
-  let list = techniciansList || [];
+  // STRICT SECURITY: Only display field operators (non-admin)! Admins must NEVER be in this public list!
+  let list = (techniciansList || []).filter(t => t.role !== "admin");
   if (selectOperatorSearchQuery) {
     list = list.filter(t => t.name && t.name.toLowerCase().includes(selectOperatorSearchQuery));
   }
@@ -1774,7 +1782,7 @@ export function renderSelectOperatorList() {
   if (list.length === 0) {
     listEl.innerHTML = `
       <div class="text-center py-6 text-xs text-slate-400">
-        ไม่พบรายชื่อที่ตรงกับ "${selectOperatorSearchQuery}"
+        ไม่พบรายชื่อผู้ปฏิบัติงานที่ตรงกับ "${selectOperatorSearchQuery}"
       </div>
     `;
     return;
@@ -1784,7 +1792,6 @@ export function renderSelectOperatorList() {
 
   listEl.innerHTML = list.map(tech => {
     const isCurrent = currentName === tech.name;
-    const isAdmin = tech.role === "admin";
     return `
       <div onclick="window.chooseOperatorProfile('${tech.id}')" class="p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 shadow-2xs hover:scale-[1.01] active:scale-[0.99] ${
         isCurrent 
@@ -1792,12 +1799,12 @@ export function renderSelectOperatorList() {
           : 'bg-white hover:bg-slate-50 border-slate-200'
       }">
         <div class="min-w-0 flex items-center space-x-2">
-          <div class="w-7 h-7 rounded-full ${isAdmin ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'} flex items-center justify-center font-bold text-xs flex-shrink-0">
-            ${isAdmin ? '👑' : '👤'}
+          <div class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+            👤
           </div>
           <div class="min-w-0">
             <div class="font-bold text-xs text-slate-900 truncate">${tech.name}</div>
-            <div class="text-[10px] text-slate-500">${isAdmin ? '👑 แอดมิน (Admin)' : '👤 ผู้ปฏิบัติงาน'}</div>
+            <div class="text-[10px] text-slate-500">👤 ผู้ปฏิบัติงาน</div>
           </div>
         </div>
         <button type="button" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex-shrink-0 cursor-pointer ${
@@ -1815,6 +1822,16 @@ export function renderSelectOperatorList() {
 export async function chooseOperatorProfile(techId) {
   const tech = techniciansList.find(t => t.id === techId);
   if (!tech) return;
+
+  // STRICT GUARD: Admin accounts cannot be chosen via operator modal!
+  if (tech.role === "admin") {
+    showAppAlert({
+      type: "warning",
+      title: "ไม่อนุญาต",
+      message: "บัญชีผู้ดูแลระบบ (Admin) ไม่สามารถเลือกใช้งานผ่านหน้านี้ได้ครับ ต้องเข้าสู่ระบบด้วย LINE หรือยืนยัน PIN ผู้ดูแลระบบเท่านั้น"
+    });
+    return;
+  }
 
   currentLinkedTech = tech;
   localStorage.setItem("fs_current_operator_id", tech.id);
