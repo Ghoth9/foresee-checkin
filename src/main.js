@@ -1177,11 +1177,6 @@ export async function resolveUserRole() {
   renderTasksListScoped();
   renderAssignedTasksBannerScoped();
 
-  // If Admin and no active tab stored yet, default to tasks management!
-  if (currentUserRole === "admin" && (!sessionStorage.getItem("fs_active_tab") || sessionStorage.getItem("fs_active_tab") === "checkin")) {
-    switchTab("tasks");
-  }
-
   // 6. If no operator has been chosen yet, and not admin override -> prompt selection
   if (!currentLinkedTech && !isUserAdminActual() && !sessionStorage.getItem("fs_operator_prompted")) {
     sessionStorage.setItem("fs_operator_prompted", "true");
