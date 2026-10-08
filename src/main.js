@@ -1360,7 +1360,7 @@ export function isUserAdminActual() {
       const match = techniciansList.find(t => t.line_user_id === profile.userId);
       if (match && match.role === "admin") return true;
       const dName = (profile.displayName || "").toLowerCase();
-      if (dName.includes("nonmarn") || dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("อาร์ม")) return true;
+      if (dName.includes("nonmarn") || dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("อาร์ม") || dName.includes("arm")) return true;
     }
   }
   return false;
