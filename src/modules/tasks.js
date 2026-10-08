@@ -96,6 +96,16 @@ export function getAssigneeSubmissionsStatus(task) {
   });
 }
 
+export function cleanLatestText(text) {
+  if (!text || text === 'ยังไม่มีอัปเดต' || text === '-') return '';
+  return text
+    .replace(/ติดตั้งเสร็จเรียบร้อย\s*ทดสอบภาพชัดเจนทุกจุด/g, 'ปฏิบัติงานเรียบร้อย')
+    .replace(/ติดตั้งเสร็จเรียบร้อย\s*ทดสอบภาพชัดเจน/g, 'ปฏิบัติงานเรียบร้อย')
+    .replace(/ทดสอบภาพชัดเจนทุกจุด/g, 'ปฏิบัติงานเรียบร้อย')
+    .replace(/ผู้ปฏิบัติงานหน้างาน/g, 'ผู้ปฏิบัติงาน')
+    .trim();
+}
+
 export function setTaskViewMode(mode, tasksList) {
   taskViewMode = mode;
   const btnList = document.getElementById("viewModeBtnList");
@@ -333,7 +343,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
                 <span>${task.title}</span>
               </div>
               ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
-              ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 line-clamp-1 mt-0.5">💬 ${task.latestUpdate}</div>` : ''}
+              ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 line-clamp-1 mt-0.5">💬 ${cleanLatestText(task.latestUpdate)}</div>` : ''}
             </div>
           </td>
           <td class="py-3 px-3">
@@ -360,7 +370,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
           <td class="py-3 px-3 text-right pr-4 whitespace-nowrap">
             <div class="flex items-center justify-end space-x-1.5">
               ${photoCount > 0 ? `
-                <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs" title="ดูภาพหน้างาน">
+                <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs" title="ดูภาพถ่ายผลงาน">
                   <span>📸</span>
                   <span>${photoCount}</span>
                 </button>
@@ -419,7 +429,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
           <div>
             <h3 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">${task.title}</h3>
             ${task.desc && task.desc !== '-' ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2">${task.desc}</p>` : ''}
-            ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<p class="text-[11px] text-blue-600 line-clamp-1 mt-1 font-medium">💬 ${task.latestUpdate}</p>` : ''}
+            ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<p class="text-[11px] text-blue-600 line-clamp-1 mt-1 font-medium">💬 ${cleanLatestText(task.latestUpdate)}</p>` : ''}
           </div>
           <div class="mt-2.5 pt-2 border-t border-slate-100 text-xs">
             <div class="text-[11px] font-bold text-slate-600 mb-1 flex items-center justify-between">
@@ -450,7 +460,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
           <div class="grid grid-cols-2 gap-1.5 pt-1">
             <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="py-1.5 px-2 text-center text-xs font-bold ${photoCount > 0 ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'} border rounded-lg transition-all flex items-center justify-center space-x-1 shadow-2xs">
               <span>📸</span>
-              <span>ภาพหน้างาน (${photoCount})</span>
+              <span>ภาพถ่ายผลงาน (${photoCount})</span>
             </button>
             <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="py-1.5 px-2 text-center text-xs font-semibold bg-slate-50 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-700 border border-slate-200 group-hover:border-blue-200 rounded-lg transition-all flex items-center justify-center space-x-1 shadow-2xs">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -1293,7 +1303,7 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
       timelineContainer.innerHTML = summaryCardHtml + `
         <div class="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-6">
           <div class="text-3xl mb-2">📸</div>
-          <div class="text-sm font-bold text-slate-800">ยังไม่มีบันทึกภาพถ่ายหน้างาน</div>
+          <div class="text-sm font-bold text-slate-800">ยังไม่มีบันทึกภาพถ่ายผลงาน</div>
           <p class="text-xs text-slate-500 mt-1">รูปถ่ายความคืบหน้าจะแสดงที่นี่เมื่อผู้ปฏิบัติงานเช็กอินหรืออัปเดตงานระหว่างวัน</p>
         </div>
       `;
@@ -1308,7 +1318,7 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
           photosHtml = `
             <div class="pt-2">
               <div class="text-[11px] font-bold text-slate-700 mb-1.5 flex items-center space-x-1">
-                <span>📸 รูปถ่ายหน้างาน (${item.photos.length} รูป):</span>
+                <span>📸 รูปถ่ายผลงาน (${item.photos.length} รูป):</span>
                 <span class="text-[10px] text-slate-400 font-normal">(แตะเพื่อดูภาพขยาย)</span>
               </div>
               <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -1333,7 +1343,7 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
             <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2">
               <div class="flex items-center justify-between flex-wrap gap-1">
                 <div class="flex items-center space-x-1.5">
-                  <span class="text-xs font-bold text-slate-900">${item.isCheckin ? '📍 เช็กอินเข้าหน้างาน' : `📊 คืบหน้า ${item.progress}%`}</span>
+                  <span class="text-xs font-bold text-slate-900">${item.isCheckin ? '📍 เช็กอินเริ่มปฏิบัติงาน' : `📊 คืบหน้า ${item.progress}%`}</span>
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">
                     ${item.status}
                   </span>

@@ -511,13 +511,17 @@ export function getUniquePhotosForActiveTask(activeItem) {
 
 export function formatLatestNoteText(rawText) {
   if (!rawText || rawText === '-') return '';
+  let cleaned = rawText;
   // If text contains pipe chain " | ", take the last updated section
-  if (rawText.includes(' | ')) {
-    const parts = rawText.split(' | ').filter(Boolean);
-    const last = parts[parts.length - 1].trim();
-    return last;
+  if (cleaned.includes(' | ')) {
+    const parts = cleaned.split(' | ').filter(Boolean);
+    cleaned = parts[parts.length - 1].trim();
   }
-  return rawText.trim();
+  return cleaned
+    .replace(/ติดตั้งเสร็จเรียบร้อย\s*ทดสอบภาพชัดเจนทุกจุด/g, 'ปฏิบัติงานเรียบร้อย')
+    .replace(/ทดสอบภาพชัดเจนทุกจุด/g, 'ปฏิบัติงานเรียบร้อย')
+    .replace(/ผู้ปฏิบัติงานหน้างาน/g, 'ผู้ปฏิบัติงาน')
+    .trim();
 }
 
 export function enableSmoothHorizontalDragScroll(container) {
