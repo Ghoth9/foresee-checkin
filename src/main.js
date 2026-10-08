@@ -2293,14 +2293,6 @@ window.renderSelectOperatorList = renderSelectOperatorList;
 window.chooseOperatorProfile = chooseOperatorProfile;
 
 window.openAssignModal = () => {
-  if (currentUserRole !== "admin") {
-    showAppAlert({
-      type: "warning",
-      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
-      message: "ฟังก์ชันมอบหมายงานสงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นครับ"
-    });
-    return;
-  }
   openAssignModal(allTechnicians);
 };
 window.closeAssignModal = closeAssignModal;
