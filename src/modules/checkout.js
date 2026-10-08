@@ -267,7 +267,7 @@ export async function submitProgressOnly({
     const now = new Date();
     const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
     const dateStr = now.toLocaleDateString("th-TH");
-    const updateEntry = `[คืบหน้า ${updatePercent}%: ${updateStatus}] ${noteText.trim() || 'อัปเดตงานตามขั้นตอน'} (โดย ${closerName || 'ผู้ปฏิบัติงานหน้างาน'} เมื่อ ${dateStr} ${timeStr})`;
+    const updateEntry = `[คืบหน้า ${updatePercent}%: ${updateStatus}] ${noteText.trim() || 'อัปเดตงานตามขั้นตอน'} (โดย ${closerName || 'ผู้ปฏิบัติงาน'} เมื่อ ${dateStr} ${timeStr})`;
 
     const newTotalPhotos = totalPhotosCount + photosToUpload.length;
 
@@ -280,7 +280,7 @@ export async function submitProgressOnly({
       progress: updatePercent,
       status: updateStatus,
       note: noteText.trim() || "อัปเดตความคืบหน้าระหว่างปฏิบัติงาน",
-      updateBy: closerName || "ผู้ปฏิบัติงานหน้างาน",
+      updateBy: closerName || "ผู้ปฏิบัติงาน",
       updateTime: timeStr,
       photoCount: photosToUpload.length,
       totalPhotos: newTotalPhotos
@@ -293,7 +293,7 @@ export async function submitProgressOnly({
       progress: updatePercent,
       status: updateStatus,
       note: noteText.trim() || "-",
-      updateBy: closerName || "ผู้ปฏิบัติงานหน้างาน",
+      updateBy: closerName || "ผู้ปฏิบัติงาน",
       updateEntry: updateEntry,
       photos: photosToUpload
     });
@@ -407,7 +407,7 @@ export async function submitCheckoutForm({
       duration: durationStr,
       outcome: selectedOutcome,
       note: noteText.trim() || "-",
-      closedBy: closerName || "ผู้ปฏิบัติงานหน้างาน",
+      closedBy: closerName || "ผู้ปฏิบัติงาน",
       photoCount: photosToUpload.length,
       photos: photosToUpload.map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }))
     };

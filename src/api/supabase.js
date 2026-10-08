@@ -491,6 +491,10 @@ export async function saveCheckoutApi(payload) {
       try {
         const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
         const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
+        const rawNote = (payload.note || '').trim();
+        const cleanUserNote = rawNote && rawNote !== '-' ? rawNote : '';
+        const closerDisplay = payload.closedBy || payload.closerName || "ผู้ปฏิบัติงาน";
+
         const closeHistoryItem = {
           id: `UPD-CLOSE-${Date.now().toString(36)}`,
           time: timeStr,
@@ -498,9 +502,9 @@ export async function saveCheckoutApi(payload) {
           progress: taskProgress,
           status: checkoutStatus,
           note: isProblem 
-            ? `ติดปัญหาหน้างาน: ${payload.note || '-'}` 
-            : `ปิดงาน: ${payload.outcome || 'เสร็จเรียบร้อย'} ${payload.note ? `(${payload.note})` : ''}`,
-          tech: payload.closedBy || payload.closerName || "ผู้ปฏิบัติงานหน้างาน",
+            ? `ติดปัญหา: ${cleanUserNote || '-'}` 
+            : `ปิดงาน 100%${cleanUserNote ? ` (${cleanUserNote})` : ''}`,
+          tech: closerDisplay,
           photos: cleanPhotos,
           createdAt: now.toISOString()
         };
@@ -508,13 +512,13 @@ export async function saveCheckoutApi(payload) {
           progress: taskProgress,
           status: checkoutStatus,
           latest_update: isProblem 
-            ? `[ติดปัญหา] ${payload.note || 'พบปัญหาหน้างาน'} (โดย ${payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน'} เมื่อ ${timeStr} น.)` 
-            : `[ปิดงาน 100%] ${payload.outcome || 'เสร็จเรียบร้อย'} (โดย ${payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน'} เมื่อ ${timeStr} น.)`,
+            ? `[ติดปัญหา] ${cleanUserNote || 'พบปัญหา'} (โดย ${closerDisplay} เมื่อ ${timeStr} น.)` 
+            : `[ปิดงาน 100%]${cleanUserNote ? ` ${cleanUserNote}` : ''} (โดย ${closerDisplay} เมื่อ ${timeStr} น.)`,
           customer: {
             ...existingCust,
             progress_history: [...existingHistory, closeHistoryItem]
           },
-          updated_by: payload.closedBy || 'ผู้ปฏิบัติงานหน้างาน',
+          updated_by: closerDisplay,
           updated_at: now.toISOString()
         }).eq('id', targetTaskId);
       } catch (tErr) {

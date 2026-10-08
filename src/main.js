@@ -441,7 +441,30 @@ export function selectJobType(type) {
 // CHECK-OUT UI HELPERS
 // -------------------------------------------------------------
 let selectedActiveCheckoutId = null;
-let selectedCheckoutOutcome = "ติดตั้งเสร็จเรียบร้อย ทดสอบภาพชัดเจนทุกจุด";
+let selectedCheckoutOutcome = "ปฏิบัติงานเรียบร้อย";
+
+export function matchTechName(techs, targetName) {
+  if (!targetName) return false;
+  if (!techs) return false;
+  const targetLower = targetName.toLowerCase().trim();
+  const targetNicknameMatch = targetName.match(/\((.*?)\)/);
+  const targetNickname = targetNicknameMatch ? targetNicknameMatch[1].toLowerCase().trim() : null;
+
+  const tArr = Array.isArray(techs) ? techs : [techs];
+  return tArr.some(t => {
+    if (!t) return false;
+    const str = String(t).toLowerCase().trim();
+    if (str === targetLower) return true;
+    if (str.includes(targetLower) || targetLower.includes(str)) return true;
+    if (targetNickname && (str.includes(targetNickname) || targetNickname.includes(str))) return true;
+    const strNickMatch = String(t).match(/\((.*?)\)/);
+    if (strNickMatch) {
+      const nick = strNickMatch[1].toLowerCase().trim();
+      if (targetLower.includes(nick) || (targetNickname && targetNickname.includes(nick))) return true;
+    }
+    return false;
+  });
+}
 
 export function getUniquePhotosForActiveTask(activeItem) {
   if (!activeItem) return [];
@@ -600,18 +623,40 @@ export function renderActiveCheckoutList() {
   const clearBtn = document.getElementById("clearAllCheckinsBtn");
   if (!container) return;
 
+  const isAdmin = currentUserRole === "admin";
+  const opName = currentLinkedTech?.name;
+
+  let displayActiveTasks = activeTasks;
+  if (!isAdmin && opName) {
+    displayActiveTasks = activeTasks.filter(item => {
+      if (matchTechName(item.techs, opName)) return true;
+      const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+      if (linkedTask) {
+        if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
+      }
+      return false;
+    });
+  }
+
   if (clearBtn) {
-    if (activeTasks.length > 1) {
+    if (isAdmin && displayActiveTasks.length > 1) {
       clearBtn.classList.remove("hidden");
     } else {
       clearBtn.classList.add("hidden");
     }
   }
 
-  if (activeTasks.length === 0) {
+  // If selected task is no longer in visible list, deselect
+  if (selectedActiveCheckoutId && !displayActiveTasks.some(a => a.id === selectedActiveCheckoutId)) {
+    selectedActiveCheckoutId = null;
+    if (outcomeSection) outcomeSection.classList.add("hidden");
+    renderActiveTaskPhotos(null);
+  }
+
+  if (displayActiveTasks.length === 0) {
     container.innerHTML = `
-      <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-5 text-center">
-        ยังไม่มีงานที่เช็กอินค้างอยู่
+      <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
+        ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
       </div>
     `;
     if (outcomeSection) outcomeSection.classList.add("hidden");
@@ -619,7 +664,7 @@ export function renderActiveCheckoutList() {
     return;
   }
 
-  container.innerHTML = activeTasks.map(item => {
+  container.innerHTML = displayActiveTasks.map(item => {
     const isSelected = selectedActiveCheckoutId === item.id;
     const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ผู้ปฏิบัติงานทั่วไป");
     const displayTaskId = item.taskId ? `${item.taskId} (${item.id})` : item.id;
@@ -822,20 +867,26 @@ export function renderTodayLogs() {
   const badge = document.getElementById("todayLogsBadge");
   if (!container) return;
 
-  if (badge) badge.innerText = `${dailyLogs.length} งาน`;
+  const isAdmin = currentUserRole === "admin";
+  const opName = currentLinkedTech?.name;
 
-  if (dailyLogs.length === 0) {
+  let displayLogs = dailyLogs;
+  if (!isAdmin && opName) {
+    displayLogs = dailyLogs.filter(log => matchTechName(log.techs, opName));
+  }
+
+  if (badge) badge.innerText = `${displayLogs.length} งาน`;
+
+  if (displayLogs.length === 0) {
     container.innerHTML = `
       <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4 text-center">
-        ยังไม่มีประวัติการปฏิบัติงานในวันนี้
+        ${!isAdmin && opName ? `ยังไม่มีประวัติการปฏิบัติงานของ "${opName}" ในวันนี้` : `ยังไม่มีประวัติการปฏิบัติงานในวันนี้`}
       </div>
     `;
     return;
   }
 
-  const isAdmin = currentUserRole === "admin";
-
-  container.innerHTML = dailyLogs.map(log => {
+  container.innerHTML = displayLogs.map(log => {
     const isDone = log.status === "เสร็จสิ้น" || log.status === "ปิดงานแล้ว";
     const techs = Array.isArray(log.techs) ? log.techs.join(", ") : (log.techs || "-");
     return `
@@ -1225,6 +1276,8 @@ export async function resolveUserRole() {
     applyRolePermissionsUI(currentUserRole, currentLinkedTech);
     renderTasksListScoped();
     renderAssignedTasksBannerScoped();
+    renderActiveCheckoutList();
+    renderTodayLogs();
     return;
   }
 
@@ -1233,6 +1286,8 @@ export async function resolveUserRole() {
   applyRolePermissionsUI(currentUserRole, currentLinkedTech);
   renderTasksListScoped();
   renderAssignedTasksBannerScoped();
+  renderActiveCheckoutList();
+  renderTodayLogs();
 
   // 6. If no operator has been chosen yet, and not admin override -> prompt selection
   if (!currentLinkedTech && !isUserAdminActual() && !sessionStorage.getItem("fs_operator_prompted")) {
@@ -1283,9 +1338,11 @@ export function switchSimulatedRole(mode) {
     switchTab("checkin");
   }
 
-  // Sync tasks view and check-in banner immediately
+  // Sync tasks view, check-in banner, active checkout, and today logs immediately
   renderTasksListScoped();
   renderAssignedTasksBannerScoped();
+  renderActiveCheckoutList();
+  renderTodayLogs();
 
   showAppAlert({
     type: "info",
@@ -1907,6 +1964,8 @@ export async function chooseOperatorProfile(techId) {
 
   renderTasksListScoped();
   renderAssignedTasksBannerScoped();
+  renderActiveCheckoutList();
+  renderTodayLogs();
 
   showAppAlert({
     type: "success",
