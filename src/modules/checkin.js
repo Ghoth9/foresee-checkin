@@ -12,8 +12,9 @@ import { compressMultipleFiles } from '../utils/compressor.js';
 import { createCheckinFlexCard, triggerLiffShare } from '../liff/line.js';
 import { saveCheckinApi } from '../api/supabase.js';
 import { formatThaiDateDisplay } from '../utils/date.js';
-import { showAppAlert } from '../utils/dialog.js';
+import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
 
+let isSubmittingCheckin = false;
 let checkinPhotos = [];
 let selectedAssignedTaskId = null;
 let cachedTasksList = [];
@@ -273,6 +274,8 @@ export function renderPhotoPreviews() {
 }
 
 export async function submitCheckinForm({ selectedTechs, selectedJobType, customJobType, locationText, noteText, onComplete }) {
+  if (isSubmittingCheckin) return;
+
   if (selectedTechs.length === 0) {
     showAppAlert({
       type: "warning",
@@ -298,48 +301,79 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
     return;
   }
 
-  const coords = getCurrentCoords();
-  const now = new Date();
-  const checkinId = `CHK-${Math.floor(1000 + Math.random() * 9000)}`;
-  const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-  const dateStr = now.toLocaleDateString("th-TH");
-  const mapUrl = coords.isReady ? getMapUrl(coords.lat, coords.lng) : "";
-
-  const checkinRecord = {
-    id: checkinId,
-    taskId: selectedAssignedTaskId,
-    task: finalJobTitle,
-    techs: [...selectedTechs],
-    time: timeStr,
-    date: dateStr,
-    lat: coords.lat || "",
-    lng: coords.lng || "",
-    mapUrl: mapUrl,
-    note: noteText.trim() || "-",
-    photoCount: 0,
-    photos: []
-  };
-
-  // 1. Send LINE Flex Card
-  const flexCard = createCheckinFlexCard({
-    id: checkinId,
-    task: finalJobTitle,
-    techs: selectedTechs,
-    time: timeStr,
-    coords: coords.isReady ? `${coords.lat}, ${coords.lng}` : null,
-    mapUrl: mapUrl,
-    photoCount: 0,
-    taskId: selectedAssignedTaskId
+  isSubmittingCheckin = true;
+  const checkinBtns = document.querySelectorAll('button[onclick="submitCheckin()"]');
+  checkinBtns.forEach(btn => {
+    btn.disabled = true;
+    btn.dataset.origHtml = btn.innerHTML;
+    btn.innerHTML = `<span>⏳ กำลังบันทึกการเช็กอิน...</span>`;
   });
 
-  // 2. Realtime sync to Google Apps Script
-  saveCheckinApi(checkinRecord);
+  try {
+    const coords = getCurrentCoords();
+    const now = new Date();
+    const checkinId = `CHK-${Math.floor(1000 + Math.random() * 9000)}`;
+    const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("th-TH");
+    const mapUrl = coords.isReady ? getMapUrl(coords.lat, coords.lng) : "";
 
-  // 3. Share to LINE Group
-  await triggerLiffShare(flexCard, "เช็กอินเข้าหน้างานและส่งการ์ดเข้า LINE สำเร็จ!");
+    const checkinRecord = {
+      id: checkinId,
+      taskId: selectedAssignedTaskId,
+      task: finalJobTitle,
+      techs: [...selectedTechs],
+      time: timeStr,
+      date: dateStr,
+      lat: coords.lat || "",
+      lng: coords.lng || "",
+      mapUrl: mapUrl,
+      note: noteText.trim() || "-",
+      photoCount: 0,
+      photos: []
+    };
 
-  // Reset form
-  clearCheckinPhotos();
-  deselectAssignedTask();
-  if (onComplete) onComplete(checkinRecord);
+    // 1. Prepare LINE Flex Card
+    const flexCard = createCheckinFlexCard({
+      id: checkinId,
+      task: finalJobTitle,
+      techs: selectedTechs,
+      time: timeStr,
+      coords: coords.isReady ? `${coords.lat}, ${coords.lng}` : null,
+      mapUrl: mapUrl,
+      photoCount: 0,
+      taskId: selectedAssignedTaskId
+    });
+
+    // 2. Realtime sync to Supabase Database
+    await saveCheckinApi(checkinRecord);
+
+    // Reset form
+    clearCheckinPhotos();
+    deselectAssignedTask();
+    if (onComplete) onComplete(checkinRecord);
+
+    // 3. Prompt user to Share to LINE (Direct User Gesture)
+    showSharePromptDialog({
+      title: "เช็กอินเข้าหน้างานสำเร็จ!",
+      message: `บันทึกเวลาเข้างาน (${timeStr} น.) เรียบร้อยแล้ว\n\nต้องการส่งการ์ดเช็กอินเข้ากลุ่ม LINE ตอนนี้หรือไม่?`,
+      shareBtnText: "💬 เลือกกลุ่ม LINE และส่งการ์ดเช็กอิน",
+      skipBtnText: "เสร็จสิ้น / ไว้แชร์ทีหลัง",
+      onShare: () => {
+        triggerLiffShare(flexCard, "เช็กอินเข้าหน้างานและส่งการ์ดเข้า LINE สำเร็จ!");
+      }
+    });
+  } catch (err) {
+    console.error("submitCheckinForm error:", err);
+    showAppAlert({
+      type: "error",
+      title: "เกิดข้อผิดพลาด",
+      message: "ไม่สามารถบันทึกการเช็กอินได้ กรุณาลองใหม่อีกครั้ง"
+    });
+  } finally {
+    isSubmittingCheckin = false;
+    checkinBtns.forEach(btn => {
+      btn.disabled = false;
+      if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
+    });
+  }
 }

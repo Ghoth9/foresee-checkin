@@ -667,7 +667,7 @@ export function renderActiveCheckoutList() {
   container.innerHTML = displayActiveTasks.map(item => {
     const isSelected = selectedActiveCheckoutId === item.id;
     const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ผู้ปฏิบัติงานทั่วไป");
-    const displayTaskId = item.taskId ? `${item.taskId} (${item.id})` : item.id;
+    const displayTaskId = item.taskId || item.id;
     const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
     const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
     const uniquePhotos = getUniquePhotosForActiveTask(item);
@@ -1126,7 +1126,24 @@ export async function refreshFromSupabase(force = false) {
       }
     });
 
-    activeTasks = checkinActives;
+    // Deduplicate activeTasks so each task appears EXACTLY ONCE
+    const uniqueActivesMap = new Map();
+    checkinActives.forEach(item => {
+      const key = item.taskId || item.id;
+      if (!uniqueActivesMap.has(key)) {
+        uniqueActivesMap.set(key, item);
+      } else {
+        const existing = uniqueActivesMap.get(key);
+        // Merge techs and photos
+        const mergedTechs = Array.from(new Set([...(existing.techs || []), ...(item.techs || [])]));
+        existing.techs = mergedTechs;
+        if (item.photos && item.photos.length > 0) {
+          existing.photos = Array.from(new Set([...(existing.photos || []), ...item.photos]));
+        }
+      }
+    });
+
+    activeTasks = Array.from(uniqueActivesMap.values());
     localStorage.setItem("fs_active_tasks", JSON.stringify(activeTasks));
     renderActiveCheckoutList();
 

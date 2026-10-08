@@ -32,9 +32,68 @@ try {
 } catch (e) {}
 
 export function getTaskTechs(task) {
-  if (Array.isArray(task.techs)) return task.techs;
-  if (typeof task.techs === "string") return [task.techs];
+  if (Array.isArray(task.techs) && task.techs.length > 0) return task.techs;
+  if (typeof task.techs === "string" && task.techs.trim()) return task.techs.split(',').map(s => s.trim());
+  if (typeof task.assignee === "string" && task.assignee.trim()) return task.assignee.split(',').map(s => s.trim());
   return ["ผู้ปฏิบัติงานทั่วไป"];
+}
+
+export function getAssigneeSubmissionsStatus(task) {
+  const techs = getTaskTechs(task);
+  let timelineItems = [];
+  if (Array.isArray(task.progressHistory) && task.progressHistory.length > 0) {
+    timelineItems = [...task.progressHistory];
+  } else if (task.customer && Array.isArray(task.customer.progress_history)) {
+    timelineItems = [...task.customer.progress_history];
+  }
+
+  const match = (itemTech, targetTech) => {
+    if (!itemTech || !targetTech) return false;
+    const cleanItem = itemTech.toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
+    const cleanTarget = targetTech.toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
+    if (!cleanItem || !cleanTarget) return false;
+    const targetBase = targetTech.split('(')[0].trim().toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
+    const itemBase = itemTech.split('(')[0].trim().toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
+    return cleanItem.includes(cleanTarget) || cleanTarget.includes(cleanItem) ||
+           (targetBase && cleanItem.includes(targetBase)) ||
+           (itemBase && cleanTarget.includes(itemBase));
+  };
+
+  return techs.map(techName => {
+    const userSubs = timelineItems.filter(it => match(it.tech, techName));
+    if (userSubs.length === 0) {
+      return {
+        techName,
+        submitted: false,
+        status: "ยังไม่ส่งงาน",
+        badgeClass: "bg-slate-100 text-slate-500 border-slate-200",
+        label: `${techName}: ยังไม่ส่งงาน (รอดำเนินการ)`
+      };
+    }
+
+    const closeSub = userSubs.find(s => s.status === "เสร็จสิ้น" || s.status === "ปิดงานแล้ว" || Number(s.progress) === 100);
+    const latestSub = userSubs[userSubs.length - 1];
+    const targetSub = closeSub || latestSub;
+    const isClosed = !!closeSub;
+    const timeStr = targetSub.time ? `${targetSub.time} น.` : '';
+
+    return {
+      techName,
+      submitted: true,
+      isClosed: isClosed,
+      status: isClosed ? "ปิดงานแล้ว" : `คืบหน้า ${targetSub.progress}%`,
+      time: targetSub.time,
+      date: targetSub.date,
+      note: targetSub.note,
+      photoCount: Array.isArray(targetSub.photos) ? targetSub.photos.length : 0,
+      badgeClass: isClosed
+        ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-bold"
+        : "bg-blue-50 text-blue-800 border-blue-300 font-bold",
+      label: isClosed
+        ? `${techName}: ปิดงานแล้ว (${timeStr} ✅)`
+        : `${techName}: ส่งงานแล้ว (${targetSub.progress}% เมื่อ ${timeStr})`
+    };
+  });
 }
 
 export function setTaskViewMode(mode, tasksList) {
@@ -243,7 +302,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
       const isDone = task.status === "เสร็จสิ้น";
       const isOver = isTaskOverdue(task.deadline, isDone);
       const isNew = recentNewTaskIds.has(task.id) || task.isNew;
-      const techs = getTaskTechs(task);
+      const assigneeStatuses = getAssigneeSubmissionsStatus(task);
       const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
 
       const isProblem = task.status === "ติดปัญหา";
@@ -279,7 +338,11 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
           </td>
           <td class="py-3 px-3">
             <div class="flex flex-wrap gap-1">
-              ${techs.map(tName => `<span class="text-xs bg-slate-100 text-slate-800 font-medium px-2 py-0.5 rounded-md border border-slate-200">${tName}</span>`).join('')}
+              ${assigneeStatuses.map(s => `
+                <span class="text-[11px] px-2 py-0.5 rounded-md border ${s.badgeClass}">
+                  ${s.label}
+                </span>
+              `).join('')}
             </div>
           </td>
           <td class="py-3 px-3 whitespace-nowrap">
@@ -328,6 +391,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
       const isOver = isTaskOverdue(task.deadline, isDone);
       const isNew = recentNewTaskIds.has(task.id) || task.isNew;
       const techs = getTaskTechs(task);
+      const assigneeStatuses = getAssigneeSubmissionsStatus(task);
       const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
 
       const isProblem = task.status === "ติดปัญหา";
@@ -357,9 +421,18 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
             ${task.desc && task.desc !== '-' ? `<p class="text-xs text-slate-500 mt-1 line-clamp-2">${task.desc}</p>` : ''}
             ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<p class="text-[11px] text-blue-600 line-clamp-1 mt-1 font-medium">💬 ${task.latestUpdate}</p>` : ''}
           </div>
-          <div class="mt-2 text-xs text-slate-500 flex items-center space-x-1">
-            <span>👷 ผู้ปฏิบัติงาน:</span>
-            <strong class="text-slate-700">${techs.join(', ')}</strong>
+          <div class="mt-2.5 pt-2 border-t border-slate-100 text-xs">
+            <div class="text-[11px] font-bold text-slate-600 mb-1 flex items-center justify-between">
+              <span>👷 ผู้ปฏิบัติงาน (${techs.length} คน):</span>
+              <span class="text-[10px] text-slate-400 font-normal">สถานะส่งงาน</span>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              ${assigneeStatuses.map(s => `
+                <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-md border ${s.badgeClass}">
+                  ${s.label}
+                </span>
+              `).join('')}
+            </div>
           </div>
         </div>
 
@@ -1193,8 +1266,31 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
 
   const timelineContainer = document.getElementById("detailTimelineContainer");
   if (timelineContainer) {
+    const assigneeStatuses = getAssigneeSubmissionsStatus(task);
+    const summaryCardHtml = `
+      <div class="mb-4 bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+          <span class="flex items-center space-x-1">
+            <span>👥 สรุปสถานะการส่งงานรายบุคคล (${assigneeStatuses.length} คน):</span>
+          </span>
+          <span class="text-[11px] text-slate-500 font-normal">แสดงตามเวลาที่ส่งงานจริง</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          ${assigneeStatuses.map(s => `
+            <div class="p-2 rounded-lg border text-xs flex items-center justify-between ${s.badgeClass}">
+              <div class="flex items-center space-x-1.5 truncate mr-2">
+                <span>${s.submitted ? (s.isClosed ? '🏁' : '📊') : '⏳'}</span>
+                <span class="font-bold truncate">${s.techName}</span>
+              </div>
+              <span class="font-mono text-[11px] flex-shrink-0">${s.submitted ? `${s.status} (${s.time ? `${s.time} น.` : ''})` : 'ยังไม่ส่งงาน'}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
     if (timelineItems.length === 0) {
-      timelineContainer.innerHTML = `
+      timelineContainer.innerHTML = summaryCardHtml + `
         <div class="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-6">
           <div class="text-3xl mb-2">📸</div>
           <div class="text-sm font-bold text-slate-800">ยังไม่มีบันทึกภาพถ่ายหน้างาน</div>
@@ -1202,7 +1298,7 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
         </div>
       `;
     } else {
-      timelineContainer.innerHTML = timelineItems.map((item, idx) => {
+      timelineContainer.innerHTML = summaryCardHtml + timelineItems.map((item, idx) => {
         const isDone = item.status === "เสร็จสิ้น" || item.progress === 100;
         const bulletColor = isDone ? "bg-emerald-500 ring-4 ring-emerald-100" : "bg-blue-600 ring-4 ring-blue-100";
         const hasPhotos = Array.isArray(item.photos) && item.photos.length > 0;

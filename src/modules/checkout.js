@@ -9,7 +9,7 @@ import { compressMultipleFiles } from '../utils/compressor.js';
 import { createCheckoutFlexCard, createProgressFlexCard, triggerLiffShare } from '../liff/line.js';
 import { saveCheckoutApi, updateTaskProgressApi } from '../api/supabase.js';
 import { formatGasTime } from '../utils/date.js';
-import { showAppAlert } from '../utils/dialog.js';
+import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
 
 let checkoutPhotos = [];
 let currentActionTab = "update"; // "update" or "close"
@@ -298,14 +298,6 @@ export async function submitProgressOnly({
       photos: photosToUpload
     });
 
-    // 4. Share to LINE (with safe fallback)
-    let shareRes = null;
-    try {
-      shareRes = await triggerLiffShare(flexCard, "อัปเดตความคืบหน้างานและส่งเข้า LINE สำเร็จ!");
-    } catch (shareErr) {
-      console.warn("LINE share error:", shareErr);
-    }
-
     if (onComplete) onComplete({
       id: activeItem.id,
       task: activeItem.task,
@@ -314,7 +306,18 @@ export async function submitProgressOnly({
       latestUpdate: updateEntry,
       photos: photosToUpload,
       historyItem: apiRes?.historyItem,
-      lineShared: !!(shareRes && shareRes.success)
+      lineShared: false
+    });
+
+    // 4. Prompt to Share to LINE (Direct User Gesture - Prevents Chrome Popup Block on PC)
+    showSharePromptDialog({
+      title: `บันทึกความคืบหน้าสำเร็จ! (${updatePercent}%)`,
+      message: `ระบบบันทึกความคืบหน้าและอัปโหลดรูปภาพ (${photosToUpload.length} รูป) เรียบร้อยแล้ว\n\nต้องการส่งการ์ดสรุปเข้ากลุ่ม LINE ตอนนี้หรือไม่?`,
+      shareBtnText: "💬 เลือกกลุ่ม LINE และส่งการ์ดสรุป",
+      skipBtnText: "เสร็จสิ้น / ไว้แชร์ทีหลัง",
+      onShare: () => {
+        triggerLiffShare(flexCard, "อัปเดตความคืบหน้างานและส่งเข้า LINE สำเร็จ!");
+      }
     });
   } catch (err) {
     console.error("submitProgressOnly error:", err);
@@ -428,14 +431,18 @@ export async function submitCheckoutForm({
     // 2. Realtime sync to GAS / Supabase
     saveCheckoutApi(payload);
 
-    // 3. Share to LINE
-    try {
-      await triggerLiffShare(flexCard, "ปิดงานและส่งสรุปผลงานเข้า LINE สำเร็จ!");
-    } catch (shareErr) {
-      console.warn("LINE share checkout error:", shareErr);
-    }
-
     if (onComplete) onComplete(payload);
+
+    // 3. Prompt to Share to LINE (Direct User Gesture - Prevents Chrome Popup Block on PC)
+    showSharePromptDialog({
+      title: "บันทึกปิดงานสำเร็จ! (100%)",
+      message: `ระบบบันทึกปิดงานและอัปโหลดรูปภาพ (${photosToUpload.length} รูป) เรียบร้อยแล้ว\n\nต้องการส่งการ์ดสรุปปิดงานเข้ากลุ่ม LINE ตอนนี้หรือไม่?`,
+      shareBtnText: "💬 เลือกกลุ่ม LINE และส่งสรุปปิดงาน",
+      skipBtnText: "เสร็จสิ้น / ไว้แชร์ทีหลัง",
+      onShare: () => {
+        triggerLiffShare(flexCard, "ปิดงานและส่งสรุปผลงานเข้า LINE สำเร็จ!");
+      }
+    });
   } catch (err) {
     console.error("submitCheckoutForm error:", err);
     showAppAlert({

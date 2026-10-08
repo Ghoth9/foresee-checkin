@@ -61,6 +61,11 @@ import { showAppAlert } from '../utils/dialog.js';
 
 export async function triggerLiffShare(flexCard, successMessage = "แชร์เข้าห้องแชท LINE สำเร็จ!") {
   if (typeof liff === "undefined") {
+    showAppAlert({
+      type: "warning",
+      title: "ไม่พบ LINE SDK",
+      message: "ไม่สามารถเรียกใช้งาน LINE SDK ได้บนเบราว์เซอร์นี้ กรุณาเปิดผ่านลิงก์ LIFF ใน LINE ครับ"
+    });
     return { success: false, reason: "no_sdk" };
   }
 
@@ -69,8 +74,8 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
     if (!liff.isLoggedIn()) {
       showAppAlert({
         type: "info",
-        title: "บันทึกข้อมูลเรียบร้อย (ยังไม่ได้แชร์เข้า LINE)",
-        message: "ระบบบันทึกข้อมูลเข้าฐานข้อมูลแล้วครับ แต่ยังไม่ได้ส่งการ์ดเข้ากลุ่ม LINE เนื่องจากยังไม่ได้เข้าสู่ระบบ LINE บนอุปกรณ์นี้ คุณสามารถกด 'เข้าสู่ระบบ LINE' เพื่อแชร์การ์ดเข้ากลุ่มได้ครับ",
+        title: "ยังไม่ได้เข้าสู่ระบบ LINE",
+        message: "ระบบบันทึกข้อมูลเข้าฐานข้อมูลแล้วครับ แต่ยังไม่ได้ส่งการ์ดเข้ากลุ่ม LINE เนื่องจากยังไม่ได้เข้าสู่ระบบ LINE บนอุปกรณ์นี้\n\nกด 'ตกลง' เพื่อเข้าสู่ระบบ LINE และแชร์การ์ดเข้ากลุ่มได้ทันทีครับ",
         onOk: () => liff.login({ redirectUri: window.location.href })
       });
       return { success: false, reason: "not_logged_in" };
@@ -78,27 +83,62 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
 
     // 1. Prioritize Share Target Picker so technician can select their team group chat
     if (liff.isApiAvailable("shareTargetPicker")) {
-      const res = await liff.shareTargetPicker([flexCard]);
-      if (res) {
-        return { success: true, method: "shareTargetPicker" };
+      try {
+        const res = await liff.shareTargetPicker([flexCard]);
+        if (res) {
+          showAppAlert({
+            type: "success",
+            title: "ส่งข้อมูลเข้า LINE สำเร็จ",
+            message: successMessage
+          });
+          return { success: true, method: "shareTargetPicker" };
+        }
+        return { success: false, reason: "cancelled" };
+      } catch (pickerErr) {
+        console.warn("shareTargetPicker error:", pickerErr);
+        showAppAlert({
+          type: "warning",
+          title: "เบราว์เซอร์บล็อกป็อปอัป (Pop-up Blocked)",
+          message: "Google Chrome บนคอมพิวเตอร์ได้บล็อกหน้าต่างเลือกกลุ่ม LINE ครับ\n\n👉 วิธีแก้ไข:\n1. สังเกตไอคอนป็อปอัป 🚫 ตรงขวาสุดของแถบที่อยู่ URL ด้านบน\n2. คลิกไอคอนแล้วเลือก 'อนุญาตป็อปอัปและเปลี่ยนเส้นทางเสมอ'\n3. จากนั้นกดปุ่มแชร์เข้า LINE ใหม่อีกครั้งครับ"
+        });
+        return { success: false, reason: "picker_error", error: pickerErr?.message };
       }
-      return { success: false, reason: "cancelled" };
     }
 
     // 2. Fallback: if inside LINE client and shareTargetPicker is not available, send directly
     if (liff.isInClient()) {
       try {
         await liff.sendMessages([flexCard]);
+        showAppAlert({
+          type: "success",
+          title: "ส่งข้อมูลเข้า LINE สำเร็จ",
+          message: successMessage
+        });
         return { success: true, method: "sendMessages" };
       } catch (sendErr) {
         console.warn("sendMessages fallback failed:", sendErr);
+        showAppAlert({
+          type: "error",
+          title: "ส่งเข้า LINE ไม่สำเร็จ",
+          message: sendErr.message || "ไม่สามารถส่งข้อความเข้าห้องแชทได้"
+        });
         return { success: false, reason: "send_error", error: sendErr.message };
       }
     }
 
+    showAppAlert({
+      type: "info",
+      title: "ระบบไม่รองรับ Share Target Picker",
+      message: "เบราว์เซอร์นี้ไม่รองรับการส่งการ์ดเข้ากลุ่มภายนอก กรุณาเปิดผ่านแอป LINE หรืออนุญาตสิทธิ์ใน LINE Developers Console ครับ"
+    });
     return { success: false, reason: "not_supported" };
   } catch (err) {
     console.warn("LIFF share error:", err);
+    showAppAlert({
+      type: "error",
+      title: "เกิดข้อผิดพลาดในการแชร์",
+      message: err.message || "ไม่สามารถส่งข้อมูลเข้า LINE ได้"
+    });
     return { success: false, reason: "error", error: err.message };
   }
 }

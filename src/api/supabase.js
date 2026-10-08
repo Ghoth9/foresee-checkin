@@ -399,6 +399,32 @@ export async function saveCheckinApi(data) {
       }
     }
 
+    // If taskId is specified, check if a checkin for this taskId already exists in 'กำลังทำ' status
+    if (data.taskId) {
+      const { data: existing } = await supabase
+        .from('checkins')
+        .select('id, techs, photos')
+        .eq('task_id', data.taskId)
+        .eq('status', 'กำลังทำ')
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        const cur = existing[0];
+        const newTechs = Array.isArray(data.techs) ? data.techs : [data.techs];
+        const mergedTechs = Array.from(new Set([...(cur.techs || []), ...newTechs]));
+        const mergedPhotos = Array.from(new Set([...(cur.photos || []), ...cleanPhotos]));
+        await supabase
+          .from('checkins')
+          .update({
+            techs: mergedTechs,
+            photos: mergedPhotos,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', cur.id);
+        return { success: true, id: cur.id };
+      }
+    }
+
     const payload = {
       id: data.id,
       task_id: data.taskId || null,
