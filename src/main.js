@@ -14,6 +14,7 @@ import {
   logoutLine, 
   createProgressFlexCard, 
   createCheckinFlexCard, 
+  createAssignTaskFlexCard, 
   triggerLiffShare 
 } from './liff/line.js';
 import { requestLocation, getCurrentCoords } from './utils/gps.js';
@@ -678,6 +679,15 @@ export function renderActiveCheckoutList() {
     const totalPhotos = uniquePhotos.length;
     const rawNote = linkedTask?.latestUpdate || item.note;
     const cleanNote = formatLatestNoteText(rawNote);
+    const isRealCheckin = (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00";
+
+    // Recent update snippet from task history
+    let historySnippet = "";
+    if (linkedTask && Array.isArray(linkedTask.progressHistory) && linkedTask.progressHistory.length > 0) {
+      const lastHist = linkedTask.progressHistory[linkedTask.progressHistory.length - 1];
+      historySnippet = `อัปเดตล่าสุด: ${lastHist.progress || itemProg}% (${lastHist.time || ''} โดย ${lastHist.by || lastHist.tech || 'ผู้ปฏิบัติงาน'})`;
+      if (lastHist.note) historySnippet += ` - "${lastHist.note}"`;
+    }
 
     return `
       <div onclick="window.selectActiveTaskForCheckout('${item.id}')" class="p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
@@ -688,17 +698,19 @@ export function renderActiveCheckoutList() {
         <div class="flex items-center justify-between mb-1.5">
           <div class="flex items-center space-x-2 flex-wrap gap-y-1">
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
-            <span class="text-xs text-emerald-800 font-bold font-mono">⏰ เข้างาน: ${formatGasTime(item.time)} น.</span>
+            ${isRealCheckin 
+              ? `<span class="text-xs text-emerald-800 font-bold font-mono">⏰ เช็กอิน: ${formatGasTime(item.time)} น.</span>` 
+              : `<span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">📋 งานมอบหมาย (ยังไม่เช็กอิน)</span>`}
             <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs">คืบหน้า ${itemProg}%</span>
             ${totalPhotos > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">📸 ${totalPhotos} รูป</span>` : ''}
           </div>
           <div class="flex items-center space-x-1.5">
-            <button type="button" onclick="event.stopPropagation(); window.shareActiveTaskToLine('${item.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-1 rounded-lg border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="แชร์ข้อมูลงานนี้เข้ากลุ่ม LINE">
+            <button type="button" onclick="event.stopPropagation(); window.shareActiveTaskToLine('${item.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-1 rounded-lg border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer" title="แชร์ข้อมูลงานนี้เข้ากลุ่ม LINE">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
               <span>แชร์เข้า LINE</span>
             </button>
             ${currentUserRole === "admin" ? `
-              <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs" title="ลบรายการเช็กอินนี้">
+              <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer" title="ลบรายการเช็กอินนี้">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 <span>ลบรายการ</span>
               </button>
@@ -712,9 +724,17 @@ export function renderActiveCheckoutList() {
             <span class="truncate block flex-1 font-sans text-slate-800" title="${cleanNote}">${cleanNote}</span>
           </div>
         ` : ''}
+        ${historySnippet ? `
+          <div class="text-[10px] text-slate-500 mt-1 flex items-center space-x-1.5 pl-0.5">
+            <span class="text-slate-400">🕒</span>
+            <span class="truncate">${historySnippet}</span>
+          </div>
+        ` : ''}
         <div class="text-slate-600 mt-2 flex items-center justify-between font-medium pt-1.5 border-t border-slate-100">
           <span>👷 ผู้ปฏิบัติงาน: <strong class="text-slate-900">${techList}</strong></span>
-          <span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>
+          ${isRealCheckin 
+            ? `<span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>` 
+            : `<span class="text-xs text-slate-500 font-sans">📅 เริ่ม: ${item.date || 'วันนี้'}</span>`}
         </div>
       </div>
     `;
@@ -1105,11 +1125,12 @@ export async function refreshFromSupabase(force = false) {
         taskId: a.taskId || null,
         task: a.task,
         techs: Array.isArray(a.techs) && a.techs.length > 0 ? a.techs : (a.tech ? [a.tech] : ["ผู้ปฏิบัติงานทั่วไป"]),
-        time: formatGasTime(a.time) || "09:00",
+        time: formatGasTime(a.time),
         date: formatGasDate(a.date),
         progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0),
         photos: a.photos || [],
-        note: a.note || ''
+        note: a.note || '',
+        isCheckedIn: true
       };
     }) : [];
 
@@ -1121,11 +1142,14 @@ export async function refreshFromSupabase(force = false) {
           taskId: t.id,
           task: t.title,
           techs: Array.isArray(t.techs) ? t.techs : (t.assignee ? t.assignee.split(", ") : ["ผู้ปฏิบัติงานประจำทีม"]),
-          time: "09:00",
-          date: "วันนี้",
+          time: null,
+          date: t.startDate || "วันนี้",
           progress: t.progress || 0,
           photos: [],
-          note: t.latestUpdate || ''
+          note: t.latestUpdate || '',
+          isCheckedIn: false,
+          isSynthetic: true,
+          linkedTaskObj: t
         });
       }
     });
@@ -1143,6 +1167,10 @@ export async function refreshFromSupabase(force = false) {
         existing.techs = mergedTechs;
         if (item.photos && item.photos.length > 0) {
           existing.photos = Array.from(new Set([...(existing.photos || []), ...item.photos]));
+        }
+        if (item.isCheckedIn) {
+          existing.isCheckedIn = true;
+          existing.time = item.time;
         }
       }
     });
@@ -2522,19 +2550,86 @@ window.deletePhotoFromTask = (photoSrc, activeTaskId) => {
   });
 };
 
-window.shareActiveTaskToLine = async (activeId) => {
+let currentShareTaskItem = null;
+
+export function openShareTaskLineModal(activeId) {
   const item = activeTasks.find(a => a.id === activeId);
   if (!item) return;
+  currentShareTaskItem = item;
+
+  const modal = document.getElementById("shareTaskLineModal");
+  const subtitle = document.getElementById("shareModalTaskSubtitle");
+  const displayTaskId = item.taskId || item.id;
+  if (subtitle) subtitle.innerText = `${displayTaskId} • ${item.task}`;
 
   const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+  const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
+  const isRealCheckin = (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00";
+
+  // Check-in option badge & desc
+  const checkinBadge = document.getElementById("shareOptionCheckinBadge");
+  const checkinDesc = document.getElementById("shareOptionCheckinDesc");
+  if (checkinBadge && checkinDesc) {
+    if (isRealCheckin) {
+      checkinBadge.className = "text-[10px] px-1.5 py-0.2 rounded font-bold bg-emerald-100 text-emerald-800";
+      checkinBadge.innerText = `เช็กอินแล้ว ${formatGasTime(item.time)} น.`;
+      checkinDesc.innerText = `แจ้งว่าผู้ปฏิบัติงานเข้างานแล้ว เวลา ${formatGasTime(item.time)} น.`;
+    } else {
+      checkinBadge.className = "text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-100 text-amber-800";
+      checkinBadge.innerText = `ยังไม่เช็กอิน`;
+      checkinDesc.innerText = `งานนี้ยังไม่มีการกดเช็กอินจริง (หากเลือกจะแชร์เวลา ณ ปัจจุบัน)`;
+    }
+  }
+
+  // Progress option badge & desc
+  const progBadge = document.getElementById("shareOptionProgressBadge");
+  const progDesc = document.getElementById("shareOptionProgressDesc");
+  if (progBadge && progDesc) {
+    progBadge.innerText = `${itemProg}%`;
+    progDesc.innerText = itemProg > 0 
+      ? `รายงานความคืบหน้าปัจจุบัน (${itemProg}%) และบันทึกล่าสุด` 
+      : `สถานะปัจจุบัน 0% (ยังไม่มีการบันทึกความคืบหน้า)`;
+  }
+
+  if (modal) modal.classList.remove("hidden");
+}
+
+export function closeShareTaskLineModal() {
+  const modal = document.getElementById("shareTaskLineModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+export async function submitShareTaskChoice(choiceType) {
+  if (!currentShareTaskItem) return;
+  const item = currentShareTaskItem;
+  closeShareTaskLineModal();
+
+  const linkedTask = tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+  const displayTaskId = item.taskId || item.id;
   const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
   const uniquePhotos = getUniquePhotosForActiveTask(item);
   const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ผู้ปฏิบัติงานทั่วไป");
   const rawNote = linkedTask?.latestUpdate || item.note;
   const cleanNote = formatLatestNoteText(rawNote);
 
-  let flexCard;
-  if (itemProg > 0) {
+  let flexCard = null;
+  let confirmMsg = "";
+
+  if (choiceType === "assign") {
+    const tObj = linkedTask || {};
+    flexCard = createAssignTaskFlexCard({
+      id: displayTaskId,
+      title: item.task,
+      category: tObj.category || "งานทั่วไป",
+      priority: tObj.priority || "ปกติ",
+      customer: tObj.customer || { name: item.task },
+      techs: item.techs,
+      startDate: tObj.startDate || item.date || "วันนี้",
+      deadline: tObj.deadline || "-",
+      desc: tObj.desc || cleanNote || "มอบหมายงานใหม่"
+    });
+    confirmMsg = `แชร์ข้อมูลมอบหมายงาน ${item.task} เข้า LINE สำเร็จ!`;
+  } else if (choiceType === "progress") {
     flexCard = createProgressFlexCard({
       id: item.id,
       taskId: item.taskId || item.id,
@@ -2548,28 +2643,39 @@ window.shareActiveTaskToLine = async (activeId) => {
       photoCount: uniquePhotos.length,
       totalPhotos: uniquePhotos.length
     });
-  } else {
+    confirmMsg = `แชร์อัปเดตความคืบหน้างาน ${item.task} เข้า LINE สำเร็จ!`;
+  } else if (choiceType === "checkin") {
+    const isRealCheckin = (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00";
+    const checkinTime = isRealCheckin ? formatGasTime(item.time) : new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
     flexCard = createCheckinFlexCard({
       id: item.id,
       taskId: item.taskId || item.id,
       task: item.task,
       techs: item.techs,
-      time: formatGasTime(item.time),
+      time: checkinTime,
       coords: item.coords,
       mapUrl: item.mapUrl,
       photoCount: uniquePhotos.length
     });
+    confirmMsg = `แชร์ข้อมูลเช็กอินงาน ${item.task} เข้า LINE สำเร็จ!`;
   }
 
-  const res = await triggerLiffShare(flexCard, `แชร์ข้อมูลงาน ${item.task} เข้ากลุ่ม LINE สำเร็จ!`);
-  if (res && res.success) {
-    showAppAlert({
-      type: "success",
-      title: "แชร์เข้า LINE สำเร็จ",
-      message: `ส่งข้อมูลงาน ${item.task} เข้าห้องแชทเรียบร้อยแล้ว`
-    });
+  if (flexCard) {
+    const res = await triggerLiffShare(flexCard, confirmMsg);
+    if (res && res.success) {
+      showAppAlert({
+        type: "success",
+        title: "แชร์เข้า LINE สำเร็จ",
+        message: confirmMsg
+      });
+    }
   }
-};
+}
+
+window.openShareTaskLineModal = openShareTaskLineModal;
+window.closeShareTaskLineModal = closeShareTaskLineModal;
+window.submitShareTaskChoice = submitShareTaskChoice;
+window.shareActiveTaskToLine = (activeId) => openShareTaskLineModal(activeId);
 
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, tasksList, allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;

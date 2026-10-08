@@ -181,7 +181,7 @@ export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, p
 
   return {
     type: "flex",
-    altText: `[เช็กอินหน้างาน] ${task} โดย ${techList}`,
+    altText: `[เช็กอินเริ่มงาน] ${task} โดย ${techList}`,
     contents: {
       type: "bubble",
       size: "mega",
@@ -195,13 +195,13 @@ export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, p
             type: "box",
             layout: "horizontal",
             contents: [
-              { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#94A3B8", size: "xxs", flex: 6 },
+              { type: "text", text: "FORESEE WORKPLACE", weight: "bold", color: "#94A3B8", size: "xxs", flex: 6 },
               { type: "text", text: id, color: "#38BDF8", size: "xs", align: "end", weight: "bold", flex: 4 }
             ]
           },
           {
             type: "text",
-            text: "📍 เช็กอินถึงหน้างานแล้ว",
+            text: "📍 เช็กอินเริ่มปฏิบัติงานแล้ว",
             weight: "bold",
             color: "#FFFFFF",
             size: "lg",
@@ -243,7 +243,7 @@ export function createCheckinFlexCard({ id, task, techs, time, coords, mapUrl, p
             type: "box",
             layout: "horizontal",
             contents: [
-              { type: "text", text: "ภาพหน้างาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: "ภาพถ่ายผลงาน", size: "xs", color: "#64748B", flex: 4 },
               { type: "text", text: `📸 แนบรูป ${photoCount} ภาพ`, size: "xs", weight: "bold", color: "#2563EB", flex: 6 }
             ]
           }] : []),
@@ -285,12 +285,12 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
 
   const displayCount = totalPhotos > 0 ? totalPhotos : photoCount;
   const photoButtonLabel = displayCount > 0 
-    ? `📸 ดูรูปหน้างาน (${displayCount} รูป) & ไทม์ไลน์` 
-    : `📸 ดูรูปหน้างาน & ไทม์ไลน์`;
+    ? `📸 ดูรูปผลงาน (${displayCount} รูป) & ไทม์ไลน์` 
+    : `📸 ดูรูปผลงาน & ไทม์ไลน์`;
 
   return {
     type: "flex",
-    altText: `[อัปเดตงาน CCTV] ${taskTitle} (${status} ${progress}%)`,
+    altText: `[อัปเดตงาน] ${taskTitle} (${status} ${progress}%)`,
     contents: {
       type: "bubble",
       size: "mega",
@@ -304,7 +304,7 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
             type: "box",
             layout: "horizontal",
             contents: [
-              { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: "#BFDBFE", size: "xxs", flex: 6 },
+              { type: "text", text: "FORESEE WORKPLACE", weight: "bold", color: "#BFDBFE", size: "xxs", flex: 6 },
               { type: "text", text: `${progress}%`, color: "#38BDF8", size: "sm", align: "end", weight: "bold", flex: 4 }
             ]
           },
@@ -417,8 +417,8 @@ export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, durat
   const headerBg = isProblem ? "#B91C1C" : "#065F46";
   const headerSubColor = isProblem ? "#FECACA" : "#A7F3D0";
   const headerIdColor = isProblem ? "#FCA5A5" : "#6EE7B7";
-  const headerTitle = isProblem ? "⚠️ ปิดงานไม่สำเร็จ (ติดปัญหาหน้างาน)" : "🏁 ปิดงานและส่งมอบเรียบร้อย";
-  const altText = isProblem ? `[ติดปัญหาหน้างาน] ${task} โดย ${techList}` : `[ปิดงานสำเร็จ] ${task} โดย ${techList}`;
+  const headerTitle = isProblem ? "⚠️ ปิดงานไม่สำเร็จ (ติดปัญหา)" : "🏁 ปิดงานและส่งมอบเรียบร้อย";
+  const altText = isProblem ? `[ติดปัญหา] ${task} โดย ${techList}` : `[ปิดงานสำเร็จ] ${task} โดย ${techList}`;
 
   return {
     type: "flex",
@@ -436,7 +436,7 @@ export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, durat
             type: "box",
             layout: "horizontal",
             contents: [
-              { type: "text", text: "FORESEE CCTV SERVICE", weight: "bold", color: headerSubColor, size: "xxs", flex: 6 },
+              { type: "text", text: "FORESEE WORKPLACE", weight: "bold", color: headerSubColor, size: "xxs", flex: 6 },
               { type: "text", text: id, color: headerIdColor, size: "xs", align: "end", weight: "bold", flex: 4 }
             ]
           },
@@ -586,7 +586,7 @@ export function createAssignTaskFlexCard({ id, title, category, priority, custom
 
   return {
     type: "flex",
-    altText: `[มอบหมายงาน CCTV] ${title} ถึง ${techList}`,
+    altText: `[มอบหมายงาน] ${title} ถึง ${techList}`,
     contents: {
       type: "bubble",
       size: "mega",
@@ -646,7 +646,7 @@ export function createAssignTaskFlexCard({ id, title, category, priority, custom
           },
           {
             type: "box", layout: "horizontal", contents: [
-              { type: "text", text: "สถานที่หน้างาน", size: "xs", color: "#64748B", flex: 4 },
+              { type: "text", text: "สถานที่ / ที่อยู่", size: "xs", color: "#64748B", flex: 4 },
               { type: "text", text: custAddress, size: "xs", color: "#334155", wrap: true, flex: 6 }
             ]
           },
