@@ -377,3 +377,61 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
     });
   }
 }
+
+let selectedJobType = "ติดตั้งกล้องวงจรปิด";
+
+export function getSelectedJobType() {
+  return selectedJobType;
+}
+
+export function selectJobType(type) {
+  const standardTypes = [
+    "ติดตั้งงานใหม่",
+    "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)",
+    "งานเซอร์วิส (มีค่าใช้จ่าย)",
+    "งาน PM (Preventive Maintenance)",
+    "เข้าตรวจสอบหน้างาน / สำรวจ",
+    "custom"
+  ];
+
+  let targetType = type || "ติดตั้งงานใหม่";
+
+  if (targetType === "ติดตั้งกล้องวงจรปิด" || targetType === "ติดตั้งงานใหม่") {
+    targetType = "ติดตั้งงานใหม่";
+  } else if (targetType.includes("ไม่มีค่าใช้จ่าย") || targetType.includes("ในประกัน") || targetType.includes("ฟรี") || targetType === "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)") {
+    targetType = "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)";
+  } else if (targetType.includes("มีค่าใช้จ่าย")) {
+    targetType = "งานเซอร์วิส (มีค่าใช้จ่าย)";
+  } else if (targetType.toUpperCase().includes("PM") || targetType.includes("บำรุง")) {
+    targetType = "งาน PM (Preventive Maintenance)";
+  } else if (targetType.includes("สำรวจ") || targetType.includes("ตรวจสอบ")) {
+    targetType = "เข้าตรวจสอบหน้างาน / สำรวจ";
+  } else if (targetType.includes("ซ่อม") || targetType.includes("ปรับมุม") || targetType.includes("เซอร์วิส") || targetType.includes("ประกัน")) {
+    targetType = "งานเซอร์วิส (ไม่มีค่าใช้จ่าย อยู่ในประกัน)";
+  } else if (!standardTypes.includes(targetType)) {
+    const customInput = document.getElementById("customJobTypeInput");
+    if (customInput && targetType !== "custom") {
+      customInput.value = targetType.replace(/^อื่นๆ:?\s*/, "");
+    }
+    targetType = "custom";
+  }
+
+  selectedJobType = targetType;
+  const customContainer = document.getElementById("customJobTypeContainer");
+  if (customContainer) {
+    if (targetType === "custom") customContainer.classList.remove("hidden");
+    else customContainer.classList.add("hidden");
+  }
+
+  standardTypes.forEach(t => {
+    const btn = document.getElementById(`jobTypeBtn-${t}`);
+    if (btn) {
+      if (t === targetType) {
+        btn.className = "py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-center transition-all bg-blue-600 text-white border-blue-600 shadow-sm";
+      } else {
+        btn.className = "py-2.5 px-3 rounded-xl border-2 text-xs font-semibold text-center transition-all bg-white hover:bg-slate-50 text-slate-800 border-slate-200 hover:border-slate-300";
+      }
+    }
+  });
+}
+
