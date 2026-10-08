@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>Foresee Technology - ระบบมอบหมายงาน CCTV</title>
+  <title>Foresee Technology - ระบบบันทึกและจัดการงาน</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
   <link rel="shortcut icon" href="/favicon.ico">
@@ -51,7 +51,7 @@
       <nav id="operatorNavTabs" class="hidden md:flex items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 flex-shrink-0">
         <button id="deskTabBtnCheckin" type="button" onclick="switchTab('checkin')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5 whitespace-nowrap">
           <span>📍</span>
-          <span>เช็กอินหน้างาน</span>
+          <span>เช็กอิน</span>
         </button>
         <button id="deskTabBtnCheckout" type="button" onclick="switchTab('checkout')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap">
           <span>📊</span>
@@ -111,7 +111,7 @@
                   <span class="text-base">👤</span>
                   <div>
                     <div class="text-xs font-bold text-slate-900">มุมมอง: ผู้ปฏิบัติงาน (Staff)</div>
-                    <div class="text-[10px] text-slate-500">เช็กอิน, อัปเดตงานของฉัน</div>
+                    <div class="text-[10px] text-slate-500">มอบหมายงาน, เช็กอิน, อัปเดตงานของฉัน</div>
                   </div>
                 </div>
                 <span id="roleCheckTech" class="text-xs text-emerald-600 font-bold hidden">✓</span>
@@ -135,8 +135,8 @@
           </div>
         </div>
 
-        <!-- Admin Only: + มอบหมายงาน (Compact & Sleek) -->
-        <button id="assignTaskHeaderBtn" type="button" onclick="openAssignModal()" class="hidden items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
+        <!-- + มอบหมายงาน (Compact & Sleek) -->
+        <button id="assignTaskHeaderBtn" type="button" onclick="openAssignModal()" class="flex items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
           <span>+ มอบหมายงาน</span>
         </button>
 
@@ -153,7 +153,7 @@
   <div id="simulatedRoleBanner" class="hidden bg-amber-400 text-slate-950 px-4 py-2 text-xs font-bold items-center justify-between shadow-xs sticky top-14 z-30">
     <div class="flex items-center space-x-2">
       <span class="text-base">👁️</span>
-      <span>คุณกำลังดูในมุมมอง: <strong class="underline">ผู้ปฏิบัติงาน</strong> (ปุ่มมอบหมายงานและปุ่มลบงานจะถูกซ่อน)</span>
+      <span>คุณกำลังดูในมุมมอง: <strong class="underline">ผู้ปฏิบัติงาน</strong> (ปุ่มลบงานจะถูกซ่อน)</span>
     </div>
     <button type="button" onclick="switchSimulatedRole('admin')" class="bg-slate-950 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-2xs">
       👑 สลับกลับเป็นแอดมิน
@@ -562,7 +562,7 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-200/90">
         <div>
           <h1 id="tasksSectionTitle" class="text-xl md:text-2xl font-bold tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
-          <p id="tasksSectionDesc" class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
+          <p id="tasksSectionDesc" class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงานและมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
         </div>
         <div class="flex items-center space-x-2 flex-wrap gap-y-2">
           <div class="relative">
@@ -1370,7 +1370,7 @@
   </div>
 
   <footer class="py-4 text-center text-[11px] text-slate-400 border-t border-slate-200/80 bg-white">
-    Foresee Technology Co., Ltd. • ระบบจัดการงาน CCTV v2.0 (Vite Modular)
+    Foresee Technology Co., Ltd. • ระบบจัดการงาน v2.0 (Vite Modular)
   </footer>
 
   <!-- Vite module entry point -->

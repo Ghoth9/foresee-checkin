@@ -1457,22 +1457,15 @@ export function applyRolePermissionsUI(role, techObj) {
   }
 
   if (assignTaskHeaderBtn) {
-    if (isAdmin) {
-      assignTaskHeaderBtn.classList.remove("hidden");
-      assignTaskHeaderBtn.classList.add("flex");
-    } else {
-      assignTaskHeaderBtn.classList.add("hidden");
-      assignTaskHeaderBtn.classList.remove("flex");
-    }
+    // General staff and Admin can both assign tasks
+    assignTaskHeaderBtn.classList.remove("hidden");
+    assignTaskHeaderBtn.classList.add("flex");
   }
 
   const assignTaskSectionBtn = document.getElementById("assignTaskSectionBtn");
   if (assignTaskSectionBtn) {
-    if (isAdmin) {
-      assignTaskSectionBtn.classList.remove("hidden");
-    } else {
-      assignTaskSectionBtn.classList.add("hidden");
-    }
+    // General staff and Admin can both assign tasks
+    assignTaskSectionBtn.classList.remove("hidden");
   }
 
   const manageTechSectionBtn = document.getElementById("manageTechSectionBtn");
