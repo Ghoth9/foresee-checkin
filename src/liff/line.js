@@ -25,6 +25,9 @@ export async function initLiff() {
       if (isLineLoggedIn()) {
         try {
           liffProfile = await liff.getProfile();
+          if (liffProfile) {
+            try { localStorage.setItem("fs_line_profile", JSON.stringify(liffProfile)); } catch (e) {}
+          }
         } catch (e) {
           console.warn("Could not get LIFF profile:", e);
         }
@@ -47,55 +50,45 @@ export function isLineLoggedIn() {
   }
 }
 
-export function getLineUserName() {
-  return liffProfile ? liffProfile.displayName : null;
+export function getLineUserProfile() {
+  if (liffProfile) return liffProfile;
+  try {
+    const cached = localStorage.getItem("fs_line_profile");
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return null;
 }
 
-export function getLineUserProfile() {
-  return liffProfile;
+export function getLineUserName() {
+  const profile = getLineUserProfile();
+  return profile ? profile.displayName : null;
 }
 
 export function getLineUserId() {
-  return liffProfile ? liffProfile.userId : null;
+  const profile = getLineUserProfile();
+  return profile ? profile.userId : null;
 }
 
 export async function loginLine() {
+  if (typeof liff === "undefined") {
+    console.warn("LINE LIFF SDK not loaded");
+    return;
+  }
   try {
-    if (typeof liff === "undefined") {
-      window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
-      return;
-    }
-
     if (!isLineLoggedIn()) {
       await initLiff();
       if (!isLineLoggedIn()) {
-        try {
-          const redirectUri = window.location.origin + window.location.pathname;
-          liff.login({ redirectUri });
-          return;
-        } catch (loginErr) {
-          console.warn("liff.login with redirectUri failed, trying default liff.login:", loginErr);
-        }
-        try {
-          liff.login();
-          return;
-        } catch (loginErr2) {
-          console.warn("liff.login failed, redirecting to liff.line.me:", loginErr2);
-        }
+        liff.login({ redirectUri: window.location.href });
       }
     }
   } catch (err) {
-    console.warn("loginLine fallback to direct LIFF:", err);
-  }
-
-  // Fallback to official LIFF gateway URL
-  if (!isLineLoggedIn()) {
-    window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
+    console.error("loginLine error:", err);
   }
 }
 
 export function logoutLine() {
   try {
+    localStorage.removeItem("fs_line_profile");
     if (typeof liff !== "undefined" && isLineLoggedIn()) {
       liff.logout();
     }

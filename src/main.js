@@ -9,6 +9,7 @@ import {
   initLiff, 
   isLineLoggedIn, 
   getLineUserName, 
+  getLineUserProfile,
   loginLine, 
   logoutLine 
 } from './liff/line.js';
@@ -407,7 +408,8 @@ function updateLineStatusUI() {
   const banner = document.getElementById("lineNotLoggedInBanner");
   if (!dot || !text) return;
 
-  if (isLineLoggedIn()) {
+  const profile = getLineUserProfile();
+  if (isLineLoggedIn() || profile) {
     const name = getLineUserName();
     dot.className = "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0";
     const shortName = name && name.length > 8 ? name.slice(0, 7) + '…' : name;

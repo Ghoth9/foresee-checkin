@@ -64,22 +64,21 @@ export function isUserAdminActual() {
 export async function resolveUserRole() {
   // 1. Identify LINE Login Profile and perform Auto-Bind
   let matchedTech = null;
-  if (isLineLoggedIn()) {
-    const profile = getLineUserProfile();
-    if (profile && profile.userId) {
-      // Find match in techniciansList by line_user_id
-      let match = state.techniciansList.find(t => t.line_user_id === profile.userId);
+  const profile = getLineUserProfile();
+  if (profile && profile.userId) {
+    // Find match in techniciansList by line_user_id
+    let match = state.techniciansList.find(t => t.line_user_id === profile.userId);
 
-      // If not found by line_user_id, match by displayName keywords
-      if (!match) {
-        const dName = (profile.displayName || "").toLowerCase();
-        if (dName.includes("nonmarn")) {
-          match = state.techniciansList.find(t => t.name && t.name.toLowerCase().includes("nonmarn"));
-        } else if (dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("095-8188897") || dName.includes("สุพิชชาญาต์")) {
-          match = state.techniciansList.find(t => (t.name && (t.name.includes("ใบปอ") || t.name.includes("สุพิชชาญาต์"))));
-        } else if (dName.includes("arm") || dName.includes("อาร์ม") || dName.includes("ชัยวัฒน์")) {
-          match = state.techniciansList.find(t => t.name && (t.name.includes("อาร์ม") || t.name.includes("ชัยวัฒน์")));
-        }
+    // If not found by line_user_id, match by displayName keywords
+    if (!match) {
+      const dName = (profile.displayName || "").toLowerCase();
+      if (dName.includes("nonmarn") || dName.includes("nonpawit") || dName.includes("ghoth9")) {
+        match = state.techniciansList.find(t => t.name && (t.name.toLowerCase().includes("nonmarn") || t.name.toLowerCase().includes("nonpawit")));
+      } else if (dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("095-8188897") || dName.includes("สุพิชชาญาต์")) {
+        match = state.techniciansList.find(t => (t.name && (t.name.includes("ใบปอ") || t.name.includes("สุพิชชาญาต์"))));
+      } else if (dName.includes("arm") || dName.includes("อาร์ม") || dName.includes("ชัยวัฒน์")) {
+        match = state.techniciansList.find(t => t.name && (t.name.includes("อาร์ม") || t.name.includes("ชัยวัฒน์")));
+      }
 
         // Or match against any technician's nickname
         if (!match) {
@@ -102,7 +101,6 @@ export async function resolveUserRole() {
         matchedTech = match;
       }
     }
-  }
 
   // 2. Fallback to localStorage operator profile (for PC, iPad, or when not auto-matched)
   if (!matchedTech) {
