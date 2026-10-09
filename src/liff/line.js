@@ -5,31 +5,46 @@
 export const MY_LIFF_ID = "2011782806-0If1jko9";
 
 let liffProfile = null;
+let initPromise = null;
 
 export async function initLiff() {
   if (typeof liff === "undefined") {
     console.warn("LINE LIFF SDK not loaded");
     return false;
   }
-  try {
-    await liff.init({ liffId: MY_LIFF_ID });
-    await liff.ready;
-    if (liff.isLoggedIn()) {
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    try {
+      await liff.init({ liffId: MY_LIFF_ID });
       try {
-        liffProfile = await liff.getProfile();
-      } catch (e) {
-        console.warn("Could not get LIFF profile:", e);
+        await liff.ready;
+      } catch (readyErr) {
+        console.warn("liff.ready error:", readyErr);
       }
+      if (isLineLoggedIn()) {
+        try {
+          liffProfile = await liff.getProfile();
+        } catch (e) {
+          console.warn("Could not get LIFF profile:", e);
+        }
+      }
+      return true;
+    } catch (err) {
+      console.warn("LIFF init error:", err);
+      return false;
     }
-    return true;
-  } catch (err) {
-    console.warn("LIFF init error:", err);
-    return false;
-  }
+  })();
+
+  return initPromise;
 }
 
 export function isLineLoggedIn() {
-  return typeof liff !== "undefined" && liff.isLoggedIn();
+  try {
+    return typeof liff !== "undefined" && typeof liff.isLoggedIn === "function" && liff.isLoggedIn();
+  } catch (e) {
+    return false;
+  }
 }
 
 export function getLineUserName() {
@@ -44,17 +59,50 @@ export function getLineUserId() {
   return liffProfile ? liffProfile.userId : null;
 }
 
-export function loginLine() {
-  if (typeof liff !== "undefined" && !liff.isLoggedIn()) {
-    liff.login({ redirectUri: window.location.href });
+export async function loginLine() {
+  try {
+    if (typeof liff === "undefined") {
+      window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
+      return;
+    }
+
+    if (!isLineLoggedIn()) {
+      await initLiff();
+      if (!isLineLoggedIn()) {
+        try {
+          const redirectUri = window.location.origin + window.location.pathname;
+          liff.login({ redirectUri });
+          return;
+        } catch (loginErr) {
+          console.warn("liff.login with redirectUri failed, trying default liff.login:", loginErr);
+        }
+        try {
+          liff.login();
+          return;
+        } catch (loginErr2) {
+          console.warn("liff.login failed, redirecting to liff.line.me:", loginErr2);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("loginLine fallback to direct LIFF:", err);
+  }
+
+  // Fallback to official LIFF gateway URL
+  if (!isLineLoggedIn()) {
+    window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
   }
 }
 
 export function logoutLine() {
-  if (typeof liff !== "undefined" && liff.isLoggedIn()) {
-    liff.logout();
-    window.location.reload();
+  try {
+    if (typeof liff !== "undefined" && isLineLoggedIn()) {
+      liff.logout();
+    }
+  } catch (e) {
+    console.warn("LIFF logout error:", e);
   }
+  window.location.reload();
 }
 
 import { showAppAlert } from '../utils/dialog.js';
@@ -70,13 +118,15 @@ export async function triggerLiffShare(flexCard, successMessage = "แชร์�
   }
 
   try {
-    await liff.ready;
-    if (!liff.isLoggedIn()) {
+    if (!isLineLoggedIn()) {
+      await initLiff();
+    }
+    if (!isLineLoggedIn()) {
       showAppAlert({
         type: "info",
         title: "ยังไม่ได้เข้าสู่ระบบ LINE",
         message: "ระบบบันทึกข้อมูลเข้าฐานข้อมูลแล้วครับ แต่ยังไม่ได้ส่งการ์ดเข้ากลุ่ม LINE เนื่องจากยังไม่ได้เข้าสู่ระบบ LINE บนอุปกรณ์นี้\n\nกด 'ตกลง' เพื่อเข้าสู่ระบบ LINE และแชร์การ์ดเข้ากลุ่มได้ทันทีครับ",
-        onOk: () => liff.login({ redirectUri: window.location.href })
+        onOk: () => loginLine()
       });
       return { success: false, reason: "not_logged_in" };
     }

@@ -431,6 +431,13 @@ function updateLineStatusUI() {
 // -------------------------------------------------------------
 async function bootstrapApp() {
   const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has("liff.state")) {
+    try {
+      const rawState = decodeURIComponent(urlParams.get("liff.state"));
+      const stateParams = new URLSearchParams(rawState.startsWith("?") ? rawState.slice(1) : rawState);
+      stateParams.forEach((val, key) => urlParams.set(key, val));
+    } catch (e) {}
+  }
   const urlTab = urlParams.get("tab");
   let savedTab = null;
   try {
@@ -477,11 +484,15 @@ async function bootstrapApp() {
   renderTasksListScoped();
   renderTodayLogs();
 
+  updateLineStatusUI();
   resolveUserRole();
   initLiff().then(() => {
     updateLineStatusUI();
     resolveUserRole();
-  }).catch(e => console.warn("LIFF init error:", e));
+  }).catch(e => {
+    console.warn("LIFF init error:", e);
+    updateLineStatusUI();
+  });
 
   requestLocation((coords) => {
     const title = document.getElementById("gpsLocationTitle");
@@ -502,16 +513,12 @@ async function bootstrapApp() {
   });
 
   refreshFromSupabase(true);
-
   subscribeToRealtimeChanges({
     onTasksChange: () => refreshFromSupabase(true),
     onCheckinsChange: () => refreshFromSupabase(true),
     onTechsChange: () => refreshFromSupabase(true)
   });
-
-  window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') refreshFromSupabase();
-  });
+  window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshFromSupabase(); });
   window.addEventListener('focus', () => refreshFromSupabase());
   setInterval(() => refreshFromSupabase(), 15000);
 }
@@ -520,13 +527,7 @@ async function bootstrapApp() {
 // WINDOW EXPORTS FOR HTML ONCLICK & EVENT BINDINGS
 // -------------------------------------------------------------
 window.switchTab = switchTab;
-window.handleBrandClick = () => {
-  if (state.currentUserRole === "admin") {
-    switchTab("tasks");
-  } else {
-    switchTab("checkin");
-  }
-};
+window.handleBrandClick = () => switchTab(state.currentUserRole === "admin" ? "tasks" : "checkin");
 window.selectAssignedTaskForCheckin = (taskId) => selectAssignedTask(taskId, state.tasksList, setCheckinTechs);
 window.deselectAssignedTask = () => deselectAssignedTask(state.tasksList);
 window.toggleCheckinFormDetails = toggleCheckinFormDetails;
@@ -620,19 +621,13 @@ window.submitOngoingUpdate = () => {
       renderActiveCheckoutList();
       if (act) renderActiveTaskPhotos(act);
 
-      if (updatedInfo.lineShared) {
-        showAppAlert({
-          type: "success",
-          title: "อัปเดตและแชร์สำเร็จ!",
-          message: `บันทึกความคืบหน้าเป็น ${updatedInfo.progress}% และแชร์รายงานเข้ากลุ่ม LINE เรียบร้อยแล้ว`
-        });
-      } else {
-        showAppAlert({
-          type: "info",
-          title: "บันทึกข้อมูลสำเร็จ!",
-          message: `บันทึกความคืบหน้าเป็น ${updatedInfo.progress}% และจัดเก็บรูปถ่ายเข้าสู่ระบบแล้ว\n(ยังไม่ได้แชร์เข้าห้องแชท LINE เนื่องจากยกเลิกการเลือกห้องแชท หรือเปิดผ่านเบราว์เซอร์ทั่วไป)`
-        });
-      }
+      showAppAlert({
+        type: updatedInfo.lineShared ? "success" : "info",
+        title: updatedInfo.lineShared ? "อัปเดตและแชร์สำเร็จ!" : "บันทึกข้อมูลสำเร็จ!",
+        message: updatedInfo.lineShared 
+          ? `บันทึกความคืบหน้าเป็น ${updatedInfo.progress}% และแชร์รายงานเข้ากลุ่ม LINE เรียบร้อยแล้ว`
+          : `บันทึกความคืบหน้าเป็น ${updatedInfo.progress}% และจัดเก็บรูปถ่ายเข้าสู่ระบบแล้ว\n(ยังไม่ได้แชร์เข้าห้องแชท LINE เนื่องจากยกเลิกการเลือกห้องแชท หรือเปิดผ่านเบราว์เซอร์ทั่วไป)`
+      });
     }
   });
 };
@@ -963,9 +958,19 @@ window.submitUpdateProgress = () => submitProgressUpdate({
   }
 });
 
-window.handleLineLoginToggle = () => {
-  if (isLineLoggedIn()) logoutLine();
-  else loginLine();
+window.handleLineLoginToggle = async () => {
+  if (isLineLoggedIn()) {
+    const ok = await showAppConfirm({
+      type: "info",
+      title: "ออกจากระบบ LINE?",
+      message: `ปัจจุบันเชื่อมต่อด้วย LINE: ${getLineUserName() || "เชื่อมต่อแล้ว"}\nคุณต้องการออกจากระบบ LINE หรือไม่?`,
+      confirmText: "ออกจากระบบ",
+      cancelText: "ยกเลิก"
+    });
+    if (ok) logoutLine();
+  } else {
+    await loginLine();
+  }
 };
 
 window.requestLocation = () => requestLocation();
