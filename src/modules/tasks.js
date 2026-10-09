@@ -371,6 +371,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
       const isDone = task.status === "เสร็จสิ้น";
       const isOver = isTaskOverdue(task.deadline, isDone);
       const isNew = recentNewTaskIds.has(task.id) || task.isNew;
+      const techs = getTaskTechs(task);
       const assigneeStatuses = getAssigneeSubmissionsStatus(task);
       const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
 
@@ -385,13 +386,13 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
         ? "bg-blue-50/70 border-l-4 border-l-blue-600 hover:bg-blue-100/70 transition-colors group cursor-pointer ring-1 ring-blue-200/50"
         : "hover:bg-blue-50/50 transition-colors group cursor-pointer";
 
-      const isCreatedByMe = opName && !techs.includes(opName) && (
-        task.assignedBy === opName ||
-        task.creator === opName ||
-        task.customer?.assigned_by === opName ||
-        task.customer?.creator === opName ||
-        task.updateBy === opName ||
-        task.updated_by === opName
+      const isCreatedByMe = opName && !techs.some(t => matchesOperator(t, opName)) && (
+        matchesOperator(task.assignedBy, opName) ||
+        matchesOperator(task.creator, opName) ||
+        matchesOperator(task.customer?.assigned_by, opName) ||
+        matchesOperator(task.customer?.creator, opName) ||
+        matchesOperator(task.updateBy, opName) ||
+        matchesOperator(task.updated_by, opName)
       );
 
       tableHtml += `
@@ -483,13 +484,13 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
         ? "group bg-gradient-to-b from-blue-50/70 to-white rounded-xl p-4 border-2 border-blue-500 shadow-md ring-2 ring-blue-400/20 hover:shadow-lg transition-all flex flex-col justify-between space-y-3 cursor-pointer"
         : "group bg-white rounded-xl p-4 border border-slate-200/90 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between space-y-3 cursor-pointer";
 
-      const isCreatedByMe = opName && !techs.includes(opName) && (
-        task.assignedBy === opName ||
-        task.creator === opName ||
-        task.customer?.assigned_by === opName ||
-        task.customer?.creator === opName ||
-        task.updateBy === opName ||
-        task.updated_by === opName
+      const isCreatedByMe = opName && !techs.some(t => matchesOperator(t, opName)) && (
+        matchesOperator(task.assignedBy, opName) ||
+        matchesOperator(task.creator, opName) ||
+        matchesOperator(task.customer?.assigned_by, opName) ||
+        matchesOperator(task.customer?.creator, opName) ||
+        matchesOperator(task.updateBy, opName) ||
+        matchesOperator(task.updated_by, opName)
       );
 
       const card = document.createElement("div");
