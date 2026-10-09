@@ -75,7 +75,9 @@ export async function fetchInitialData() {
           note: c.note || '',
           photos: c.photos || [],
           progress: c.progress || 0,
-          date: new Date(c.created_at).toLocaleDateString('th-TH')
+          date: new Date(c.created_at).toLocaleDateString('th-TH'),
+          checkedInBy: c.closer_name || '',
+          closerName: c.closer_name || ''
         };
 
         if (c.status === 'กำลังทำ' || c.status === 'กำลังปฏิบัติงาน') {
@@ -443,6 +445,7 @@ export async function saveCheckinApi(data) {
       checkin_time: data.time,
       status: 'กำลังทำ',
       photos: cleanPhotos,
+      closer_name: data.checkedInBy || data.closerName || '',
       created_at: new Date().toISOString()
     };
 
@@ -451,6 +454,17 @@ export async function saveCheckinApi(data) {
       .upsert(payload, { onConflict: 'id' });
 
     if (error) throw error;
+
+    if (data.taskId) {
+      await supabase
+        .from('tasks')
+        .update({
+          status: 'กำลังทำ',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', data.taskId);
+    }
+
     return { success: true, id: data.id };
   } catch (err) {
     console.warn("saveCheckinApi error:", err);

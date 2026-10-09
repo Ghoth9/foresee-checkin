@@ -336,6 +336,7 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
     const dateStr = now.toLocaleDateString("th-TH");
     const mapUrl = coords.isReady ? getMapUrl(coords.lat, coords.lng) : "";
 
+    const currentOpName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name") || "";
     const checkinRecord = {
       id: checkinId,
       taskId: selectedAssignedTaskId,
@@ -348,7 +349,10 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
       mapUrl: mapUrl,
       note: noteText.trim() || "-",
       photoCount: 0,
-      photos: []
+      photos: [],
+      checkedInBy: currentOpName,
+      closerName: currentOpName,
+      isCheckedIn: true
     };
 
     // 1. Prepare LINE Flex Card

@@ -9,27 +9,14 @@ import { formatGasTime, formatDisplayTime } from '../utils/date.js';
 import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
 import { deleteCheckinApi, clearAllCheckinsApi } from '../api/supabase.js';
 import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState } from './checkout.js';
+import { matchesOperator } from './tasks.js';
 
 export function matchTechName(techs, targetName) {
-  if (!targetName) return false;
-  if (!techs) return false;
-  const targetLower = targetName.toLowerCase().trim();
-  const targetNicknameMatch = targetName.match(/\((.*?)\)/);
-  const targetNickname = targetNicknameMatch ? targetNicknameMatch[1].toLowerCase().trim() : null;
-
+  if (!targetName || !techs) return false;
   const tArr = Array.isArray(techs) ? techs : [techs];
   return tArr.some(t => {
     if (!t) return false;
-    const str = String(t).toLowerCase().trim();
-    if (str === targetLower) return true;
-    if (str.includes(targetLower) || targetLower.includes(str)) return true;
-    if (targetNickname && (str.includes(targetNickname) || targetNickname.includes(str))) return true;
-    const strNickMatch = String(t).match(/\((.*?)\)/);
-    if (strNickMatch) {
-      const nick = strNickMatch[1].toLowerCase().trim();
-      if (targetLower.includes(nick) || (targetNickname && targetNickname.includes(nick))) return true;
-    }
-    return false;
+    return matchesOperator(t, targetName);
   });
 }
 
@@ -200,10 +187,22 @@ export function renderActiveCheckoutList() {
   if (!isAdmin) {
     if (opName) {
       displayActiveTasks = state.activeTasks.filter(item => {
+        // 1. Matched in active checkin assigned techs
         if (matchTechName(item.techs, opName)) return true;
+        // 2. Checked in by this user
+        if (matchesOperator(item.checkedInBy, opName) || matchesOperator(item.closerName, opName) || matchesOperator(item.closer_name, opName) || matchesOperator(item.creator, opName)) return true;
+
+        // 3. Linked task check
         const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
         if (linkedTask) {
           if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
+          const isCreatedByMe = matchesOperator(linkedTask.assignedBy, opName) ||
+            matchesOperator(linkedTask.creator, opName) ||
+            matchesOperator(linkedTask.customer?.assigned_by, opName) ||
+            matchesOperator(linkedTask.customer?.creator, opName) ||
+            matchesOperator(linkedTask.updateBy, opName) ||
+            matchesOperator(linkedTask.updated_by, opName);
+          if (isCreatedByMe) return true;
         }
         return false;
       });
@@ -463,7 +462,22 @@ export function renderTodayLogs() {
   let displayLogs = state.dailyLogs;
   if (!isAdmin) {
     if (opName) {
-      displayLogs = state.dailyLogs.filter(log => matchTechName(log.techs, opName));
+      displayLogs = state.dailyLogs.filter(log => {
+        if (matchTechName(log.techs, opName)) return true;
+        if (matchesOperator(log.checkedInBy, opName) || matchesOperator(log.closerName, opName) || matchesOperator(log.closer_name, opName) || matchesOperator(log.closedBy, opName) || matchesOperator(log.creator, opName)) return true;
+        const linkedTask = state.tasksList.find(t => (log.taskId && t.id === log.taskId) || t.id === log.id || t.title === log.task);
+        if (linkedTask) {
+          if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
+          const isCreatedByMe = matchesOperator(linkedTask.assignedBy, opName) ||
+            matchesOperator(linkedTask.creator, opName) ||
+            matchesOperator(linkedTask.customer?.assigned_by, opName) ||
+            matchesOperator(linkedTask.customer?.creator, opName) ||
+            matchesOperator(linkedTask.updateBy, opName) ||
+            matchesOperator(linkedTask.updated_by, opName);
+          if (isCreatedByMe) return true;
+        }
+        return false;
+      });
     } else {
       displayLogs = [];
     }

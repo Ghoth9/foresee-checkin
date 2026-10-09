@@ -5,162 +5,60 @@
 
 import './style.css';
 import { state } from './modules/state.js';
-import { 
-  initLiff, 
-  isLineLoggedIn, 
-  getLineUserName, 
-  getLineUserProfile,
-  loginLine, 
-  logoutLine 
-} from './liff/line.js';
+import { initLiff, isLineLoggedIn, getLineUserName, getLineUserProfile, loginLine, logoutLine } from './liff/line.js';
 import { requestLocation, getCurrentCoords } from './utils/gps.js';
-import { 
-  fetchInitialData, 
-  deleteCheckinApi, 
-  deletePhotoFromSupabaseApi, 
-  subscribeToRealtimeChanges 
-} from './api/supabase.js';
+import { fetchInitialData, deleteCheckinApi, deletePhotoFromSupabaseApi, subscribeToRealtimeChanges } from './api/supabase.js';
 import {
-  renderAssignedTasksBanner,
-  selectAssignedTask,
-  deselectAssignedTask,
-  toggleCheckinFormDetails,
-  handlePhotoUpload,
-  removePhoto,
-  submitCheckinForm,
-  selectJobType,
-  getSelectedJobType
+  renderAssignedTasksBanner, selectAssignedTask, deselectAssignedTask, toggleCheckinFormDetails,
+  handlePhotoUpload, removePhoto, submitCheckinForm, selectJobType, getSelectedJobType
 } from './modules/checkin.js';
 import {
-  handleCheckoutPhotoUpload,
-  removeCheckoutPhoto,
-  submitCheckoutForm,
-  submitProgressOnly,
-  setActionTab,
-  setUpdatePercent,
-  setUpdateStatus
+  handleCheckoutPhotoUpload, removeCheckoutPhoto, submitCheckoutForm, submitProgressOnly,
+  setActionTab, setUpdatePercent, setUpdateStatus
 } from './modules/checkout.js';
 import {
-  setTaskViewMode,
-  setStatusFilter,
-  setTechFilter,
-  setTaskSearchQuery,
-  renderTechFilterChips,
-  renderTasksList,
-  openAssignModal,
-  closeAssignModal,
-  selectAssignPriority,
-  selectAssignCategory,
-  toggleAssignTech,
-  renderAssignTechChips,
-  submitAssignForm,
-  openEditTaskModal,
-  closeEditTaskModal,
-  setEditModalStatus,
-  saveEditedTask,
-  openTaskDetailModal,
-  closeTaskDetailModal,
-  switchTaskDetailTab,
-  openImageLightbox,
-  closeImageLightbox,
-  zoomLightbox,
-  resetLightboxZoom,
-  setDetailModalStatus,
-  setDetailModalPriority,
-  updateDetailPhoneLink,
-  saveTaskDetailChanges,
-  deleteCurrentDetailTask,
-  openExtendModal,
-  closeExtendModal,
-  submitExtendDeadline,
-  pickAssignDate,
-  pickDetailDate,
-  pickExtendModalDate,
-  setOnDeletePhotoCallback,
-  deletePhotoFromTask,
-  deleteCurrentLightboxImage,
-  clearAssignTechSearch,
-  clearDetailTechSearch
+  setTaskViewMode, setStatusFilter, setTechFilter, setTaskSearchQuery, renderTechFilterChips,
+  renderTasksList, openAssignModal, closeAssignModal, selectAssignPriority, selectAssignCategory,
+  toggleAssignTech, renderAssignTechChips, submitAssignForm, openEditTaskModal, closeEditTaskModal,
+  setEditModalStatus, saveEditedTask, openTaskDetailModal, closeTaskDetailModal, switchTaskDetailTab,
+  openImageLightbox, closeImageLightbox, zoomLightbox, resetLightboxZoom, setDetailModalStatus,
+  setDetailModalPriority, updateDetailPhoneLink, saveTaskDetailChanges, deleteCurrentDetailTask,
+  openExtendModal, closeExtendModal, submitExtendDeadline, pickAssignDate, pickDetailDate,
+  pickExtendModalDate, setOnDeletePhotoCallback, deletePhotoFromTask, deleteCurrentLightboxImage,
+  clearAssignTechSearch, clearDetailTechSearch
 } from './modules/tasks.js';
 import {
-  openProgressModal,
-  closeProgressModal,
-  setProgressPercent,
-  setProgressStatus,
-  submitProgressUpdate
+  openProgressModal, closeProgressModal, setProgressPercent, setProgressStatus, submitProgressUpdate
 } from './modules/progress.js';
 import { formatGasTime, formatGasDate } from './utils/date.js';
 import { showAppAlert, showAppConfirm } from './utils/dialog.js';
 import {
-  openCustomCalendar,
-  closeCustomCalendar,
-  prevCalendarMonth,
-  nextCalendarMonth,
-  selectTodayOnCalendar
+  openCustomCalendar, closeCustomCalendar, prevCalendarMonth, nextCalendarMonth, selectTodayOnCalendar
 } from './utils/calendar.js';
 
 // Modular Subsystems
 import {
-  isUserAdminActual,
-  isCurrentUserAdmin,
-  resolveUserRole,
-  switchSimulatedRole,
-  toggleRoleDropdownMenu,
-  closeRoleDropdownMenu,
-  handleRoleBadgeClick,
-  applyRolePermissionsUI,
-  openAdminPinModal,
-  closeAdminPinModal,
-  submitAdminPinUnlock,
-  quickUnlockNonmarnAdmin,
-  openTeamRoleModal,
-  closeTeamRoleModal,
-  setTeamRoleFilter,
-  renderTeamRoleList,
-  setNewMemberRole,
-  handleChangeMemberRole,
-  submitAddNewMember,
-  handleDeleteMember,
-  bindCurrentLineUserToTech,
-  unbindTechLineUser,
-  openManageTechModal,
-  closeManageTechModal,
-  renderManageTechList,
-  confirmAddTech,
-  deleteTech,
-  renderCheckinTechChips,
-  setCheckinTechs
+  isUserAdminActual, isCurrentUserAdmin, resolveUserRole, switchSimulatedRole,
+  toggleRoleDropdownMenu, closeRoleDropdownMenu, handleRoleBadgeClick, applyRolePermissionsUI,
+  openAdminPinModal, closeAdminPinModal, submitAdminPinUnlock, quickUnlockNonmarnAdmin,
+  openTeamRoleModal, closeTeamRoleModal, setTeamRoleFilter, renderTeamRoleList,
+  setNewMemberRole, handleChangeMemberRole, submitAddNewMember, handleDeleteMember,
+  bindCurrentLineUserToTech, unbindTechLineUser, openManageTechModal, closeManageTechModal,
+  renderManageTechList, confirmAddTech, deleteTech, renderCheckinTechChips, setCheckinTechs
 } from './modules/team.js';
 
 import {
-  openSelectOperatorModal,
-  closeSelectOperatorModal,
-  filterSelectOperatorList,
-  clearSelectOperatorSearch,
-  renderSelectOperatorList,
-  chooseOperatorProfile
+  openSelectOperatorModal, closeSelectOperatorModal, filterSelectOperatorList,
+  clearSelectOperatorSearch, renderSelectOperatorList, chooseOperatorProfile
 } from './modules/operator.js';
 
 import {
-  matchTechName,
-  getUniquePhotosForActiveTask,
-  formatLatestNoteText,
-  renderActiveTaskPhotos,
-  renderActiveCheckoutList,
-  deleteActiveCheckin,
-  clearAllActiveCheckins,
-  selectActiveTaskForCheckout,
-  setCheckoutOutcome,
-  renderTodayLogs,
-  deleteTodayLog,
-  toggleTodayLogsCollapse
+  matchTechName, getUniquePhotosForActiveTask, formatLatestNoteText, renderActiveTaskPhotos,
+  renderActiveCheckoutList, deleteActiveCheckin, clearAllActiveCheckins, selectActiveTaskForCheckout,
+  setCheckoutOutcome, renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse
 } from './modules/checkoutList.js';
 
-import {
-  openShareTaskLineModal,
-  closeShareTaskLineModal,
-  submitShareTaskChoice
-} from './modules/shareModal.js';
+import { openShareTaskLineModal, closeShareTaskLineModal, submitShareTaskChoice } from './modules/shareModal.js';
 
 // -------------------------------------------------------------
 // LOCAL STATE INITIALIZATION FROM CACHE
@@ -315,7 +213,9 @@ export async function refreshFromSupabase(force = false) {
         progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0),
         photos: a.photos || [],
         note: a.note || '',
-        isCheckedIn: true
+        isCheckedIn: true,
+        checkedInBy: a.checkedInBy || a.closerName || '',
+        closerName: a.closerName || ''
       };
     }) : [];
 
@@ -525,14 +425,25 @@ window.submitCheckin = () => {
     locationText: locInput ? locInput.value : "",
     noteText: noteInput ? noteInput.value : "",
     onComplete: (record) => {
+      if (record.taskId) {
+        const linkedT = state.tasksList.find(t => t.id === record.taskId);
+        if (linkedT && linkedT.status !== 'กำลังทำ') {
+          linkedT.status = 'กำลังทำ';
+          localStorage.setItem("fs_tasks", JSON.stringify(state.tasksList));
+          renderTasksListScoped();
+        }
+      }
       state.activeTasks.unshift(record);
       state.dailyLogs.unshift({
         id: record.id,
+        taskId: record.taskId || null,
         task: record.task,
         techs: record.techs,
         checkinTime: record.time,
         checkoutTime: null,
-        status: "กำลังทำ"
+        status: "กำลังทำ",
+        checkedInBy: record.checkedInBy || '',
+        closerName: record.closerName || ''
       });
       localStorage.setItem("fs_active_tasks", JSON.stringify(state.activeTasks));
       localStorage.setItem("fs_daily_logs", JSON.stringify(state.dailyLogs));
@@ -882,23 +793,18 @@ window.deleteActiveCheckin = deleteActiveCheckin;
 window.clearAllActiveCheckins = clearAllActiveCheckins;
 window.deleteTodayLog = deleteTodayLog;
 window.renderActiveTaskPhotos = renderActiveTaskPhotos;
-
-// Lightbox photo deletion
+window.deletePhotoFromTask = deletePhotoFromTask;
 setOnDeletePhotoCallback((photoSrc, taskId) => {
   window.deletePhotoFromTask(photoSrc, taskId || state.selectedActiveCheckoutId);
 });
-
-window.deletePhotoFromTask = deletePhotoFromTask;
 
 window.openShareTaskLineModal = openShareTaskLineModal;
 window.closeShareTaskLineModal = closeShareTaskLineModal;
 window.submitShareTaskChoice = submitShareTaskChoice;
 window.shareActiveTaskToLine = (activeId) => openShareTaskLineModal(activeId);
-
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, state.tasksList, state.allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;
 window.saveEditedTask = () => window.saveTaskDetailChanges();
-
 window.openExtendModal = (taskId) => openExtendModal(taskId, state.tasksList);
 window.closeExtendModal = closeExtendModal;
 window.submitExtendDeadline = () => submitExtendDeadline(state.tasksList, getLineUserName(), () => renderTasksListScoped());
