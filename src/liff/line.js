@@ -31,6 +31,15 @@ export async function initLiff() {
 
       if (loggedIn) {
         try {
+          const url = new URL(window.location.href);
+          if (url.searchParams.has("code") || url.searchParams.has("state")) {
+            url.searchParams.delete("code");
+            url.searchParams.delete("state");
+            window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
+          }
+        } catch (e) {}
+
+        try {
           liffProfile = await liff.getProfile();
           console.log("[LIFF] Profile fetched:", liffProfile);
           if (liffProfile) {
@@ -54,8 +63,18 @@ export async function initLiff() {
       console.error("[LIFF] Init error:", err);
       const urlParams = new URLSearchParams(window.location.search);
       const isRedirectBack = urlParams.has("code") || urlParams.has("state") || urlParams.has("error") || sessionStorage.getItem("fs_line_logging_in") === "true";
+      sessionStorage.removeItem("fs_line_logging_in");
+
+      try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has("code") || url.searchParams.has("state")) {
+          url.searchParams.delete("code");
+          url.searchParams.delete("state");
+          window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
+        }
+      } catch (e) {}
+
       if (isRedirectBack) {
-        sessionStorage.removeItem("fs_line_logging_in");
         showAppAlert({
           type: "danger",
           title: "LINE Login เกิดข้อผิดพลาด",
@@ -115,12 +134,13 @@ export async function loginLine() {
     if (!isLineLoggedIn()) {
       await initLiff();
       if (!isLineLoggedIn()) {
-        let cleanRedirectUri = window.location.origin + window.location.pathname;
-        if (!cleanRedirectUri.endsWith("/")) {
-          cleanRedirectUri += "/";
+        console.log("[LIFF] Calling liff.login() with default registered endpoint");
+        try {
+          liff.login();
+        } catch (liffErr) {
+          console.warn("[LIFF] liff.login() error, retrying with origin:", liffErr);
+          liff.login({ redirectUri: window.location.origin });
         }
-        console.log("[LIFF] Calling liff.login with clean redirectUri:", cleanRedirectUri);
-        liff.login({ redirectUri: cleanRedirectUri });
       }
     }
   } catch (err) {
