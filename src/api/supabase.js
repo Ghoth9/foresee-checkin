@@ -48,6 +48,8 @@ export async function fetchInitialData() {
         progress: t.progress || 0,
         latestUpdate: t.latest_update || 'ยังไม่มีอัปเดต',
         customer: t.customer || {},
+        assignedBy: t.customer?.assigned_by || t.customer?.creator || t.updated_by || '-',
+        creator: t.customer?.creator || t.customer?.assigned_by || t.updated_by || '-',
         progressHistory: t.customer?.progress_history || [],
         oldDeadline: t.old_deadline || '-',
         reason: t.extend_reason || '-',
@@ -165,6 +167,10 @@ export async function uploadPhotoToSupabase(base64Data, filename) {
 // -------------------------------------------------------------
 export async function saveTaskApi(task) {
   try {
+    const cust = { ...(task.customer || {}) };
+    if (task.assignedBy) cust.assigned_by = task.assignedBy;
+    if (task.creator) cust.creator = task.creator;
+
     const payload = {
       id: task.id,
       title: task.title,
@@ -178,8 +184,8 @@ export async function saveTaskApi(task) {
       status: task.status || 'รอดำเนินการ',
       progress: task.progress || 0,
       latest_update: task.latestUpdate || 'ยังไม่มีอัปเดต',
-      customer: task.customer || {},
-      updated_by: task.updateBy || 'แอดมิน',
+      customer: cust,
+      updated_by: task.assignedBy || task.updateBy || 'แอดมิน',
       updated_at: new Date().toISOString()
     };
 

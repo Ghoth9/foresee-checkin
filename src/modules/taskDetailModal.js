@@ -88,11 +88,21 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
 
   if (!isAdmin) {
     const taskTechs = getTaskTechs(task);
-    if (!opName || !taskTechs.includes(opName)) {
+    const isAssignedToMe = opName && taskTechs.includes(opName);
+    const isCreatedByMe = opName && (
+      task.assignedBy === opName ||
+      task.creator === opName ||
+      task.customer?.assigned_by === opName ||
+      task.customer?.creator === opName ||
+      task.updateBy === opName ||
+      task.updated_by === opName
+    );
+
+    if (!isAssignedToMe && !isCreatedByMe) {
       showAppAlert({
         type: "warning",
         title: "ไม่มีสิทธิ์เข้าถึงงานนี้ (Privacy Protection)",
-        message: "งานนี้ไม่ได้มอบหมายให้คุณ กรุณาเข้าสู่ระบบด้วยบัญชีผู้ปฏิบัติงานที่ได้รับมอบหมายครับ"
+        message: "งานนี้ไม่ได้มอบหมายให้คุณ และคุณไม่ได้เป็นผู้มอบหมายงานนี้ครับ"
       });
       return;
     }

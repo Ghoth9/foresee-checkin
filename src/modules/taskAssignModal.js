@@ -310,6 +310,8 @@ export async function submitAssignForm({ tasksList, onComplete }) {
   const taskId = `TASK-${Math.floor(100 + Math.random() * 900)}`;
   const titleDisplay = `${finalCategory} - ${custName}`;
 
+  const creatorName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name") || "หัวหน้างาน";
+
   const newTask = {
     id: taskId,
     title: titleDisplay,
@@ -324,16 +326,20 @@ export async function submitAssignForm({ tasksList, onComplete }) {
       address: custAddress,
       phone: custPhone,
       email: custEmail || "-",
-      lineId: custLineId || "-"
+      lineId: custLineId || "-",
+      assigned_by: creatorName,
+      creator: creatorName
     },
     techs: [...selectedAssignTechs],
+    assignedBy: creatorName,
+    creator: creatorName,
     startDate: startDate,
     deadline: deadline,
     status: "กำลังทำ",
     progress: 0,
     latestUpdate: `มอบหมายงานใหม่ [ความเร่งด่วน: ${selectedAssignPriority}]`,
     reason: "-",
-    updateBy: "หัวหน้างาน",
+    updateBy: creatorName,
     updateTime: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })
   };
 

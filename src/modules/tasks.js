@@ -185,12 +185,19 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
   let baseTasks = tasksList || state.tasksList;
 
-  // Non-admins only see tasks assigned to them
+  // Non-admins see tasks assigned to them OR tasks assigned/created by them!
   if (!isAdmin) {
     if (opName) {
       baseTasks = baseTasks.filter(t => {
         const techs = getTaskTechs(t);
-        return techs.includes(opName);
+        const isAssignedToMe = techs.includes(opName);
+        const isCreatedByMe = (t.assignedBy === opName) ||
+          (t.creator === opName) ||
+          (t.customer?.assigned_by === opName) ||
+          (t.customer?.creator === opName) ||
+          (t.updateBy === opName) ||
+          (t.updated_by === opName);
+        return isAssignedToMe || isCreatedByMe;
       });
     } else {
       baseTasks = [];
@@ -372,6 +379,15 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
         ? "bg-blue-50/70 border-l-4 border-l-blue-600 hover:bg-blue-100/70 transition-colors group cursor-pointer ring-1 ring-blue-200/50"
         : "hover:bg-blue-50/50 transition-colors group cursor-pointer";
 
+      const isCreatedByMe = opName && !techs.includes(opName) && (
+        task.assignedBy === opName ||
+        task.creator === opName ||
+        task.customer?.assigned_by === opName ||
+        task.customer?.creator === opName ||
+        task.updateBy === opName ||
+        task.updated_by === opName
+      );
+
       tableHtml += `
         <tr class="${rowClass}" onclick="window.openTaskDetailModal('${task.id}')">
           <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-500 font-semibold">${index + 1}</td>
@@ -381,6 +397,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
                 ${task.status}
               </span>
               ${isNew ? `<span class="inline-flex items-center space-x-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 border border-amber-300 shadow-xs animate-pulse flex-shrink-0"><span>✨</span><span>งานใหม่</span></span>` : ''}
+              ${isCreatedByMe ? `<span class="inline-flex items-center space-x-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs flex-shrink-0"><span>📌</span><span>คุณมอบหมาย</span></span>` : ''}
             </div>
           </td>
           <td class="py-3 px-3">
@@ -460,6 +477,15 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
         ? "group bg-gradient-to-b from-blue-50/70 to-white rounded-xl p-4 border-2 border-blue-500 shadow-md ring-2 ring-blue-400/20 hover:shadow-lg transition-all flex flex-col justify-between space-y-3 cursor-pointer"
         : "group bg-white rounded-xl p-4 border border-slate-200/90 hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between space-y-3 cursor-pointer";
 
+      const isCreatedByMe = opName && !techs.includes(opName) && (
+        task.assignedBy === opName ||
+        task.creator === opName ||
+        task.customer?.assigned_by === opName ||
+        task.customer?.creator === opName ||
+        task.updateBy === opName ||
+        task.updated_by === opName
+      );
+
       const card = document.createElement("div");
       card.className = cardClass;
       card.onclick = () => window.openTaskDetailModal(task.id);
@@ -469,6 +495,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
             <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
               <span class="text-[10px] font-mono text-slate-400 font-bold">#${index + 1} (${task.id})</span>
               ${isNew ? `<span class="inline-flex items-center space-x-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 shadow-xs animate-pulse"><span>✨</span><span>งานใหม่</span></span>` : ''}
+              ${isCreatedByMe ? `<span class="inline-flex items-center space-x-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs"><span>📌</span><span>คุณมอบหมาย</span></span>` : ''}
             </div>
             <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeBg}">${task.status}</span>
           </div>
