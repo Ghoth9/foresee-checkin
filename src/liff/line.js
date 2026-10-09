@@ -48,6 +48,8 @@ export async function initLiff() {
         } catch (e) {
           console.warn("[LIFF] Could not get LIFF profile:", e);
         }
+        if (typeof window.updateLineStatusUI === "function") window.updateLineStatusUI();
+        if (typeof window.resolveUserRole === "function") window.resolveUserRole();
       } else {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("error")) {
@@ -157,6 +159,8 @@ export function logoutLine() {
   try {
     localStorage.removeItem("fs_line_profile");
     sessionStorage.removeItem("fs_line_logging_in");
+    sessionStorage.removeItem("fs_admin_override");
+    sessionStorage.removeItem("fs_simulated_role");
     if (typeof liff !== "undefined" && isLineLoggedIn()) {
       liff.logout();
     }

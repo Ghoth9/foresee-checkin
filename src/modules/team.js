@@ -41,12 +41,16 @@ export function isUserAdminActual() {
     return true;
   }
 
+  const lName = (getLineUserName() || "").toLowerCase();
+  if (lName.includes("nonmarn") || lName.includes("nonpawit") || lName.includes("ghoth9") || lName.includes("baipor") || lName.includes("ใบปอ") || lName.includes("สุพิชชาญาต์") || lName.includes("อาร์ม") || lName.includes("ชัยวัฒน์")) {
+    return true;
+  }
+
   if (isLineLoggedIn()) {
     const profile = getLineUserProfile();
     if (profile && profile.userId) {
       const match = state.techniciansList.find(t => t.line_user_id === profile.userId);
       if (match) return match.role === "admin";
-
       const dName = (profile.displayName || "").toLowerCase();
       const nameMatch = state.techniciansList.find(t => {
         if (!t.name) return false;
@@ -54,7 +58,6 @@ export function isUserAdminActual() {
         return pure && pure.length > 1 && dName.includes(pure);
       });
       if (nameMatch) return nameMatch.role === "admin";
-
       if (dName.includes("nonmarn") || dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("สุพิชชาญาต์") || dName.includes("อาร์ม") || dName.includes("arm")) return true;
     }
   }
@@ -65,42 +68,47 @@ export async function resolveUserRole() {
   // 1. Identify LINE Login Profile and perform Auto-Bind
   let matchedTech = null;
   const profile = getLineUserProfile();
-  if (profile && profile.userId) {
-    // Find match in techniciansList by line_user_id
-    let match = state.techniciansList.find(t => t.line_user_id === profile.userId);
+  const lineName = getLineUserName() || profile?.displayName;
+  const lineId = profile?.userId || getLineUserId();
 
-    // If not found by line_user_id, match by displayName keywords
-    if (!match) {
-      const dName = (profile.displayName || "").toLowerCase();
+  if (lineId || lineName) {
+    let match = lineId ? state.techniciansList.find(t => t.line_user_id === lineId) : null;
+    if (!match && lineName) {
+      const dName = lineName.toLowerCase();
       if (dName.includes("nonmarn") || dName.includes("nonpawit") || dName.includes("ghoth9")) {
         match = state.techniciansList.find(t => t.name && (t.name.toLowerCase().includes("nonmarn") || t.name.toLowerCase().includes("nonpawit")));
-      } else if (dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("095-8188897") || dName.includes("สุพิชชาญาต์")) {
-        match = state.techniciansList.find(t => (t.name && (t.name.includes("ใบปอ") || t.name.includes("สุพิชชาญาต์"))));
+      } else if (dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("สุพิชชาญาต์")) {
+        match = state.techniciansList.find(t => t.name && (t.name.includes("ใบปอ") || t.name.includes("สุพิชชาญาต์")));
       } else if (dName.includes("arm") || dName.includes("อาร์ม") || dName.includes("ชัยวัฒน์")) {
         match = state.techniciansList.find(t => t.name && (t.name.includes("อาร์ม") || t.name.includes("ชัยวัฒน์")));
       }
-
-        // Or match against any technician's nickname
-        if (!match) {
-          match = state.techniciansList.find(t => {
-            if (!t.name) return false;
-            const pureName = t.name.replace(/K\./g, '').split('(')[0].trim().toLowerCase();
-            return pureName && pureName.length > 1 && dName.includes(pureName);
-          });
-        }
-
-        // Auto-bind line_user_id to this technician in Supabase
-        if (match && !match.line_user_id) {
-          match.line_user_id = profile.userId;
-          bindTechnicianLineUserApi(match.id, profile.userId);
-        }
-      }
-
-      if (match) {
-        state.currentLinkedTech = match;
-        matchedTech = match;
+      if (!match) {
+        match = state.techniciansList.find(t => {
+          if (!t.name) return false;
+          const pure = t.name.replace(/K\./g, '').split('(')[0].trim().toLowerCase();
+          return pure && pure.length > 1 && dName.includes(pure);
+        });
       }
     }
+
+    if (!match && lineName && (lineName.toLowerCase().includes("nonmarn") || lineName.toLowerCase().includes("nonpawit") || lineName.toLowerCase().includes("ghoth9"))) {
+      match = {
+        id: "1ead037c-68fd-4514-963d-ef8c2f521dad",
+        name: "nonmarn (System Admin)",
+        role: "admin",
+        line_user_id: lineId || "Uf1a6593c5b88f31e162d86d250440509"
+      };
+    }
+
+    if (match) {
+      state.currentLinkedTech = match;
+      matchedTech = match;
+      if (lineId && !match.line_user_id) {
+        match.line_user_id = lineId;
+        bindTechnicianLineUserApi(match.id, lineId);
+      }
+    }
+  }
 
   // 2. Fallback to localStorage operator profile (for PC, iPad, or when not auto-matched)
   if (!matchedTech) {
@@ -234,7 +242,14 @@ export function applyRolePermissionsUI(role, techObj) {
   if (badge && icon && text) {
     if (isAdmin) {
       icon.innerText = "👑";
-      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : (getLineUserName() || (sessionStorage.getItem("fs_admin_override") === "true" ? "PIN" : "แอดมิน"));
+      const lineName = getLineUserName();
+      const opName = (techObj || state.currentLinkedTech)?.name;
+      let cleanName = "nonmarn";
+      if (opName && !opName.includes("ผู้ดูแลระบบ")) {
+        cleanName = opName.replace(/K\./g, '').split(' ')[0];
+      } else if (lineName) {
+        cleanName = lineName;
+      }
       const shortName = cleanName && cleanName.length > 8 ? cleanName.slice(0, 7) + '…' : cleanName;
       text.innerText = `แอดมิน: ${shortName}`;
       badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0";
@@ -397,7 +412,9 @@ export function applyRolePermissionsUI(role, techObj) {
   // 10. Dropdown Operator Name & Role Control visibility
   const dropOpName = document.getElementById("dropdownCurrentOperatorName");
   if (dropOpName) {
-    dropOpName.innerText = (techObj || state.currentLinkedTech)?.name || "ยังไม่ได้เลือกชื่อ";
+    const lName = getLineUserName();
+    const opDisplay = (techObj || state.currentLinkedTech)?.name;
+    dropOpName.innerText = opDisplay || (lName && lName.toLowerCase().includes("nonmarn") ? "nonmarn (System Admin)" : (lName ? `LINE: ${lName}` : "ยังไม่ได้เลือกชื่อ"));
   }
 
   const adminControls = document.getElementById("roleDropdownAdminControls");
@@ -416,15 +433,13 @@ export function applyRolePermissionsUI(role, techObj) {
   // 11. Company-wide Technician Filter row visibility (Admin only)
   const techFilterRow = document.getElementById("taskTechFilterRow");
   if (techFilterRow) {
-    if (isAdmin) {
-      techFilterRow.classList.remove("hidden");
-    } else {
-      techFilterRow.classList.add("hidden");
-    }
+    if (isAdmin) techFilterRow.classList.remove("hidden");
+    else techFilterRow.classList.add("hidden");
   }
 
   renderTodayLogs();
   renderActiveCheckoutList();
+  if (typeof window.updateLineStatusUI === "function") window.updateLineStatusUI();
 }
 
 export function openAdminPinModal() {
@@ -519,13 +534,12 @@ export function updateTeamRoleBanner() {
   }
 
   if (btnAdmin && btnTech) {
-    if (isAdmin) {
-      btnAdmin.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
-      btnTech.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
-    } else {
-      btnAdmin.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
-      btnTech.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-950 hover:bg-slate-800 text-white shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
-    }
+    btnAdmin.className = isAdmin
+      ? "px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-2xs transition-all active:scale-95 flex items-center space-x-1"
+      : "px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
+    btnTech.className = isAdmin
+      ? "px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95 flex items-center space-x-1"
+      : "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-950 hover:bg-slate-800 text-white shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
   }
 }
 
@@ -643,17 +657,13 @@ export function renderTeamRoleList() {
   const currentLineId = getLineUserId();
 
   if (currentTeamRoleFilter === "admin") {
-    if (adminList.length === 0) {
-      container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-xl">ไม่มีสมาชิกในกลุ่มแอดมิน</div>`;
-    } else {
-      container.innerHTML = `<div class="space-y-2">${adminList.map(t => renderMemberCard(t, currentLineId)).join("")}</div>`;
-    }
+    container.innerHTML = adminList.length === 0
+      ? `<div class="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-xl">ไม่มีสมาชิกในกลุ่มแอดมิน</div>`
+      : `<div class="space-y-2">${adminList.map(t => renderMemberCard(t, currentLineId)).join("")}</div>`;
   } else if (currentTeamRoleFilter === "technician") {
-    if (techList.length === 0) {
-      container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-xl">ไม่มีสมาชิกในกลุ่มผู้ปฏิบัติงาน</div>`;
-    } else {
-      container.innerHTML = `<div class="space-y-2">${techList.map(t => renderMemberCard(t, currentLineId)).join("")}</div>`;
-    }
+    container.innerHTML = techList.length === 0
+      ? `<div class="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-xl">ไม่มีสมาชิกในกลุ่มผู้ปฏิบัติงาน</div>`
+      : `<div class="space-y-2">${techList.map(t => renderMemberCard(t, currentLineId)).join("")}</div>`;
   } else {
     container.innerHTML = `
       <div class="space-y-3">

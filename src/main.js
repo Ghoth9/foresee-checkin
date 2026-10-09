@@ -403,29 +403,29 @@ export async function refreshFromSupabase(force = false) {
   }
 }
 
-function updateLineStatusUI() {
+export function updateLineStatusUI() {
   const dot = document.getElementById("lineLoginDot");
   const text = document.getElementById("lineLoginText");
   const banner = document.getElementById("lineNotLoggedInBanner");
   if (!dot || !text) return;
 
   const profile = getLineUserProfile();
-  if (isLineLoggedIn() || profile) {
-    const name = getLineUserName();
+  const name = getLineUserName() || profile?.displayName;
+  const loggedIn = isLineLoggedIn() || !!profile || !!name;
+
+  if (loggedIn && name) {
     dot.className = "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0";
-    const shortName = name && name.length > 8 ? name.slice(0, 7) + '…' : name;
-    text.innerText = shortName ? `LINE: ${shortName}` : "LINE เชื่อมต่อแล้ว";
-    if (banner) {
-      banner.classList.add("hidden");
-      banner.classList.remove("flex");
-    }
+    const shortName = name.length > 8 ? name.slice(0, 7) + '…' : name;
+    text.innerText = `LINE: ${shortName}`;
+    if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
+  } else if (loggedIn) {
+    dot.className = "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0";
+    text.innerText = "LINE เชื่อมต่อแล้ว";
+    if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
   } else {
     dot.className = "w-2 h-2 rounded-full bg-slate-300 flex-shrink-0";
     text.innerText = "เข้าสู่ระบบ LINE";
-    if (banner) {
-      banner.classList.remove("hidden");
-      banner.classList.add("flex");
-    }
+    if (banner) { banner.classList.remove("hidden"); banner.classList.add("flex"); }
   }
 }
 
@@ -726,6 +726,7 @@ window.openAdminPinModal = openAdminPinModal;
 window.closeAdminPinModal = closeAdminPinModal;
 window.submitAdminPinUnlock = submitAdminPinUnlock;
 window.quickUnlockNonmarnAdmin = quickUnlockNonmarnAdmin;
+window.updateLineStatusUI = updateLineStatusUI;
 window.openTeamRoleModal = openTeamRoleModal;
 window.closeTeamRoleModal = closeTeamRoleModal;
 window.setTeamRoleFilter = setTeamRoleFilter;
@@ -990,5 +991,8 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Run bootstrap when DOM is ready
-document.addEventListener("DOMContentLoaded", bootstrapApp);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootstrapApp);
+} else {
+  bootstrapApp();
+}
