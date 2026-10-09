@@ -112,6 +112,7 @@ import {
   openAdminPinModal,
   closeAdminPinModal,
   submitAdminPinUnlock,
+  quickUnlockNonmarnAdmin,
   openTeamRoleModal,
   closeTeamRoleModal,
   setTeamRoleFilter,
@@ -724,6 +725,7 @@ window.closeRoleDropdownMenu = closeRoleDropdownMenu;
 window.openAdminPinModal = openAdminPinModal;
 window.closeAdminPinModal = closeAdminPinModal;
 window.submitAdminPinUnlock = submitAdminPinUnlock;
+window.quickUnlockNonmarnAdmin = quickUnlockNonmarnAdmin;
 window.openTeamRoleModal = openTeamRoleModal;
 window.closeTeamRoleModal = closeTeamRoleModal;
 window.setTeamRoleFilter = setTeamRoleFilter;

@@ -1,3 +1,5 @@
+import { showAppAlert } from '../utils/dialog.js';
+
 /**
  * LINE LIFF Integration & Flex Message Generator
  */
@@ -9,32 +11,57 @@ let initPromise = null;
 
 export async function initLiff() {
   if (typeof liff === "undefined") {
-    console.warn("LINE LIFF SDK not loaded");
+    console.warn("[LIFF] SDK script not loaded on window");
     return false;
   }
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
     try {
+      console.log("[LIFF] Initializing with ID:", MY_LIFF_ID, "URL:", window.location.href);
       await liff.init({ liffId: MY_LIFF_ID });
       try {
         await liff.ready;
       } catch (readyErr) {
-        console.warn("liff.ready error:", readyErr);
+        console.warn("[LIFF] liff.ready warning:", readyErr);
       }
-      if (isLineLoggedIn()) {
+
+      const loggedIn = isLineLoggedIn();
+      console.log("[LIFF] Init complete. isLineLoggedIn =", loggedIn);
+
+      if (loggedIn) {
         try {
           liffProfile = await liff.getProfile();
+          console.log("[LIFF] Profile fetched:", liffProfile);
           if (liffProfile) {
             try { localStorage.setItem("fs_line_profile", JSON.stringify(liffProfile)); } catch (e) {}
           }
         } catch (e) {
-          console.warn("Could not get LIFF profile:", e);
+          console.warn("[LIFF] Could not get LIFF profile:", e);
+        }
+      } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("error")) {
+          showAppAlert({
+            type: "danger",
+            title: "LINE Login ปฏิเสธการเข้าสู่ระบบ",
+            message: `ข้อผิดพลาดจาก LINE: ${urlParams.get("error")}\nรายละเอียด: ${urlParams.get("error_description") || "-"}`
+          });
         }
       }
       return true;
     } catch (err) {
-      console.warn("LIFF init error:", err);
+      console.error("[LIFF] Init error:", err);
+      const urlParams = new URLSearchParams(window.location.search);
+      const isRedirectBack = urlParams.has("code") || urlParams.has("state") || urlParams.has("error") || sessionStorage.getItem("fs_line_logging_in") === "true";
+      if (isRedirectBack) {
+        sessionStorage.removeItem("fs_line_logging_in");
+        showAppAlert({
+          type: "danger",
+          title: "LINE Login เกิดข้อผิดพลาด",
+          message: `ไม่สามารถเชื่อมต่อ LINE LIFF ได้:\n${err?.message || JSON.stringify(err)}\n\n(LIFF ID: ${MY_LIFF_ID})\nคุณสามารถแตะปุ่มสิทธิ์มุมขวาบนเพื่อสลับเข้าสู่โหมดแอดมินได้ทันทีครับ`
+        });
+      }
       return false;
     }
   })();
@@ -71,24 +98,45 @@ export function getLineUserId() {
 
 export async function loginLine() {
   if (typeof liff === "undefined") {
-    console.warn("LINE LIFF SDK not loaded");
+    showAppAlert({
+      type: "warning",
+      title: "ไม่พบ LINE SDK",
+      message: "ไม่สามารถเรียกใช้งาน LINE SDK ได้ กรุณารีเฟรชหน้าเว็บ"
+    });
     return;
   }
   try {
+    sessionStorage.setItem("fs_line_logging_in", "true");
+    try {
+      const activeTab = sessionStorage.getItem("fs_active_tab") || "tasks";
+      sessionStorage.setItem("fs_active_tab", activeTab);
+    } catch (e) {}
+
     if (!isLineLoggedIn()) {
       await initLiff();
       if (!isLineLoggedIn()) {
-        liff.login({ redirectUri: window.location.href });
+        let cleanRedirectUri = window.location.origin + window.location.pathname;
+        if (!cleanRedirectUri.endsWith("/")) {
+          cleanRedirectUri += "/";
+        }
+        console.log("[LIFF] Calling liff.login with clean redirectUri:", cleanRedirectUri);
+        liff.login({ redirectUri: cleanRedirectUri });
       }
     }
   } catch (err) {
     console.error("loginLine error:", err);
+    showAppAlert({
+      type: "danger",
+      title: "เข้าสู่ระบบ LINE ไม่สำเร็จ",
+      message: err?.message || JSON.stringify(err)
+    });
   }
 }
 
 export function logoutLine() {
   try {
     localStorage.removeItem("fs_line_profile");
+    sessionStorage.removeItem("fs_line_logging_in");
     if (typeof liff !== "undefined" && isLineLoggedIn()) {
       liff.logout();
     }
@@ -97,8 +145,6 @@ export function logoutLine() {
   }
   window.location.reload();
 }
-
-import { showAppAlert } from '../utils/dialog.js';
 
 export async function triggerLiffShare(flexCard, successMessage = "แชร์เข้าห้องแชท LINE สำเร็จ!") {
   if (typeof liff === "undefined") {

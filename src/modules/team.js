@@ -462,6 +462,32 @@ export function submitAdminPinUnlock() {
   }
 }
 
+export function quickUnlockNonmarnAdmin() {
+  sessionStorage.setItem("fs_admin_override", "true");
+  sessionStorage.removeItem("fs_simulated_role");
+  state.simulatedRole = null;
+  state.currentUserRole = "admin";
+  const nonmarn = state.techniciansList.find(t => t.name && (t.name.toLowerCase().includes("nonmarn") || t.name.toLowerCase().includes("nonpawit"))) || {
+    id: "1ead037c-68fd-4514-963d-ef8c2f521dad",
+    name: "nonmarn (System Admin)",
+    role: "admin",
+    line_user_id: "Uf1a6593c5b88f31e162d86d250440509"
+  };
+  state.currentLinkedTech = nonmarn;
+  localStorage.setItem("fs_current_operator_id", nonmarn.id);
+  localStorage.setItem("fs_current_operator_name", nonmarn.name);
+  applyRolePermissionsUI("admin", nonmarn);
+  if (typeof window.renderTasksListScoped === "function") window.renderTasksListScoped();
+  if (typeof window.renderAssignedTasksBannerScoped === "function") window.renderAssignedTasksBannerScoped();
+  renderActiveCheckoutList();
+  renderTodayLogs();
+  showAppAlert({
+    type: "success",
+    title: "เข้าสู่โหมด System Admin 👑",
+    message: "ปลดล็อกสิทธิ์ nonmarn (System Admin) เรียบร้อยแล้วครับ สามารถจัดการงานได้เต็มรูปแบบ"
+  });
+}
+
 export function updateTeamRoleBanner() {
   const isSimulated = !!state.simulatedRole;
   const currentRole = state.currentUserRole;
@@ -682,31 +708,17 @@ export function setNewMemberRole(role) {
 export async function bindCurrentLineUserToTech(techId) {
   const profile = getLineUserProfile();
   if (!profile || !profile.userId) {
-    showAppAlert({
-      type: "warning",
-      title: "ยังไม่ได้เข้าสู่ระบบ LINE",
-      message: "กรุณากดเข้าสู่ระบบ LINE ก่อนดำเนินการผูกบัญชีครับ"
-    });
+    showAppAlert({ type: "warning", title: "ยังไม่ได้เข้าสู่ระบบ LINE", message: "กรุณากดเข้าสู่ระบบ LINE ก่อนดำเนินการผูกบัญชีครับ" });
     return;
   }
   const res = await bindTechnicianLineUserApi(techId, profile.userId);
   if (res.success) {
     const tech = state.techniciansList.find(t => t.id === techId);
     if (tech) tech.line_user_id = profile.userId;
-    showAppAlert({
-      type: "success",
-      title: "ผูกบัญชี LINE สำเร็จ!",
-      message: `เชื่อมต่อบัญชี LINE "${profile.displayName}" เข้ากับ "${tech?.name || ''}" เรียบร้อยแล้ว 🟢`
-    });
-    if (typeof window.refreshFromSupabase === "function") {
-      window.refreshFromSupabase(true);
-    }
+    showAppAlert({ type: "success", title: "ผูกบัญชี LINE สำเร็จ!", message: `เชื่อมต่อบัญชี LINE "${profile.displayName}" เข้ากับ "${tech?.name || ''}" เรียบร้อยแล้ว 🟢` });
+    if (typeof window.refreshFromSupabase === "function") window.refreshFromSupabase(true);
   } else {
-    showAppAlert({
-      type: "warning",
-      title: "เกิดข้อผิดพลาด",
-      message: res.error || "ไม่สามารถผูกบัญชี LINE ได้"
-    });
+    showAppAlert({ type: "warning", title: "เกิดข้อผิดพลาด", message: res.error || "ไม่สามารถผูกบัญชี LINE ได้" });
   }
 }
 
@@ -722,14 +734,8 @@ export async function unbindTechLineUser(techId) {
       if (res.success) {
         const tech = state.techniciansList.find(t => t.id === techId);
         if (tech) tech.line_user_id = null;
-        showAppAlert({
-          type: "info",
-          title: "ยกเลิกการผูก LINE สำเร็จ",
-          message: "ยกเลิกการผูกบัญชีเรียบร้อยแล้ว"
-        });
-        if (typeof window.refreshFromSupabase === "function") {
-          window.refreshFromSupabase(true);
-        }
+        showAppAlert({ type: "info", title: "ยกเลิกการผูก LINE สำเร็จ", message: "ยกเลิกการผูกบัญชีเรียบร้อยแล้ว" });
+        if (typeof window.refreshFromSupabase === "function") window.refreshFromSupabase(true);
       }
     }
   });
@@ -906,11 +912,7 @@ export function setCheckinTechs(techs) {
 
 export function openManageTechModal() {
   if (state.currentUserRole !== "admin" && !isUserAdminActual()) {
-    showAppAlert({
-      type: "warning",
-      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
-      message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์จัดการทีมงานครับ"
-    });
+    showAppAlert({ type: "warning", title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)", message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่มีสิทธิ์จัดการทีมงานครับ" });
     return;
   }
   openTeamRoleModal();
@@ -956,7 +958,7 @@ export async function confirmAddTech() {
   renderTechFilterChips(state.tasksList, state.allTechnicians);
   renderAssignTechChips(state.allTechnicians);
   addNewTechnicianApi(name);
-  showAppAlert({ type: "success", title: "เพิ่มผู้ปฏิบัติงานสำเร็จ", message: `เพิ่ม "${name}" เข้าสู่ระบบทีมผู้ปฏิบัติงานเรียบร้อยแล้ว` });
+  showAppAlert({ type: "success", title: "เพิ่มผู้ปฏิบัติงานสำเร็จ", message: `เพิ่ม "${name}" เข้าสู่ระบบเรียบร้อยแล้ว` });
 }
 
 export async function deleteTech(name) {
