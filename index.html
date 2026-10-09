@@ -32,7 +32,7 @@
       </div>
 
       <!-- Desktop Nav: ADMIN NAV (Visible when admin) -->
-      <nav id="adminNavTabs" class="hidden md:flex items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 flex-shrink-0">
+      <nav id="adminNavTabs" class="hidden items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 flex-shrink-0">
         <button id="deskTabBtnAdminTasks" type="button" onclick="switchTab('tasks')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5 whitespace-nowrap">
           <span>📋</span>
           <span>จัดการ & มอบหมายงาน</span>
@@ -59,7 +59,7 @@
         </button>
         <button id="deskTabBtnTasks" type="button" onclick="switchTab('tasks')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap">
           <span>📋</span>
-          <span id="deskTabBtnTasksText">รายการงาน</span>
+          <span>รายการงาน</span>
         </button>
       </nav>
 
@@ -89,7 +89,7 @@
             </div>
 
             <!-- Admin Controls (Shown for admins) -->
-            <div id="roleDropdownAdminControls" class="space-y-1">
+            <div id="roleDropdownAdminControls" class="hidden space-y-1">
               <div class="px-2 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
                 <span>สลับมุมมองหน้าจอ</span>
                 <span class="text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-mono font-bold border border-amber-200">Admin</span>
