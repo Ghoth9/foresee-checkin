@@ -107,6 +107,47 @@ export async function chooseOperatorProfile(techId) {
     return;
   }
 
+  // Check if current user is an actual Admin
+  const isActualAdmin = (typeof window.isUserAdminActual === "function" && window.isUserAdminActual()) ||
+    (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()) ||
+    (state.currentUserRole === "admin");
+
+  if (isActualAdmin) {
+    // 🛡️ ADMIN PREVIEW / SIMULATION MODE (SANDBOX):
+    // 1. NEVER bind admin's LINE to this technician in Supabase!
+    // 2. NEVER overwrite localStorage admin identity!
+    // 3. Store purely as simulated operator in session
+    state.simulatedOperator = tech;
+    sessionStorage.setItem("fs_simulated_operator_id", tech.id);
+    sessionStorage.setItem("fs_simulated_operator_name", tech.name);
+    state.simulatedRole = "technician";
+    sessionStorage.setItem("fs_simulated_role", "technician");
+    state.currentUserRole = "technician";
+    state.currentLinkedTech = tech;
+    state.selectedCheckinTechs = [tech.name];
+
+    closeSelectOperatorModal();
+
+    if (typeof window.applyRolePermissionsUI === "function") {
+      window.applyRolePermissionsUI("technician", tech);
+    }
+    if (typeof window.updateTeamRoleBanner === "function") {
+      window.updateTeamRoleBanner();
+    }
+    if (typeof window.renderCheckinTechChips === "function") window.renderCheckinTechChips();
+    if (typeof window.renderTasksListScoped === "function") window.renderTasksListScoped();
+    if (typeof window.renderAssignedTasksBannerScoped === "function") window.renderAssignedTasksBannerScoped();
+    if (typeof window.renderActiveCheckoutList === "function") window.renderActiveCheckoutList();
+    if (typeof window.renderTodayLogs === "function") window.renderTodayLogs();
+
+    showAppAlert({
+      type: "info",
+      title: "🧪 โหมดจำลองมุมมอง (Sandbox)",
+      message: `คุณกำลังจำลองมุมมองของ "${tech.name}" (ระบบจะไม่แตะต้อง LINE หรือฐานข้อมูลของพนักงานคนนี้ และสามารถกดปุ่มสลับกลับเป็นแอดมินด้านบนได้ตลอดเวลาครับ)`
+    });
+    return;
+  }
+
   state.currentLinkedTech = tech;
   localStorage.setItem("fs_current_operator_id", tech.id);
   localStorage.setItem("fs_current_operator_name", tech.name);
@@ -114,7 +155,7 @@ export async function chooseOperatorProfile(techId) {
   // If LINE is logged in and tech has no line_user_id yet, auto-bind to Supabase!
   if (isLineLoggedIn()) {
     const profile = getLineUserProfile();
-    if (profile && profile.userId) {
+    if (profile && profile.userId && !tech.line_user_id) {
       tech.line_user_id = profile.userId;
       bindTechnicianLineUserApi(tech.id, profile.userId);
     }

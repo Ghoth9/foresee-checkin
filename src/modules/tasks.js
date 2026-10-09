@@ -303,17 +303,36 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
   if (filteredTasks.length === 0) {
     container.innerHTML = `
-      <div class="text-center py-10 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-        <div class="text-3xl mb-2">🔍</div>
+      <div class="text-center py-10 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-2">
+        <div class="text-3xl mb-1">🔍</div>
         <div class="text-sm font-bold text-slate-800">ไม่พบงานที่ตรงกับเงื่อนไข</div>
-        <p class="text-xs text-slate-500 mt-1">ตัวกรองปัจจุบัน: สถานะ "${currentStatusFilter}"${currentTechFilter !== 'ทั้งหมด' ? ` / ${currentTechFilter}` : ''}</p>
-        <button type="button" onclick="window.setStatusFilter('ทั้งหมด'); window.setTaskTechFilter('ทั้งหมด');" class="mt-3 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition-colors">
-          ล้างตัวกรองทั้งหมด
-        </button>
+        <p class="text-xs text-slate-500">${taskSearchQuery ? `ไม่พบงานที่มีคำว่า "${taskSearchQuery}"` : `ตัวกรองปัจจุบัน: สถานะ "${currentStatusFilter}"${currentTechFilter !== 'ทั้งหมด' ? ` / ${currentTechFilter}` : ''}`}</p>
+        <div class="flex items-center justify-center gap-2 pt-2 flex-wrap">
+          ${taskSearchQuery ? `
+            <button type="button" onclick="window.clearTaskSearch()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shadow-2xs active:scale-95 cursor-pointer">
+              ✕ ล้างคำค้นหา "${taskSearchQuery}"
+            </button>
+          ` : ''}
+          <button type="button" onclick="window.setStatusFilter('ทั้งหมด'); window.setTaskTechFilter('ทั้งหมด');" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs transition-colors cursor-pointer">
+            ล้างตัวกรองทั้งหมด
+          </button>
+        </div>
       </div>
     `;
     return;
   }
+
+  const searchNoticeHtml = taskSearchQuery ? `
+    <div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs text-blue-950 shadow-2xs animate-fade-in">
+      <div class="flex items-center space-x-2 min-w-0">
+        <span class="text-base flex-shrink-0">🔍</span>
+        <span class="truncate">กำลังกรองค้นหา: <strong class="font-bold underline text-blue-800">"${taskSearchQuery}"</strong> (พบ ${filteredTasks.length} จากทั้งหมด ${techFiltered.length} งาน)</span>
+      </div>
+      <button type="button" onclick="window.clearTaskSearch()" class="ml-2 px-2.5 py-1 bg-white hover:bg-blue-100 text-blue-700 font-bold border border-blue-300 rounded-lg text-xs transition-all shadow-2xs active:scale-95 whitespace-nowrap cursor-pointer">
+        ✕ ล้างการค้นหา
+      </button>
+    </div>
+  ` : '';
 
   // 3. Render View Mode
   if (taskViewMode === "list" && window.innerWidth >= 768) {
@@ -417,10 +436,10 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
         </table>
       </div>
     `;
-    container.innerHTML = tableHtml;
+    container.innerHTML = searchNoticeHtml + tableHtml;
   } else {
     // Grid Card View
-    container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="taskCardsGrid"></div>`;
+    container.innerHTML = searchNoticeHtml + `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="taskCardsGrid"></div>`;
     const grid = document.getElementById("taskCardsGrid");
 
     filteredTasks.forEach((task, index) => {

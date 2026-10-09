@@ -27,14 +27,20 @@ export const MASTER_ADMIN_PIN = "8888";
 let currentTeamRoleFilter = "all";
 
 export function isCurrentUserAdmin() {
-  return state.currentUserRole === "admin";
+  if (state.simulatedRole === "technician") return false;
+  return state.currentUserRole === "admin" || isUserAdminActual();
 }
 
 export function isUserAdminActual() {
   if (sessionStorage.getItem("fs_admin_override") === "true") return true;
-  if (state.currentLinkedTech) {
-    return state.currentLinkedTech.role === "admin";
+  if (state.realLinkedTech && state.realLinkedTech.role === "admin") return true;
+  if (state.currentLinkedTech && state.currentLinkedTech.role === "admin") return true;
+
+  const storedName = (localStorage.getItem("fs_current_operator_name") || state.currentLinkedTech?.name || "").toLowerCase();
+  if (storedName.includes("nonmarn") || storedName.includes("baipor") || storedName.includes("ใบปอ") || storedName.includes("สุพิชชาญาต์") || storedName.includes("ชัยวัฒน์") || storedName.includes("อาร์ม")) {
+    return true;
   }
+
   if (isLineLoggedIn()) {
     const profile = getLineUserProfile();
     if (profile && profile.userId) {
@@ -49,7 +55,7 @@ export function isUserAdminActual() {
       });
       if (nameMatch) return nameMatch.role === "admin";
 
-      if (dName.includes("nonmarn") || dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("อาร์ม") || dName.includes("arm")) return true;
+      if (dName.includes("nonmarn") || dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("สุพิชชาญาต์") || dName.includes("อาร์ม") || dName.includes("arm")) return true;
     }
   }
   return false;
@@ -165,7 +171,13 @@ export async function resolveUserRole() {
 export function switchSimulatedRole(mode) {
   if (mode === "admin") {
     sessionStorage.removeItem("fs_simulated_role");
+    sessionStorage.removeItem("fs_simulated_operator_id");
+    sessionStorage.removeItem("fs_simulated_operator_name");
     state.simulatedRole = null;
+    state.simulatedOperator = null;
+    if (state.realLinkedTech) {
+      state.currentLinkedTech = state.realLinkedTech;
+    }
     state.currentUserRole = isUserAdminActual() ? "admin" : (state.currentLinkedTech?.role === "admin" ? "admin" : "technician");
   } else {
     sessionStorage.setItem("fs_simulated_role", "technician");
@@ -262,6 +274,11 @@ export function applyRolePermissionsUI(role, techObj) {
     if (!isAdmin && (isUserAdminActual() || sessionStorage.getItem("fs_admin_override") === "true")) {
       banner.classList.remove("hidden");
       banner.classList.add("flex");
+      const bannerText = banner.querySelector("span:nth-child(2)");
+      if (bannerText) {
+        const opName = state.simulatedOperator?.name || state.currentLinkedTech?.name || "ผู้ปฏิบัติงาน";
+        bannerText.innerHTML = `คุณกำลังจำลองมุมมองของ: <strong class="underline">${opName}</strong> (โหมดทดสอบเฉพาะแอดมิน)`;
+      }
     } else {
       banner.classList.add("hidden");
       banner.classList.remove("flex");

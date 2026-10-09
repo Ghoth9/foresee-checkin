@@ -787,10 +787,11 @@ window.nextCalendarMonth = nextCalendarMonth;
 window.selectTodayOnCalendar = selectTodayOnCalendar;
 
 window.isCurrentUserAdmin = () => isCurrentUserAdmin();
+window.isUserAdminActual = () => isUserAdminActual();
 
 window.openTaskDetailModal = (taskId, initialTab = "info") => {
   openTaskDetailModal(taskId, state.tasksList, state.allTechnicians, initialTab);
-  const isAdmin = state.currentUserRole === "admin";
+  const isAdmin = typeof window.isCurrentUserAdmin === "function" ? window.isCurrentUserAdmin() : (state.currentUserRole === "admin");
   const inputs = [
     "detailTitleInput",
     "detailDescInput",
