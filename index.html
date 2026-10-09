@@ -13,10 +13,10 @@
   <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body class="technical-bg text-slate-900 min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+<body class="technical-bg text-slate-900 min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white overflow-x-hidden">
 
   <!-- ==================== DESKTOP & MOBILE HEADER ==================== -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-300/90 shadow-xs">
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-300/90 shadow-xs max-w-full overflow-x-hidden">
     <div class="max-w-[1600px] mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
       
       <!-- Brand & Logo -->
@@ -32,7 +32,7 @@
       </div>
 
       <!-- Desktop Nav: ADMIN NAV (Visible when admin) -->
-      <nav id="adminNavTabs" class="hidden items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 flex-shrink-0">
+      <nav id="adminNavTabs" class="hidden md:flex items-center space-x-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 flex-shrink-0">
         <button id="deskTabBtnAdminTasks" type="button" onclick="switchTab('tasks')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5 whitespace-nowrap">
           <span>📋</span>
           <span>จัดการ & มอบหมายงาน</span>
@@ -136,8 +136,9 @@
         </div>
 
         <!-- + มอบหมายงาน (Compact & Sleek) -->
-        <button id="assignTaskHeaderBtn" type="button" onclick="openAssignModal()" class="flex items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
-          <span>+ มอบหมายงาน</span>
+        <button id="assignTaskHeaderBtn" type="button" onclick="openAssignModal()" class="flex items-center space-x-1 sm:space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
+          <span class="hidden sm:inline">+ มอบหมายงาน</span>
+          <span class="sm:hidden">+ งาน</span>
         </button>
 
         <!-- Compact LINE Status -->
@@ -1260,21 +1261,21 @@
       </div>
 
       <!-- Current Admin Banner & Quick View Switcher -->
-      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-xl p-3 text-xs space-y-2">
+      <div id="teamRoleUserBanner" class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-xl p-3 text-xs space-y-2">
         <div class="flex items-center space-x-3">
-          <span class="text-xl">👑</span>
+          <span id="teamRoleBannerIcon" class="text-xl">👑</span>
           <div>
-            <div class="font-bold text-amber-950">สิทธิ์ของคุณ: แอดมินผู้ดูแลระบบ (Admin)</div>
-            <div class="text-[11px] text-amber-800 mt-0.5">สามารถมอบหมายงาน แก้ไข ลบงาน และจัดการสิทธิ์สมาชิกทุกคน</div>
+            <div id="teamRoleBannerTitle" class="font-bold text-amber-950">สิทธิ์ของคุณ: แอดมินผู้ดูแลระบบ (Admin)</div>
+            <div id="teamRoleBannerDesc" class="text-[11px] text-amber-800 mt-0.5">สามารถมอบหมายงาน แก้ไข ลบงาน และจัดการสิทธิ์สมาชิกทุกคน</div>
           </div>
         </div>
         <div class="pt-2 border-t border-amber-200/60 flex items-center justify-between flex-wrap gap-2">
           <span class="text-[11px] font-bold text-amber-900">🔍 ทดสอบสลับมุมมองหน้าจอ:</span>
           <div class="flex items-center space-x-1.5">
-            <button type="button" onclick="switchSimulatedRole('admin')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-2xs transition-all active:scale-95">
+            <button id="quickSwitchAdminBtn" type="button" onclick="switchSimulatedRole('admin')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-2xs transition-all active:scale-95">
               👑 มุมมองแอดมิน
             </button>
-            <button type="button" onclick="switchSimulatedRole('technician')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95">
+            <button id="quickSwitchTechBtn" type="button" onclick="switchSimulatedRole('technician')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95">
               👤 มุมมองผู้ปฏิบัติงาน
             </button>
           </div>

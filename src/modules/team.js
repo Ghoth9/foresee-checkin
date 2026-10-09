@@ -32,13 +32,23 @@ export function isCurrentUserAdmin() {
 
 export function isUserAdminActual() {
   if (sessionStorage.getItem("fs_admin_override") === "true") return true;
-  if (state.currentLinkedTech && state.currentLinkedTech.role === "admin") return true;
+  if (state.currentLinkedTech) {
+    return state.currentLinkedTech.role === "admin";
+  }
   if (isLineLoggedIn()) {
     const profile = getLineUserProfile();
     if (profile && profile.userId) {
       const match = state.techniciansList.find(t => t.line_user_id === profile.userId);
-      if (match && match.role === "admin") return true;
+      if (match) return match.role === "admin";
+
       const dName = (profile.displayName || "").toLowerCase();
+      const nameMatch = state.techniciansList.find(t => {
+        if (!t.name) return false;
+        const pure = t.name.replace(/K\./g, '').split('(')[0].trim().toLowerCase();
+        return pure && pure.length > 1 && dName.includes(pure);
+      });
+      if (nameMatch) return nameMatch.role === "admin";
+
       if (dName.includes("nonmarn") || dName.includes("baipor") || dName.includes("ใบปอ") || dName.includes("อาร์ม") || dName.includes("arm")) return true;
     }
   }
@@ -156,7 +166,7 @@ export function switchSimulatedRole(mode) {
   if (mode === "admin") {
     sessionStorage.removeItem("fs_simulated_role");
     state.simulatedRole = null;
-    state.currentUserRole = "admin";
+    state.currentUserRole = isUserAdminActual() ? "admin" : (state.currentLinkedTech?.role === "admin" ? "admin" : "technician");
   } else {
     sessionStorage.setItem("fs_simulated_role", "technician");
     state.simulatedRole = "technician";
@@ -164,7 +174,9 @@ export function switchSimulatedRole(mode) {
   }
 
   closeRoleDropdownMenu();
+  closeTeamRoleModal();
   applyRolePermissionsUI(state.currentUserRole, state.currentLinkedTech);
+  updateTeamRoleBanner();
 
   // Switch to appropriate primary workspace
   if (typeof window.switchTab === "function") {
@@ -185,7 +197,7 @@ export function switchSimulatedRole(mode) {
     title: mode === "admin" ? "สลับเป็น: เมนูแอดมิน 👑" : "สลับเป็น: เมนูผู้ปฏิบัติงาน 👤",
     message: mode === "admin"
       ? "แสดงผลเมนูแอดมินเต็มรูปแบบ (จัดการงาน, มอบหมายงาน, ตรวจสอบงาน, จัดการสิทธิ์ทีม)"
-      : "แสดงผลเมนูผู้ปฏิบัติงานหน้างาน (เช็กอิน, อัปเดตงาน, ปิดงาน ซ่อนปุ่มแอดมินทั้งหมด)"
+      : "สลับเป็นมุมมองผู้ปฏิบัติงานหน้างานเรียบร้อยแล้ว (เช็กอิน, อัปเดตงาน, ปิดงาน ซ่อนปุ่มแอดมินทั้งหมด)"
   });
 }
 
@@ -293,13 +305,23 @@ export function applyRolePermissionsUI(role, techObj) {
   const operatorMobNav = document.getElementById("operatorMobileTabs");
 
   if (isAdmin) {
-    if (adminNav) { adminNav.classList.remove("hidden"); adminNav.classList.add("md:flex"); }
-    if (operatorNav) { operatorNav.classList.add("hidden"); operatorNav.classList.remove("md:flex"); }
+    if (adminNav) {
+      adminNav.classList.add("hidden", "md:flex");
+    }
+    if (operatorNav) {
+      operatorNav.classList.add("hidden");
+      operatorNav.classList.remove("md:flex");
+    }
     if (adminMobNav) { adminMobNav.className = "grid md:hidden grid-cols-3 gap-1 bg-slate-300 p-1 rounded-xl text-xs font-bold text-slate-700 shadow-inner"; }
     if (operatorMobNav) { operatorMobNav.className = "hidden md:hidden"; }
   } else {
-    if (adminNav) { adminNav.classList.add("hidden"); adminNav.classList.remove("md:flex"); }
-    if (operatorNav) { operatorNav.classList.remove("hidden"); operatorNav.classList.add("md:flex"); }
+    if (adminNav) {
+      adminNav.classList.add("hidden");
+      adminNav.classList.remove("md:flex");
+    }
+    if (operatorNav) {
+      operatorNav.classList.add("hidden", "md:flex");
+    }
     if (adminMobNav) { adminMobNav.className = "hidden md:hidden"; }
     if (operatorMobNav) { operatorMobNav.className = "grid md:hidden grid-cols-3 gap-1 bg-slate-300 p-1 rounded-xl text-xs font-bold text-slate-700 shadow-inner"; }
   }
@@ -430,6 +452,47 @@ export function submitAdminPinUnlock() {
   }
 }
 
+export function updateTeamRoleBanner() {
+  const isSimulated = !!state.simulatedRole;
+  const currentRole = state.currentUserRole;
+  const isAdmin = currentRole === "admin";
+
+  const banner = document.getElementById("teamRoleUserBanner");
+  const icon = document.getElementById("teamRoleBannerIcon");
+  const title = document.getElementById("teamRoleBannerTitle");
+  const desc = document.getElementById("teamRoleBannerDesc");
+  const btnAdmin = document.getElementById("quickSwitchAdminBtn");
+  const btnTech = document.getElementById("quickSwitchTechBtn");
+
+  if (icon && title && desc) {
+    if (isAdmin) {
+      icon.innerText = "👑";
+      title.innerText = isSimulated ? "มุมมองจำลอง: แอดมิน (Admin)" : "สิทธิ์ของคุณ: แอดมินผู้ดูแลระบบ (Admin)";
+      title.className = "font-bold text-amber-950";
+      desc.innerText = "สามารถมอบหมายงาน แก้ไข ลบงาน และจัดการสิทธิ์สมาชิกทุกคน";
+      desc.className = "text-[11px] text-amber-800 mt-0.5";
+      if (banner) banner.className = "bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-xl p-3 text-xs space-y-2 transition-all";
+    } else {
+      icon.innerText = "👤";
+      title.innerText = isSimulated ? "มุมมองจำลอง: ผู้ปฏิบัติงาน (Staff/Field)" : "สิทธิ์ของคุณ: ผู้ปฏิบัติงาน (Staff/Field)";
+      title.className = "font-bold text-slate-900";
+      desc.innerText = "มุมมองสำหรับช่างหน้างาน: เช็กอิน อัปเดตงาน และปิดงาน (ซ่อนปุ่มลบงานและจัดการสิทธิ์)";
+      desc.className = "text-[11px] text-slate-600 mt-0.5";
+      if (banner) banner.className = "bg-slate-100 border border-slate-300 rounded-xl p-3 text-xs space-y-2 transition-all";
+    }
+  }
+
+  if (btnAdmin && btnTech) {
+    if (isAdmin) {
+      btnAdmin.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
+      btnTech.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
+    } else {
+      btnAdmin.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
+      btnTech.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-950 hover:bg-slate-800 text-white shadow-2xs transition-all active:scale-95 flex items-center space-x-1";
+    }
+  }
+}
+
 export function openTeamRoleModal() {
   if (state.currentUserRole !== "admin" && !isUserAdminActual()) {
     showAppAlert({
@@ -439,6 +502,7 @@ export function openTeamRoleModal() {
     });
     return;
   }
+  updateTeamRoleBanner();
   renderTeamRoleList();
   const el = document.getElementById("teamRoleModal");
   if (el) el.classList.remove("hidden");
@@ -668,13 +732,47 @@ export async function handleChangeMemberRole(techId, newRole) {
   const res = await updateTechnicianRoleApi(techId, newRole);
   if (res.success) {
     if (target) target.role = newRole;
+
+    const currentLineId = getLineUserId();
+    const isMe = (currentLineId && target.line_user_id === currentLineId) ||
+                 (state.currentLinkedTech && state.currentLinkedTech.id === target.id);
+
+    if (isMe) {
+      if (state.currentLinkedTech) state.currentLinkedTech.role = newRole;
+      if (newRole === "technician") {
+        sessionStorage.removeItem("fs_admin_override");
+        sessionStorage.removeItem("fs_simulated_role");
+        state.currentUserRole = "technician";
+        state.simulatedRole = null;
+      } else {
+        sessionStorage.removeItem("fs_simulated_role");
+        state.currentUserRole = "admin";
+        state.simulatedRole = null;
+      }
+    }
+
+    renderTeamRoleList();
+    updateTeamRoleBanner();
+    await resolveUserRole();
+
+    if (typeof window.refreshFromSupabase === "function") {
+      window.refreshFromSupabase(true);
+    }
+
+    if (isMe && newRole === "technician") {
+      closeTeamRoleModal();
+      if (typeof window.switchTab === "function") {
+        window.switchTab("checkin");
+      }
+    }
+
     showAppAlert({
       type: "success",
       title: "อัปเดตสิทธิ์สำเร็จ",
-      message: `เปลี่ยนสิทธิ์ของ "${target?.name || ''}" เป็น ${newRole === 'admin' ? 'แอดมิน' : 'ผู้ปฏิบัติงาน'} เรียบร้อยแล้ว`
+      message: isMe && newRole === "technician"
+        ? `เปลี่ยนสิทธิ์ของคุณเป็น "ผู้ปฏิบัติงาน" เรียบร้อยแล้ว ระบบสลับไปยังหน้าจอผู้ปฏิบัติงาน`
+        : `เปลี่ยนสิทธิ์ของ "${target?.name || ''}" เป็น ${newRole === 'admin' ? 'แอดมิน' : 'ผู้ปฏิบัติงาน'} เรียบร้อยแล้ว`
     });
-    renderTeamRoleList();
-    resolveUserRole();
   } else {
     showAppAlert({
       type: "warning",
@@ -818,12 +916,8 @@ export function renderManageTechList() {
   const countLabel = document.getElementById("techCountLabel");
   if (countLabel) countLabel.innerText = `${state.allTechnicians.length} คน`;
   if (!container) return;
-  container.innerHTML = "";
-
-  state.allTechnicians.forEach((name, idx) => {
-    const row = document.createElement("div");
-    row.className = "flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs";
-    row.innerHTML = `
+  container.innerHTML = state.allTechnicians.map((name, idx) => `
+    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
       <div class="flex items-center space-x-2.5">
         <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-[10px]">${idx + 1}</span>
         <span class="font-bold text-slate-800">${name}</span>
@@ -832,9 +926,8 @@ export function renderManageTechList() {
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         <span>ลบ</span>
       </button>
-    `;
-    container.appendChild(row);
-  });
+    </div>
+  `).join("");
 }
 
 export async function confirmAddTech() {
@@ -842,43 +935,25 @@ export async function confirmAddTech() {
   const name = input ? input.value.trim() : "";
   if (!name) return;
   if (state.allTechnicians.includes(name)) {
-    showAppAlert({
-      type: "warning",
-      title: "มีชื่อนี้แล้ว",
-      message: `มีชื่อ "${name}" อยู่ในระบบแล้ว`
-    });
+    showAppAlert({ type: "warning", title: "มีชื่อนี้แล้ว", message: `มีชื่อ "${name}" อยู่ในระบบแล้ว` });
     return;
   }
   state.allTechnicians.push(name);
-  try {
-    localStorage.setItem("fs_technicians", JSON.stringify(state.allTechnicians));
-  } catch (e) {}
-
+  try { localStorage.setItem("fs_technicians", JSON.stringify(state.allTechnicians)); } catch (e) {}
   if (input) input.value = "";
   renderManageTechList();
   renderCheckinTechChips();
   renderTechFilterChips(state.tasksList, state.allTechnicians);
   renderAssignTechChips(state.allTechnicians);
-
   addNewTechnicianApi(name);
-
-  showAppAlert({
-    type: "success",
-    title: "เพิ่มผู้ปฏิบัติงานสำเร็จ",
-    message: `เพิ่ม "${name}" เข้าสู่ระบบทีมผู้ปฏิบัติงานเรียบร้อยแล้ว`
-  });
+  showAppAlert({ type: "success", title: "เพิ่มผู้ปฏิบัติงานสำเร็จ", message: `เพิ่ม "${name}" เข้าสู่ระบบทีมผู้ปฏิบัติงานเรียบร้อยแล้ว` });
 }
 
 export async function deleteTech(name) {
   if (state.allTechnicians.length <= 1) {
-    showAppAlert({
-      type: "warning",
-      title: "ไม่สามารถลบได้",
-      message: "ต้องมีรายชื่อผู้ปฏิบัติงานอย่างน้อย 1 คนในระบบ"
-    });
+    showAppAlert({ type: "warning", title: "ไม่สามารถลบได้", message: "ต้องมีรายชื่อผู้ปฏิบัติงานอย่างน้อย 1 คนในระบบ" });
     return;
   }
-
   showAppConfirm({
     title: "ยืนยันการลบรายชื่อผู้ปฏิบัติงาน",
     message: `คุณต้องการลบ "${name}" ออกจากระบบทีมผู้ปฏิบัติงานหรือไม่?`,
@@ -888,25 +963,14 @@ export async function deleteTech(name) {
     onConfirm: () => {
       state.allTechnicians = state.allTechnicians.filter(t => t !== name);
       state.selectedCheckinTechs = state.selectedCheckinTechs.filter(t => t !== name);
-      try {
-        localStorage.setItem("fs_technicians", JSON.stringify(state.allTechnicians));
-      } catch(e) {}
-
+      try { localStorage.setItem("fs_technicians", JSON.stringify(state.allTechnicians)); } catch(e) {}
       renderManageTechList();
       renderCheckinTechChips();
       renderTechFilterChips(state.tasksList, state.allTechnicians);
       renderAssignTechChips(state.allTechnicians);
-      if (typeof window.renderTasksListScoped === "function") {
-        window.renderTasksListScoped();
-      }
-
+      if (typeof window.renderTasksListScoped === "function") window.renderTasksListScoped();
       deleteTechnicianApi(name);
-
-      showAppAlert({
-        type: "success",
-        title: "ลบสำเร็จ",
-        message: `ลบ "${name}" ออกจากระบบเรียบร้อยแล้ว`
-      });
+      showAppAlert({ type: "success", title: "ลบสำเร็จ", message: `ลบ "${name}" ออกจากระบบเรียบร้อยแล้ว` });
     }
   });
 }

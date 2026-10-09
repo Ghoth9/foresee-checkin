@@ -10,6 +10,7 @@ import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
 import { openCustomCalendar } from '../utils/calendar.js';
 import { openImageLightbox } from './taskLightbox.js';
 import { getTaskTechs, getAssigneeSubmissionsStatus } from './tasks.js';
+import { state } from './state.js';
 
 let currentDetailTaskId = null;
 let currentDetailStatus = "กำลังทำ";
@@ -73,6 +74,21 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
   currentDetailTaskId = taskId;
   const task = tasksList.find(t => t.id === taskId);
   if (!task) return;
+
+  // Security & Privacy Check: Non-admins cannot open tasks not assigned to them!
+  const isAdmin = typeof window.isCurrentUserAdmin === 'function' ? window.isCurrentUserAdmin() : (state.currentUserRole === "admin");
+  const opName = state.currentLinkedTech?.name;
+  if (!isAdmin) {
+    const taskTechs = getTaskTechs(task);
+    if (!opName || !taskTechs.includes(opName)) {
+      showAppAlert({
+        type: "warning",
+        title: "ไม่มีสิทธิ์เข้าถึงงานนี้ (Privacy Protection)",
+        message: "งานนี้ไม่ได้มอบหมายให้คุณ กรุณาเข้าสู่ระบบด้วยบัญชีผู้ปฏิบัติงานที่ได้รับมอบหมายครับ"
+      });
+      return;
+    }
+  }
 
   const idBadge = document.getElementById("detailTaskIdBadge");
   if (idBadge) idBadge.innerText = task.id;

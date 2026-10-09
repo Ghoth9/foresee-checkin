@@ -177,11 +177,44 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdmin = 
 
   // 1. Role-based scoping: non-admin operators only see tasks assigned to them!
   let baseTasks = tasksList;
-  if (!isAdmin && activeOperatorName) {
-    baseTasks = baseTasks.filter(t => {
-      const techs = getTaskTechs(t);
-      return techs.includes(activeOperatorName);
-    });
+  if (!isAdmin) {
+    if (activeOperatorName) {
+      baseTasks = baseTasks.filter(t => {
+        const techs = getTaskTechs(t);
+        return techs.includes(activeOperatorName);
+      });
+    } else {
+      // Unauthenticated staff: MUST NOT SEE ANY TASKS!
+      baseTasks = [];
+      container.innerHTML = `
+        <div class="text-center py-12 px-4 bg-white rounded-2xl border border-slate-200 p-8 shadow-xs space-y-3">
+          <div class="w-14 h-14 mx-auto bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-3xl font-bold border border-amber-200">🔒</div>
+          <h3 class="text-base font-bold text-slate-900">กรุณาระบุตัวตนเพื่อดูรายการงานที่ได้รับมอบหมาย</h3>
+          <p class="text-xs text-slate-500 max-w-md mx-auto">เพื่อความปลอดภัยและความเป็นส่วนตัวของข้อมูลงาน พนักงานที่ยังไม่ผูก LINE จำเป็นต้องเข้าสู่ระบบหรือเลือกชื่อของตนเองก่อน จึงจะสามารถดูงานที่ได้รับมอบหมายได้ครับ</p>
+          <div class="flex items-center justify-center gap-2.5 pt-2 flex-wrap">
+            <button type="button" onclick="handleLineLoginToggle()" class="px-4 py-2.5 bg-[#06C755] hover:bg-[#05b34c] text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center space-x-1.5 cursor-pointer">
+              <span>💬</span>
+              <span>เข้าสู่ระบบผ่าน LINE</span>
+            </button>
+            <button type="button" onclick="openSelectOperatorModal()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 flex items-center space-x-1.5 cursor-pointer">
+              <span>👤</span>
+              <span>เลือกชื่อผู้ปฏิบัติงานของฉัน</span>
+            </button>
+          </div>
+        </div>
+      `;
+      const elTotal = document.getElementById("statTotalTasks");
+      if (elTotal) elTotal.innerText = 0;
+      const elOver = document.getElementById("statOverdue");
+      if (elOver) elOver.innerText = 0;
+      const elProg = document.getElementById("statInProgress");
+      if (elProg) elProg.innerText = 0;
+      const elComp = document.getElementById("statCompleted");
+      if (elComp) elComp.innerText = 0;
+      const elProb = document.getElementById("statProblem");
+      if (elProb) elProb.innerText = 0;
+      return;
+    }
   }
 
   const techFiltered = baseTasks.filter(t => {

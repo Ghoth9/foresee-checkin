@@ -197,15 +197,19 @@ export function renderActiveCheckoutList() {
   const opName = state.currentLinkedTech?.name;
 
   let displayActiveTasks = state.activeTasks;
-  if (!isAdmin && opName) {
-    displayActiveTasks = state.activeTasks.filter(item => {
-      if (matchTechName(item.techs, opName)) return true;
-      const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
-      if (linkedTask) {
-        if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
-      }
-      return false;
-    });
+  if (!isAdmin) {
+    if (opName) {
+      displayActiveTasks = state.activeTasks.filter(item => {
+        if (matchTechName(item.techs, opName)) return true;
+        const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+        if (linkedTask) {
+          if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
+        }
+        return false;
+      });
+    } else {
+      displayActiveTasks = [];
+    }
   }
 
   if (clearBtn) {
@@ -226,7 +230,9 @@ export function renderActiveCheckoutList() {
   if (displayActiveTasks.length === 0) {
     container.innerHTML = `
       <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
-        ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
+        ${!isAdmin && !opName 
+          ? `🔒 กรุณาระบุชื่อของคุณหรือเข้าสู่ระบบ LINE เพื่อดูงานที่เช็กอินค้างอยู่`
+          : (!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`)}
       </div>
     `;
     if (outcomeSection) outcomeSection.classList.add("hidden");
@@ -457,8 +463,12 @@ export function renderTodayLogs() {
   const opName = state.currentLinkedTech?.name;
 
   let displayLogs = state.dailyLogs;
-  if (!isAdmin && opName) {
-    displayLogs = state.dailyLogs.filter(log => matchTechName(log.techs, opName));
+  if (!isAdmin) {
+    if (opName) {
+      displayLogs = state.dailyLogs.filter(log => matchTechName(log.techs, opName));
+    } else {
+      displayLogs = [];
+    }
   }
 
   if (badge) badge.innerText = `${displayLogs.length} งาน`;
@@ -466,7 +476,9 @@ export function renderTodayLogs() {
   if (displayLogs.length === 0) {
     container.innerHTML = `
       <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4 text-center">
-        ${!isAdmin && opName ? `ยังไม่มีประวัติการปฏิบัติงานของ "${opName}" ในวันนี้` : `ยังไม่มีประวัติการปฏิบัติงานในวันนี้`}
+        ${!isAdmin && !opName
+          ? `🔒 กรุณาระบุชื่อของคุณเพื่อดูประวัติงานวันนี้`
+          : (!isAdmin && opName ? `ยังไม่มีประวัติการปฏิบัติงานของ "${opName}" ในวันนี้` : `ยังไม่มีประวัติการปฏิบัติงานในวันนี้`)}
       </div>
     `;
     return;

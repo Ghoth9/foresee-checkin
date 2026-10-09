@@ -119,11 +119,28 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
   let pendingTasks = tasksList.filter(t => t.status !== "เสร็จสิ้น");
 
   // If Operator (non-admin) and operator name is known, filter to ONLY their assigned tasks!
-  if (!isAdmin && currentOperatorName) {
-    pendingTasks = pendingTasks.filter(t => {
-      const techs = Array.isArray(t.techs) ? t.techs : (typeof t.techs === 'string' ? [t.techs] : []);
-      return techs.includes(currentOperatorName);
-    });
+  if (!isAdmin) {
+    if (currentOperatorName) {
+      pendingTasks = pendingTasks.filter(t => {
+        const techs = Array.isArray(t.techs) ? t.techs : (typeof t.techs === 'string' ? [t.techs] : []);
+        return techs.includes(currentOperatorName);
+      });
+    } else {
+      // Unauthenticated staff: MUST NOT SEE ANY TASKS!
+      pendingTasks = [];
+      container.innerHTML = `
+        <div class="text-xs text-slate-600 bg-amber-50/80 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-2 shadow-2xs">
+          <div class="flex items-center space-x-2">
+            <span class="text-base">🔒</span>
+            <span>กรุณา <strong>เลือกชื่อของคุณ</strong> หรือ <strong>เข้าสู่ระบบ LINE</strong> เพื่อดูงานที่ได้รับมอบหมาย</span>
+          </div>
+          <button type="button" onclick="openSelectOperatorModal()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-800 border border-slate-300 shadow-2xs hover:bg-slate-50 transition-all whitespace-nowrap cursor-pointer">
+            👤 เลือกชื่อ
+          </button>
+        </div>
+      `;
+      return;
+    }
   }
 
   if (pendingTasks.length === 0) {
