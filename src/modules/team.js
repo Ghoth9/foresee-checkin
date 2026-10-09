@@ -129,12 +129,7 @@ export async function resolveUserRole() {
   }
 
   // 3. Determine actual role
-  let actualRole = "technician";
-  if (matchedTech && matchedTech.role === "admin") {
-    actualRole = "admin";
-  } else if (sessionStorage.getItem("fs_admin_override") === "true") {
-    actualRole = "admin";
-  }
+  let actualRole = isUserAdminActual() ? "admin" : (matchedTech?.role === "admin" ? "admin" : "technician");
 
   // 4. Check active simulation (persisted in sessionStorage)
   const sim = sessionStorage.getItem("fs_simulated_role");
@@ -229,7 +224,7 @@ export function handleRoleBadgeClick() {
 }
 
 export function applyRolePermissionsUI(role, techObj) {
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || (state.simulatedRole !== "technician" && isUserAdminActual());
 
   // 1. Header Role Badge
   const badge = document.getElementById("userRoleBadge");
@@ -241,7 +236,7 @@ export function applyRolePermissionsUI(role, techObj) {
   if (badge && icon && text) {
     if (isAdmin) {
       icon.innerText = "👑";
-      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : (getLineUserName() || "แอดมิน");
+      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : (getLineUserName() || (sessionStorage.getItem("fs_admin_override") === "true" ? "PIN" : "แอดมิน"));
       const shortName = cleanName && cleanName.length > 8 ? cleanName.slice(0, 7) + '…' : cleanName;
       text.innerText = `แอดมิน: ${shortName}`;
       badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0";
