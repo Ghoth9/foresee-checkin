@@ -13,6 +13,7 @@ import { createCheckinFlexCard, triggerLiffShare } from '../liff/line.js';
 import { saveCheckinApi } from '../api/supabase.js';
 import { formatThaiDateDisplay } from '../utils/date.js';
 import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
+import { state } from './state.js';
 
 let isSubmittingCheckin = false;
 let checkinPhotos = [];
@@ -110,44 +111,37 @@ export function toggleCheckinFormDetails() {
   }
 }
 
-export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTask, currentOperatorName = null, isAdmin = false) {
+export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTask, currentOperatorName = null, isAdminArg = null) {
   if (Array.isArray(tasksList)) cachedTasksList = tasksList;
   const container = document.getElementById("assignedTasksCheckinContainer");
   if (!container) return;
 
-  // Filter tasks that are in progress or pending
-  let pendingTasks = tasksList.filter(t => t.status !== "เสร็จสิ้น");
+  const isAdmin = (typeof isAdminArg === "boolean")
+    ? isAdminArg
+    : (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
 
-  // If Operator (non-admin) and operator name is known, filter to ONLY their assigned tasks!
+  const opName = currentOperatorName || state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name");
+
+  // Filter tasks that are in progress or pending
+  let pendingTasks = (tasksList || []).filter(t => t.status !== "เสร็จสิ้น");
+
+  // If Operator (non-admin), ONLY show their assigned tasks!
   if (!isAdmin) {
-    if (currentOperatorName) {
+    if (opName) {
       pendingTasks = pendingTasks.filter(t => {
         const techs = Array.isArray(t.techs) ? t.techs : (typeof t.techs === 'string' ? [t.techs] : []);
-        return techs.includes(currentOperatorName);
+        return techs.includes(opName);
       });
     } else {
-      // Unauthenticated staff: MUST NOT SEE ANY TASKS!
       pendingTasks = [];
-      container.innerHTML = `
-        <div class="text-xs text-slate-600 bg-amber-50/80 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-2 shadow-2xs">
-          <div class="flex items-center space-x-2">
-            <span class="text-base">🔒</span>
-            <span>กรุณา <strong>เลือกชื่อของคุณ</strong> หรือ <strong>เข้าสู่ระบบ LINE</strong> เพื่อดูงานที่ได้รับมอบหมาย</span>
-          </div>
-          <button type="button" onclick="openSelectOperatorModal()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-slate-800 border border-slate-300 shadow-2xs hover:bg-slate-50 transition-all whitespace-nowrap cursor-pointer">
-            👤 เลือกชื่อ
-          </button>
-        </div>
-      `;
-      return;
     }
   }
 
   if (pendingTasks.length === 0) {
     container.innerHTML = `
       <div class="text-xs text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-3 text-center">
-        ${!isAdmin && currentOperatorName
-          ? `ไม่มีงานมอบหมายค้างอยู่ของ <strong>${currentOperatorName}</strong> ในขณะนี้ (สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย)`
+        ${!isAdmin && opName
+          ? `ไม่มีงานมอบหมายค้างอยู่ของ <strong>${opName}</strong> ในขณะนี้ (สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย)`
           : `ไม่มีงานมอบหมายค้างอยู่ สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย`}
       </div>
     `;

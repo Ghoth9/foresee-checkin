@@ -266,15 +266,15 @@ export function switchTab(tab) {
 // SCOPED TASK VIEWS
 // -------------------------------------------------------------
 export function renderTasksListScoped() {
-  const isAdmin = state.currentUserRole === "admin";
-  const opName = state.currentLinkedTech ? state.currentLinkedTech.name : null;
+  const isAdmin = state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin());
+  const opName = state.currentLinkedTech ? state.currentLinkedTech.name : localStorage.getItem("fs_current_operator_name");
   renderTasksList(state.tasksList, opName, isAdmin);
 }
 window.renderTasksListScoped = renderTasksListScoped;
 
 export function renderAssignedTasksBannerScoped() {
-  const isAdmin = state.currentUserRole === "admin";
-  const opName = state.currentLinkedTech ? state.currentLinkedTech.name : null;
+  const isAdmin = state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin());
+  const opName = state.currentLinkedTech ? state.currentLinkedTech.name : localStorage.getItem("fs_current_operator_name");
   renderAssignedTasksBanner(state.tasksList, state.allTechnicians, (tId) => selectAssignedTask(tId, state.tasksList, setCheckinTechs), opName, isAdmin);
 }
 window.renderAssignedTasksBannerScoped = renderAssignedTasksBannerScoped;
@@ -609,7 +609,7 @@ window.submitOngoingUpdate = () => {
             }
           }
           localStorage.setItem("fs_tasks", JSON.stringify(state.tasksList));
-          renderTasksList(state.tasksList);
+          renderTasksListScoped();
         }
       }
 

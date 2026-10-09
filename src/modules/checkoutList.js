@@ -193,8 +193,8 @@ export function renderActiveCheckoutList() {
   const clearBtn = document.getElementById("clearAllCheckinsBtn");
   if (!container) return;
 
-  const isAdmin = state.currentUserRole === "admin";
-  const opName = state.currentLinkedTech?.name;
+  const isAdmin = state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin());
+  const opName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name");
 
   let displayActiveTasks = state.activeTasks;
   if (!isAdmin) {
@@ -230,9 +230,7 @@ export function renderActiveCheckoutList() {
   if (displayActiveTasks.length === 0) {
     container.innerHTML = `
       <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
-        ${!isAdmin && !opName 
-          ? `🔒 กรุณาระบุชื่อของคุณหรือเข้าสู่ระบบ LINE เพื่อดูงานที่เช็กอินค้างอยู่`
-          : (!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`)}
+        ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
       </div>
     `;
     if (outcomeSection) outcomeSection.classList.add("hidden");
@@ -459,8 +457,8 @@ export function renderTodayLogs() {
   const badge = document.getElementById("todayLogsBadge");
   if (!container) return;
 
-  const isAdmin = state.currentUserRole === "admin";
-  const opName = state.currentLinkedTech?.name;
+  const isAdmin = state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin());
+  const opName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name");
 
   let displayLogs = state.dailyLogs;
   if (!isAdmin) {
@@ -476,9 +474,7 @@ export function renderTodayLogs() {
   if (displayLogs.length === 0) {
     container.innerHTML = `
       <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4 text-center">
-        ${!isAdmin && !opName
-          ? `🔒 กรุณาระบุชื่อของคุณเพื่อดูประวัติงานวันนี้`
-          : (!isAdmin && opName ? `ยังไม่มีประวัติการปฏิบัติงานของ "${opName}" ในวันนี้` : `ยังไม่มีประวัติการปฏิบัติงานในวันนี้`)}
+        ${!isAdmin && opName ? `ยังไม่มีประวัติการปฏิบัติงานของ "${opName}" ในวันนี้` : `ยังไม่มีประวัติการปฏิบัติงานในวันนี้`}
       </div>
     `;
     return;
