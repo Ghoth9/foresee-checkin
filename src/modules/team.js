@@ -137,9 +137,14 @@ export async function resolveUserRole() {
   // 3. Determine actual role
   let actualRole = isUserAdminActual() ? "admin" : (matchedTech?.role === "admin" ? "admin" : "technician");
 
+  // If actual admin, clear stale simulated role unless explicitly simulating
+  if (actualRole === "admin" && !state.simulatedRole) {
+    sessionStorage.removeItem("fs_simulated_role");
+  }
+
   // 4. Check active simulation (persisted in sessionStorage)
-  const sim = sessionStorage.getItem("fs_simulated_role");
-  if (sim) {
+  const sim = state.simulatedRole || sessionStorage.getItem("fs_simulated_role");
+  if (sim && actualRole === "admin") {
     state.simulatedRole = sim;
     state.currentUserRole = sim;
     applyRolePermissionsUI(state.currentUserRole, state.currentLinkedTech);
@@ -204,14 +209,6 @@ export function switchSimulatedRole(mode) {
   if (typeof window.renderAssignedTasksBannerScoped === "function") window.renderAssignedTasksBannerScoped();
   renderActiveCheckoutList();
   renderTodayLogs();
-
-  showAppAlert({
-    type: "info",
-    title: mode === "admin" ? "สลับเป็น: เมนูแอดมิน 👑" : "สลับเป็น: เมนูผู้ปฏิบัติงาน 👤",
-    message: mode === "admin"
-      ? "แสดงผลเมนูแอดมินเต็มรูปแบบ (จัดการงาน, มอบหมายงาน, ตรวจสอบงาน, จัดการสิทธิ์ทีม)"
-      : "สลับเป็นมุมมองผู้ปฏิบัติงานหน้างานเรียบร้อยแล้ว (เช็กอิน, อัปเดตงาน, ปิดงาน ซ่อนปุ่มแอดมินทั้งหมด)"
-  });
 }
 
 export function toggleRoleDropdownMenu() {
@@ -323,33 +320,6 @@ export function applyRolePermissionsUI(role, techObj) {
     }
   }
 
-  // 5. Separate Navigation Bars between Admin and Operator
-  const adminNav = document.getElementById("adminNavTabs");
-  const operatorNav = document.getElementById("operatorNavTabs");
-  const adminMobNav = document.getElementById("adminMobileTabs");
-  const operatorMobNav = document.getElementById("operatorMobileTabs");
-
-  if (isAdmin) {
-    if (adminNav) {
-      adminNav.classList.add("hidden", "md:flex");
-    }
-    if (operatorNav) {
-      operatorNav.classList.add("hidden");
-      operatorNav.classList.remove("md:flex");
-    }
-    if (adminMobNav) { adminMobNav.className = "grid md:hidden grid-cols-3 gap-1 bg-slate-300 p-1 rounded-xl text-xs font-bold text-slate-700 shadow-inner"; }
-    if (operatorMobNav) { operatorMobNav.className = "hidden md:hidden"; }
-  } else {
-    if (adminNav) {
-      adminNav.classList.add("hidden");
-      adminNav.classList.remove("md:flex");
-    }
-    if (operatorNav) {
-      operatorNav.classList.add("hidden", "md:flex");
-    }
-    if (adminMobNav) { adminMobNav.className = "hidden md:hidden"; }
-    if (operatorMobNav) { operatorMobNav.className = "grid md:hidden grid-cols-3 gap-1 bg-slate-300 p-1 rounded-xl text-xs font-bold text-slate-700 shadow-inner"; }
-  }
 
   // 6. Header Subtitle and Role Badge
   const appRoleBadgeTitle = document.getElementById("appRoleBadgeTitle");
@@ -496,11 +466,6 @@ export function quickUnlockNonmarnAdmin() {
   if (typeof window.renderAssignedTasksBannerScoped === "function") window.renderAssignedTasksBannerScoped();
   renderActiveCheckoutList();
   renderTodayLogs();
-  showAppAlert({
-    type: "success",
-    title: "เข้าสู่โหมด System Admin 👑",
-    message: "ปลดล็อกสิทธิ์ nonmarn (System Admin) เรียบร้อยแล้วครับ สามารถจัดการงานได้เต็มรูปแบบ"
-  });
 }
 
 export function updateTeamRoleBanner() {

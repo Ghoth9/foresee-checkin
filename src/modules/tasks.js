@@ -19,6 +19,22 @@ let currentTechFilter = "ทั้งหมด";
 let taskSearchQuery = "";
 let cachedTechnicians = [];
 
+export function matchesOperator(str, opName) {
+  if (!str || !opName) return false;
+  const s = String(str).toLowerCase().trim();
+  const op = String(opName).toLowerCase().trim();
+  if (s === op) return true;
+  const cleanS = s.replace(/[^a-z0-9ก-๙]/g, '');
+  const cleanOp = op.replace(/[^a-z0-9ก-๙]/g, '');
+  if (!cleanS || !cleanOp) return false;
+  if (cleanS.includes(cleanOp) || cleanOp.includes(cleanS)) return true;
+  const baseS = s.split('(')[0].replace(/k\./g, '').trim().replace(/[^a-z0-9ก-๙]/g, '');
+  const baseOp = op.split('(')[0].replace(/k\./g, '').trim().replace(/[^a-z0-9ก-๙]/g, '');
+  if (baseS && cleanOp.includes(baseS)) return true;
+  if (baseOp && cleanS.includes(baseOp)) return true;
+  return false;
+}
+
 export function getTaskTechs(task) {
   if (Array.isArray(task.techs) && task.techs.length > 0) return task.techs;
   if (typeof task.techs === "string" && task.techs.trim()) return task.techs.split(',').map(s => s.trim());
@@ -35,17 +51,7 @@ export function getAssigneeSubmissionsStatus(task) {
     timelineItems = [...task.customer.progress_history];
   }
 
-  const match = (itemTech, targetTech) => {
-    if (!itemTech || !targetTech) return false;
-    const cleanItem = itemTech.toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
-    const cleanTarget = targetTech.toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
-    if (!cleanItem || !cleanTarget) return false;
-    const targetBase = targetTech.split('(')[0].trim().toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
-    const itemBase = itemTech.split('(')[0].trim().toLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
-    return cleanItem.includes(cleanTarget) || cleanTarget.includes(cleanItem) ||
-           (targetBase && cleanItem.includes(targetBase)) ||
-           (itemBase && cleanTarget.includes(itemBase));
-  };
+  const match = (itemTech, targetTech) => matchesOperator(itemTech, targetTech);
 
   return techs.map(techName => {
     const userSubs = timelineItems.filter(it => match(it.tech, techName));
@@ -190,13 +196,13 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
     if (opName) {
       baseTasks = baseTasks.filter(t => {
         const techs = getTaskTechs(t);
-        const isAssignedToMe = techs.includes(opName);
-        const isCreatedByMe = (t.assignedBy === opName) ||
-          (t.creator === opName) ||
-          (t.customer?.assigned_by === opName) ||
-          (t.customer?.creator === opName) ||
-          (t.updateBy === opName) ||
-          (t.updated_by === opName);
+        const isAssignedToMe = techs.some(tech => matchesOperator(tech, opName));
+        const isCreatedByMe = matchesOperator(t.assignedBy, opName) ||
+          matchesOperator(t.creator, opName) ||
+          matchesOperator(t.customer?.assigned_by, opName) ||
+          matchesOperator(t.customer?.creator, opName) ||
+          matchesOperator(t.updateBy, opName) ||
+          matchesOperator(t.updated_by, opName);
         return isAssignedToMe || isCreatedByMe;
       });
     } else {

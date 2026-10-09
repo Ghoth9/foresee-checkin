@@ -208,7 +208,7 @@ export function switchTab(tab) {
       }
     }
 
-    // Operator Desktop nav buttons
+    // Desktop nav button
     const deskBtn = document.getElementById(`deskTabBtn${s.charAt(0).toUpperCase() + s.slice(1)}`);
     if (deskBtn) {
       if (s === tab) {
@@ -218,37 +218,13 @@ export function switchTab(tab) {
       }
     }
 
-    // Admin Desktop nav buttons
-    const adminDeskBtn = document.getElementById(`deskTabBtnAdmin${s.charAt(0).toUpperCase() + s.slice(1)}`);
-    if (adminDeskBtn) {
-      if (s === tab) {
-        adminDeskBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-white shadow-xs transition-all flex items-center space-x-1.5 whitespace-nowrap";
-      } else {
-        if (s === "checkin") {
-          adminDeskBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-800 hover:bg-amber-100 bg-amber-50 border border-amber-200 transition-all flex items-center space-x-1 whitespace-nowrap";
-        } else {
-          adminDeskBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all flex items-center space-x-1.5 whitespace-nowrap";
-        }
-      }
-    }
-
-    // Operator Mobile nav buttons
+    // Mobile nav button
     const mobBtn = document.getElementById(`tabBtn${s.charAt(0).toUpperCase() + s.slice(1)}`);
     if (mobBtn) {
       if (s === tab) {
         mobBtn.className = "py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 whitespace-nowrap";
       } else {
         mobBtn.className = "py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 text-slate-600 whitespace-nowrap";
-      }
-    }
-
-    // Admin Mobile nav buttons
-    const adminMobBtn = document.getElementById(`mobAdminTab${s.charAt(0).toUpperCase() + s.slice(1)}`);
-    if (adminMobBtn) {
-      if (s === tab) {
-        adminMobBtn.className = "py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 whitespace-nowrap";
-      } else {
-        adminMobBtn.className = "py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 text-slate-600 whitespace-nowrap";
       }
     }
   });

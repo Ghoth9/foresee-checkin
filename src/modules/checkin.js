@@ -13,6 +13,7 @@ import { createCheckinFlexCard, triggerLiffShare } from '../liff/line.js';
 import { saveCheckinApi } from '../api/supabase.js';
 import { formatThaiDateDisplay } from '../utils/date.js';
 import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
+import { matchesOperator } from './tasks.js';
 import { state } from './state.js';
 
 let isSubmittingCheckin = false;
@@ -125,12 +126,19 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
   // Filter tasks that are in progress or pending
   let pendingTasks = (tasksList || []).filter(t => t.status !== "เสร็จสิ้น");
 
-  // If Operator (non-admin), ONLY show their assigned tasks!
+  // If Operator (non-admin), ONLY show their assigned tasks or tasks they created!
   if (!isAdmin) {
     if (opName) {
       pendingTasks = pendingTasks.filter(t => {
-        const techs = Array.isArray(t.techs) ? t.techs : (typeof t.techs === 'string' ? [t.techs] : []);
-        return techs.includes(opName);
+        const techs = Array.isArray(t.techs) ? t.techs : (typeof t.techs === 'string' ? t.techs.split(',').map(s => s.trim()) : []);
+        const isAssignedToMe = techs.some(tech => matchesOperator(tech, opName));
+        const isCreatedByMe = matchesOperator(t.assignedBy, opName) ||
+          matchesOperator(t.creator, opName) ||
+          matchesOperator(t.customer?.assigned_by, opName) ||
+          matchesOperator(t.customer?.creator, opName) ||
+          matchesOperator(t.updateBy, opName) ||
+          matchesOperator(t.updated_by, opName);
+        return isAssignedToMe || isCreatedByMe;
       });
     } else {
       pendingTasks = [];

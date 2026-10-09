@@ -128,6 +128,7 @@ export async function loginLine() {
   }
   try {
     sessionStorage.setItem("fs_line_logging_in", "true");
+    sessionStorage.removeItem("fs_simulated_role");
     try {
       const activeTab = sessionStorage.getItem("fs_active_tab") || "tasks";
       sessionStorage.setItem("fs_active_tab", activeTab);
