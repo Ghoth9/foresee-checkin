@@ -71,8 +71,13 @@ export function updateQuickCardUI(task) {
   } else {
     if (normalHeader) normalHeader.classList.remove("hidden");
     quickCard.classList.add("hidden");
-    if (detailsContainer) detailsContainer.classList.remove("hidden");
+    // Collapse manual form by default when no assigned task is selected so screen stays clean
+    if (detailsContainer) detailsContainer.classList.add("hidden");
     if (detailsEditNotice) detailsEditNotice.classList.add("hidden");
+    const manualToggleText = document.getElementById("manualFormToggleText");
+    const manualToggleChevron = document.getElementById("manualFormToggleChevron");
+    if (manualToggleText) manualToggleText.innerText = "ขยายฟอร์ม";
+    if (manualToggleChevron) manualToggleChevron.style.transform = "rotate(0deg)";
   }
 }
 
@@ -109,6 +114,25 @@ export function toggleCheckinFormDetails() {
     detailsContainer.classList.add("hidden");
     if (toggleTextEl) toggleTextEl.innerText = "📋 ขยายดูรายละเอียดงาน";
     if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
+  }
+}
+
+export function toggleManualCheckinForm() {
+  const detailsContainer = document.getElementById("checkinFormDetailsContainer");
+  const toggleText = document.getElementById("manualFormToggleText");
+  const toggleChevron = document.getElementById("manualFormToggleChevron");
+  if (!detailsContainer) return;
+
+  const isHidden = detailsContainer.classList.contains("hidden");
+  if (isHidden) {
+    detailsContainer.classList.remove("hidden");
+    if (toggleText) toggleText.innerText = "ย่อเก็บ";
+    if (toggleChevron) toggleChevron.style.transform = "rotate(180deg)";
+    detailsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    detailsContainer.classList.add("hidden");
+    if (toggleText) toggleText.innerText = "ขยายฟอร์ม";
+    if (toggleChevron) toggleChevron.style.transform = "rotate(0deg)";
   }
 }
 

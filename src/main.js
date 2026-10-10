@@ -10,7 +10,7 @@ import { requestLocation, getCurrentCoords } from './utils/gps.js';
 import { fetchInitialData, deleteCheckinApi, deletePhotoFromSupabaseApi, subscribeToRealtimeChanges } from './api/supabase.js';
 import {
   renderAssignedTasksBanner, selectAssignedTask, deselectAssignedTask, toggleCheckinFormDetails,
-  handlePhotoUpload, removePhoto, submitCheckinForm, selectJobType, getSelectedJobType
+  toggleManualCheckinForm, handlePhotoUpload, removePhoto, submitCheckinForm, selectJobType, getSelectedJobType
 } from './modules/checkin.js';
 import {
   handleCheckoutPhotoUpload, removeCheckoutPhoto, submitCheckoutForm, submitProgressOnly,
@@ -413,6 +413,7 @@ window.handleBrandClick = () => switchTab(state.currentUserRole === "admin" ? "t
 window.selectAssignedTaskForCheckin = (taskId) => selectAssignedTask(taskId, state.tasksList, setCheckinTechs);
 window.deselectAssignedTask = () => deselectAssignedTask(state.tasksList);
 window.toggleCheckinFormDetails = toggleCheckinFormDetails;
+window.toggleManualCheckinForm = toggleManualCheckinForm;
 window.handlePhotoUpload = handlePhotoUpload;
 window.removeCheckinPhoto = removePhoto;
 window.selectJobType = selectJobType;

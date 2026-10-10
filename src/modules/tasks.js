@@ -53,15 +53,19 @@ export function getAssigneeSubmissionsStatus(task) {
 
   const match = (itemTech, targetTech) => matchesOperator(itemTech, targetTech);
 
-  return techs.map(techName => {
-    const userSubs = timelineItems.filter(it => match(it.tech, techName));
+  return techs.map(rawTechName => {
+    const cleanTech = rawTechName ? rawTechName.split('(')[0].replace(/k\./gi, '').trim() : "ผู้ปฏิบัติงาน";
+    const userSubs = timelineItems.filter(it => match(it.tech, rawTechName));
     if (userSubs.length === 0) {
       return {
-        techName,
+        techName: cleanTech,
+        fullTechName: rawTechName,
         submitted: false,
         status: "ยังไม่ส่งงาน",
-        badgeClass: "bg-slate-100 text-slate-500 border-slate-200",
-        label: `${techName}: ยังไม่ส่งงาน (รอดำเนินการ)`
+        dotColor: "bg-slate-400",
+        badgeClass: "bg-slate-50 text-slate-600 border-slate-200",
+        label: cleanTech,
+        tooltip: `${rawTechName}: ยังไม่ส่งงาน (รอดำเนินการ)`
       };
     }
 
@@ -72,20 +76,23 @@ export function getAssigneeSubmissionsStatus(task) {
     const timeStr = targetSub.time ? `${targetSub.time} น.` : '';
 
     return {
-      techName,
+      techName: cleanTech,
+      fullTechName: rawTechName,
       submitted: true,
       isClosed: isClosed,
-      status: isClosed ? "ปิดงานแล้ว" : `คืบหน้า ${targetSub.progress}%`,
+      status: isClosed ? "ปิดงานแล้ว" : `${targetSub.progress}%`,
       time: targetSub.time,
       date: targetSub.date,
       note: targetSub.note,
       photoCount: Array.isArray(targetSub.photos) ? targetSub.photos.length : 0,
+      dotColor: isClosed ? "bg-emerald-500" : "bg-blue-500",
       badgeClass: isClosed
-        ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-bold"
-        : "bg-blue-50 text-blue-800 border-blue-300 font-bold",
-      label: isClosed
-        ? `${techName}: ปิดงานแล้ว (${timeStr} ✅)`
-        : `${techName}: ส่งงานแล้ว (${targetSub.progress}% เมื่อ ${timeStr})`
+        ? "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold"
+        : "bg-blue-50 text-blue-800 border-blue-200 font-semibold",
+      label: isClosed ? `${cleanTech} ✓` : `${cleanTech} (${targetSub.progress}%)`,
+      tooltip: isClosed
+        ? `${rawTechName}: ปิดงานแล้ว (${timeStr})`
+        : `${rawTechName}: คืบหน้า ${targetSub.progress}% (${timeStr})`
     };
   });
 }
@@ -352,20 +359,20 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
   if (taskViewMode === "list" && window.innerWidth >= 768) {
     // List Table View - High Contrast & 100% Fluid
     let tableHtml = `
-      <div class="bg-white rounded-xl border border-slate-300 shadow-xs overflow-hidden">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <table class="w-full text-left text-sm border-collapse">
-          <thead class="bg-slate-100 text-xs font-bold text-slate-800 border-b-2 border-slate-200">
+          <thead class="bg-slate-50 text-[11px] font-bold text-slate-600 border-b border-slate-200 uppercase tracking-wider">
             <tr>
-              <th class="py-3.5 px-3 w-10 text-center font-mono">#</th>
-              <th class="py-3.5 px-3 w-32 whitespace-nowrap">สถานะ</th>
-              <th class="py-3.5 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
-              <th class="py-3.5 px-3 w-36">ผู้ปฏิบัติงาน</th>
-              <th class="py-3.5 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
-              <th class="py-3.5 px-3 w-28 whitespace-nowrap">ความคืบหน้า</th>
-              <th class="py-3.5 px-3 w-36 text-right pr-4 whitespace-nowrap">จัดการ</th>
+              <th class="py-2.5 px-3 w-10 text-center font-mono">#</th>
+              <th class="py-2.5 px-3 w-28 whitespace-nowrap">สถานะ</th>
+              <th class="py-2.5 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
+              <th class="py-2.5 px-3 w-44">ผู้ปฏิบัติงาน</th>
+              <th class="py-2.5 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
+              <th class="py-2.5 px-3 w-28 whitespace-nowrap">ความคืบหน้า</th>
+              <th class="py-2.5 px-3 w-32 text-right pr-4 whitespace-nowrap">จัดการ</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-200">
+          <tbody class="divide-y divide-slate-100">
     `;
 
     filteredTasks.forEach((task, index) => {
@@ -377,15 +384,15 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
       const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
 
       const isProblem = task.status === "ติดปัญหา";
-      let badgeBg = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
-      if (isDone) badgeBg = "bg-emerald-100 text-emerald-900 border-emerald-300 font-bold";
-      else if (isProblem) badgeBg = "bg-rose-100 text-rose-800 border-rose-300 font-bold";
-      else if (isOver) badgeBg = "bg-rose-100 text-rose-900 border-rose-300 font-bold";
-      else if (task.status === "กำลังทำ") badgeBg = "bg-blue-100 text-blue-900 border-blue-300 font-bold";
+      let badgeBg = "bg-amber-50 text-amber-900 border-amber-200 font-semibold";
+      if (isDone) badgeBg = "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold";
+      else if (isProblem) badgeBg = "bg-rose-50 text-rose-800 border-rose-200 font-semibold";
+      else if (isOver) badgeBg = "bg-rose-50 text-rose-900 border-rose-200 font-semibold";
+      else if (task.status === "กำลังทำ") badgeBg = "bg-blue-50 text-blue-900 border-blue-200 font-semibold";
 
       const rowClass = isNew
         ? "bg-blue-50/70 border-l-4 border-l-blue-600 hover:bg-blue-100/70 transition-colors group cursor-pointer ring-1 ring-blue-200/50"
-        : "hover:bg-blue-50/50 transition-colors group cursor-pointer";
+        : "hover:bg-slate-50/80 transition-colors group cursor-pointer";
 
       const isCreatedByMe = opName && !techs.some(t => matchesOperator(t, opName)) && (
         matchesOperator(task.assignedBy, opName) ||
@@ -398,47 +405,48 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
       tableHtml += `
         <tr class="${rowClass}" onclick="window.openTaskDetailModal('${task.id}')">
-          <td class="py-3.5 px-3 text-center font-mono text-xs text-slate-500 font-semibold">${index + 1}</td>
-          <td class="py-3 px-3 whitespace-nowrap">
+          <td class="py-2.5 px-3 text-center font-mono text-xs text-slate-400 font-medium">${index + 1}</td>
+          <td class="py-2.5 px-3 whitespace-nowrap">
             <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
-              <span class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border ${badgeBg}">
+              <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md border ${badgeBg}">
                 ${task.status}
               </span>
-              ${isNew ? `<span class="inline-flex items-center space-x-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 border border-amber-300 shadow-xs animate-pulse flex-shrink-0"><span>✨</span><span>งานใหม่</span></span>` : ''}
-              ${isCreatedByMe ? `<span class="inline-flex items-center space-x-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs flex-shrink-0"><span>📌</span><span>คุณมอบหมาย</span></span>` : ''}
+              ${isNew ? `<span class="inline-flex items-center space-x-0.5 px-1.5 py-0.2 text-[10px] font-black bg-amber-400 text-slate-950 rounded shadow-xs animate-pulse flex-shrink-0"><span>✨</span><span>ใหม่</span></span>` : ''}
+              ${isCreatedByMe ? `<span class="inline-flex items-center space-x-0.5 px-1.5 py-0.2 text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 rounded shadow-2xs flex-shrink-0"><span>📌</span><span>คุณมอบหมาย</span></span>` : ''}
             </div>
           </td>
-          <td class="py-3 px-3">
-            <div>
-              <div class="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 flex items-center space-x-2">
-                <span>${task.title}</span>
+          <td class="py-2.5 px-3">
+            <div class="max-w-md">
+              <div class="font-bold text-xs md:text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                ${task.title}
               </div>
-              ${task.desc && task.desc !== '-' ? `<div class="text-xs text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
-              ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 line-clamp-1 mt-0.5">💬 ${cleanLatestText(task.latestUpdate)}</div>` : ''}
+              ${task.desc && task.desc !== '-' ? `<div class="text-[11px] text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
+              ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 line-clamp-1 mt-0.5 font-medium">💬 ${cleanLatestText(task.latestUpdate)}</div>` : ''}
             </div>
           </td>
-          <td class="py-3 px-3">
-            <div class="flex flex-wrap gap-1">
+          <td class="py-2.5 px-3">
+            <div class="flex flex-wrap items-center gap-1">
               ${assigneeStatuses.map(s => `
-                <span class="text-[11px] px-2 py-0.5 rounded-md border ${s.badgeClass}">
-                  ${s.label}
+                <span class="inline-flex items-center space-x-1 text-[11px] px-2 py-0.5 rounded-md border ${s.badgeClass}" title="${s.tooltip || s.fullTechName || s.techName}">
+                  <span class="w-1.5 h-1.5 rounded-full ${s.dotColor || 'bg-slate-400'} flex-shrink-0"></span>
+                  <span class="font-medium">${s.label}</span>
                 </span>
               `).join('')}
             </div>
           </td>
-          <td class="py-3 px-3 whitespace-nowrap">
-            <div class="font-mono text-xs text-slate-800 font-semibold">${formatThaiDateDisplay(task.deadline)}</div>
-            <div class="mt-0.5">${isProblem ? `<span class="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap flex-shrink-0"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>⚠️ ติดปัญหา</span></span>` : getDeadlineCountdownBadge(task.deadline, isDone)}</div>
+          <td class="py-2.5 px-3 whitespace-nowrap">
+            <div class="font-mono text-xs text-slate-700 font-medium">${formatThaiDateDisplay(task.deadline)}</div>
+            <div class="mt-0.5">${isProblem ? `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>⚠️ ติดปัญหา</span></span>` : getDeadlineCountdownBadge(task.deadline, isDone)}</div>
           </td>
-          <td class="py-3 px-3 whitespace-nowrap">
+          <td class="py-2.5 px-3 whitespace-nowrap">
             <div class="flex items-center space-x-2">
-              <div class="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div class="w-14 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                 <div class="h-1.5 ${isDone ? 'bg-emerald-500' : (isProblem ? 'bg-rose-500' : 'bg-slate-900')} rounded-full transition-all" style="width: ${task.progress || 0}%"></div>
               </div>
-              <span class="font-mono text-xs font-bold text-slate-800">${task.progress || 0}%</span>
+              <span class="font-mono text-xs font-semibold text-slate-700">${task.progress || 0}%</span>
             </div>
           </td>
-          <td class="py-3 px-3 text-right pr-4 whitespace-nowrap">
+          <td class="py-2.5 px-3 text-right pr-4 whitespace-nowrap">
             <div class="flex items-center justify-end space-x-1.5">
               ${photoCount > 0 ? `
                 <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs" title="ดูภาพถ่ายผลงาน">
@@ -446,8 +454,8 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
                   <span>${photoCount}</span>
                 </button>
               ` : ''}
-              <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95" title="${typeof window.isCurrentUserAdmin === 'function' && window.isCurrentUserAdmin() ? 'คลิกเพื่อดูรายละเอียดและแก้ไขงาน' : 'คลิกเพื่อดูรายละเอียดงาน'}">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-blue-700 bg-slate-50 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95">
+                <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 <span>${typeof window.isCurrentUserAdmin === 'function' && window.isCurrentUserAdmin() ? 'ดู/แก้ไข' : 'ดูรายละเอียด'}</span>
               </button>
             </div>
@@ -519,8 +527,9 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
             </div>
             <div class="flex flex-wrap gap-1">
               ${assigneeStatuses.map(s => `
-                <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-md border ${s.badgeClass}">
-                  ${s.label}
+                <span class="inline-flex items-center space-x-1 text-[10px] px-2 py-0.5 rounded-md border ${s.badgeClass}" title="${s.tooltip || s.fullTechName || s.techName}">
+                  <span class="w-1.5 h-1.5 rounded-full ${s.dotColor || 'bg-slate-400'} flex-shrink-0"></span>
+                  <span class="font-medium">${s.label}</span>
                 </span>
               `).join('')}
             </div>
