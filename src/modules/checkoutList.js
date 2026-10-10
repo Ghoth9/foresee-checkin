@@ -220,11 +220,9 @@ export function renderActiveCheckoutList() {
     }
   }
 
-  // If selected task is no longer in visible list, deselect
+  // If selected task is no longer in visible list, close modal
   if (state.selectedActiveCheckoutId && !displayActiveTasks.some(a => a.id === state.selectedActiveCheckoutId)) {
-    state.selectedActiveCheckoutId = null;
-    if (outcomeSection) outcomeSection.classList.add("hidden");
-    renderActiveTaskPhotos(null);
+    closeCheckoutModal();
   }
 
   if (displayActiveTasks.length === 0) {
@@ -233,8 +231,7 @@ export function renderActiveCheckoutList() {
         ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
       </div>
     `;
-    if (outcomeSection) outcomeSection.classList.add("hidden");
-    renderActiveTaskPhotos(null);
+    closeCheckoutModal();
     return;
   }
 
@@ -259,12 +256,12 @@ export function renderActiveCheckoutList() {
     }
 
     return `
-      <div onclick="window.selectActiveTaskForCheckout('${item.id}')" class="p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
+      <div onclick="window.openCheckoutModal('${item.id}')" class="p-3.5 sm:p-4 rounded-xl border text-xs cursor-pointer transition-all hover:border-blue-400 hover:shadow-md ${
         isSelected
-          ? 'bg-emerald-50 border-2 border-emerald-600 shadow-sm ring-2 ring-emerald-200'
+          ? 'bg-blue-50/40 border-2 border-blue-600 shadow-sm ring-2 ring-blue-200'
           : 'bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs'
       }">
-        <div class="flex items-center justify-between mb-1.5">
+        <div class="flex items-center justify-between mb-2">
           <div class="flex items-center space-x-2 flex-wrap gap-y-1">
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
             ${isRealCheckin 
@@ -274,7 +271,7 @@ export function renderActiveCheckoutList() {
             ${totalPhotos > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">📸 ${totalPhotos} รูป</span>` : ''}
           </div>
           <div class="flex items-center space-x-1.5">
-            <button type="button" onclick="event.stopPropagation(); window.shareActiveTaskToLine('${item.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-1 rounded-lg border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer" title="แชร์ข้อมูลงานนี้เข้ากลุ่ม LINE">
+            <button type="button" onclick="event.stopPropagation(); window.shareActiveTaskToLine('${item.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2.5 py-1 rounded-lg border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer" title="แชร์ข้อมูลงานนี้เข้ากลุ่ม LINE">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
               <span>แชร์เข้า LINE</span>
             </button>
@@ -286,9 +283,9 @@ export function renderActiveCheckoutList() {
             ` : ''}
           </div>
         </div>
-        <div class="font-bold text-sm text-slate-950">${item.task}</div>
+        <div class="font-bold text-sm text-slate-950 mb-1">${item.task}</div>
         ${cleanNote ? `
-          <div class="text-[11px] text-blue-900 bg-blue-50/90 rounded-lg px-2.5 py-1.5 mt-2 font-medium border border-blue-200/70 flex items-start space-x-1.5">
+          <div class="text-[11px] text-blue-900 bg-blue-50/90 rounded-lg px-2.5 py-1.5 mt-1.5 font-medium border border-blue-200/70 flex items-start space-x-1.5">
             <span class="flex-shrink-0 text-blue-600 font-bold">📌 ล่าสุด:</span>
             <span class="truncate block flex-1 font-sans text-slate-800" title="${cleanNote}">${cleanNote}</span>
           </div>
@@ -299,28 +296,21 @@ export function renderActiveCheckoutList() {
             <span class="truncate">${historySnippet}</span>
           </div>
         ` : ''}
-        <div class="text-slate-600 mt-2 flex items-center justify-between font-medium pt-1.5 border-t border-slate-100">
+        <div class="text-slate-600 mt-2.5 flex items-center justify-between font-medium pt-2 border-t border-slate-100 flex-wrap gap-2">
           <span>👷 ผู้ปฏิบัติงาน: <strong class="text-slate-900">${techList}</strong></span>
-          ${isRealCheckin 
-            ? `<span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>` 
-            : `<span class="text-xs text-slate-500 font-sans">📅 เริ่ม: ${item.date || 'วันนี้'}</span>`}
+          <div class="flex items-center space-x-2">
+            ${isRealCheckin 
+              ? `<span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>` 
+              : `<span class="text-xs text-slate-500 font-sans">📅 เริ่ม: ${item.date || 'วันนี้'}</span>`}
+            <button type="button" onclick="event.stopPropagation(); window.openCheckoutModal('${item.id}')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer">
+              <span>📝 อัปเดต / ปิดงาน</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     `;
   }).join('');
-
-  if (outcomeSection) {
-    if (state.selectedActiveCheckoutId) {
-      outcomeSection.classList.remove("hidden");
-      outcomeSection.classList.add("animate-fade-in");
-      const activeObj = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId);
-      if (activeObj) renderActiveTaskPhotos(activeObj);
-    } else {
-      outcomeSection.classList.add("hidden");
-      outcomeSection.classList.remove("animate-fade-in");
-      renderActiveTaskPhotos(null);
-    }
-  }
 }
 
 export function deleteActiveCheckin(id) {
@@ -344,7 +334,7 @@ export function deleteActiveCheckin(id) {
     onConfirm: () => {
       state.activeTasks = state.activeTasks.filter(a => a.id !== id);
       if (state.selectedActiveCheckoutId === id) {
-        state.selectedActiveCheckoutId = null;
+        closeCheckoutModal();
       }
       localStorage.setItem("fs_active_tasks", JSON.stringify(state.activeTasks));
 
@@ -386,7 +376,7 @@ export function clearAllActiveCheckins() {
     onConfirm: () => {
       const idsToDelete = state.activeTasks.map(a => a.id);
       state.activeTasks = [];
-      state.selectedActiveCheckoutId = null;
+      closeCheckoutModal();
       localStorage.setItem("fs_active_tasks", JSON.stringify([]));
 
       state.dailyLogs = state.dailyLogs.filter(l => !idsToDelete.includes(l.id) || l.status === "เสร็จสิ้น");
@@ -406,19 +396,80 @@ export function clearAllActiveCheckins() {
   });
 }
 
-export function selectActiveTaskForCheckout(id) {
+export function openCheckoutModal(id) {
   state.selectedActiveCheckoutId = id;
   const item = state.activeTasks.find(a => a.id === id);
-  if (item) {
-    const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
-    if (linkedTask && linkedTask.progress !== undefined) {
-      setUpdatePercent(linkedTask.progress);
-    } else if (item.progress !== undefined) {
-      setUpdatePercent(item.progress);
-    }
+  if (!item) return;
+
+  const modal = document.getElementById("checkoutOutcomeModal");
+  if (!modal) return;
+
+  const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+  const displayTaskId = item.taskId || item.id;
+  const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
+
+  // Set modal header details
+  const titleEl = document.getElementById("checkoutModalTaskTitle");
+  const idEl = document.getElementById("checkoutModalTaskId");
+  const progEl = document.getElementById("checkoutModalTaskProgress");
+  const timeEl = document.getElementById("checkoutModalTaskTime");
+
+  if (titleEl) titleEl.innerText = item.task;
+  if (idEl) idEl.innerText = displayTaskId;
+  if (progEl) {
+    progEl.innerText = `คืบหน้า ${itemProg}%`;
+    progEl.className = itemProg === 100 
+      ? "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-mono shadow-2xs" 
+      : "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs";
   }
-  renderActiveCheckoutList();
+  if (timeEl) {
+    const isRealCheckin = (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00";
+    timeEl.innerText = isRealCheckin ? `⏰ เช็กอิน: ${formatGasTime(item.time)} น.` : `📅 เริ่ม: ${item.date || 'วันนี้'}`;
+  }
+
+  // Pre-fill / sync current progress in checkout module
+  setUpdatePercent(itemProg);
+
+  // Render existing photos of this task
+  renderActiveTaskPhotos(item);
+
+  // Update submit buttons state
   updateCheckoutSubmitButtonsState();
+
+  // Show modal
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+  document.body.classList.add("overflow-hidden");
+
+  // Re-render list to reflect selected state
+  renderActiveCheckoutList();
+}
+
+export function closeCheckoutModal() {
+  const modal = document.getElementById("checkoutOutcomeModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+  document.body.classList.remove("overflow-hidden");
+  state.selectedActiveCheckoutId = null;
+  renderActiveTaskPhotos(null);
+  renderActiveCheckoutList();
+}
+
+export function selectActiveTaskForCheckout(id) {
+  openCheckoutModal(id);
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const modal = document.getElementById("checkoutOutcomeModal");
+      if (modal && !modal.classList.contains("hidden")) {
+        closeCheckoutModal();
+      }
+    }
+  });
 }
 
 export function setCheckoutOutcome(outcome) {

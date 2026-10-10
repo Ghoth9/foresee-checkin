@@ -56,6 +56,7 @@ import {
 import {
   matchTechName, getUniquePhotosForActiveTask, formatLatestNoteText, renderActiveTaskPhotos,
   renderActiveCheckoutList, deleteActiveCheckin, clearAllActiveCheckins, selectActiveTaskForCheckout,
+  openCheckoutModal, closeCheckoutModal,
   setCheckoutOutcome, renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse
 } from './modules/checkoutList.js';
 
@@ -511,6 +512,7 @@ window.submitOngoingUpdate = () => {
       localStorage.setItem("fs_active_tasks", JSON.stringify(state.activeTasks));
       localStorage.setItem("fs_daily_logs", JSON.stringify(state.dailyLogs));
       if (noteInput) noteInput.value = "";
+      closeCheckoutModal();
       renderTodayLogs();
       renderActiveCheckoutList();
       if (act) renderActiveTaskPhotos(act);
@@ -529,6 +531,8 @@ window.submitOngoingUpdate = () => {
 window.handleCheckoutPhotoUpload = handleCheckoutPhotoUpload;
 window.removeCheckoutPhoto = removeCheckoutPhoto;
 window.selectActiveTaskForCheckout = selectActiveTaskForCheckout;
+window.openCheckoutModal = openCheckoutModal;
+window.closeCheckoutModal = closeCheckoutModal;
 window.setCheckoutOutcome = setCheckoutOutcome;
 window.submitCheckout = () => {
   const activeItem = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId);
@@ -567,6 +571,7 @@ window.submitCheckout = () => {
 
       localStorage.setItem("fs_active_tasks", JSON.stringify(state.activeTasks));
       localStorage.setItem("fs_daily_logs", JSON.stringify(state.dailyLogs));
+      closeCheckoutModal();
       renderTodayLogs();
       renderActiveCheckoutList();
       showAppAlert({
