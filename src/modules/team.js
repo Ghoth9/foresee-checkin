@@ -103,10 +103,6 @@ export async function resolveUserRole() {
     if (match) {
       state.currentLinkedTech = match;
       matchedTech = match;
-      if (lineId && !match.line_user_id) {
-        match.line_user_id = lineId;
-        bindTechnicianLineUserApi(match.id, lineId);
-      }
     }
   }
 

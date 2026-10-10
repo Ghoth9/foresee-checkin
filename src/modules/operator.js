@@ -5,8 +5,6 @@
 
 import { state } from './state.js';
 import { showAppAlert } from '../utils/dialog.js';
-import { isLineLoggedIn, getLineUserProfile } from '../liff/line.js';
-import { bindTechnicianLineUserApi } from '../api/supabase.js';
 
 let selectOperatorSearchQuery = "";
 
@@ -139,27 +137,12 @@ export async function chooseOperatorProfile(techId) {
     if (typeof window.renderAssignedTasksBannerScoped === "function") window.renderAssignedTasksBannerScoped();
     if (typeof window.renderActiveCheckoutList === "function") window.renderActiveCheckoutList();
     if (typeof window.renderTodayLogs === "function") window.renderTodayLogs();
-
-    showAppAlert({
-      type: "info",
-      title: "🧪 โหมดจำลองมุมมอง (Sandbox)",
-      message: `คุณกำลังจำลองมุมมองของ "${tech.name}" (ระบบจะไม่แตะต้อง LINE หรือฐานข้อมูลของพนักงานคนนี้ และสามารถกดปุ่มสลับกลับเป็นแอดมินด้านบนได้ตลอดเวลาครับ)`
-    });
     return;
   }
 
   state.currentLinkedTech = tech;
   localStorage.setItem("fs_current_operator_id", tech.id);
   localStorage.setItem("fs_current_operator_name", tech.name);
-
-  // If LINE is logged in and tech has no line_user_id yet, auto-bind to Supabase!
-  if (isLineLoggedIn()) {
-    const profile = getLineUserProfile();
-    if (profile && profile.userId && !tech.line_user_id) {
-      tech.line_user_id = profile.userId;
-      bindTechnicianLineUserApi(tech.id, profile.userId);
-    }
-  }
 
   // Auto-select their own name in check-in form
   state.selectedCheckinTechs = [tech.name];
