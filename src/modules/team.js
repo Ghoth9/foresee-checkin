@@ -302,8 +302,7 @@ export function applyRolePermissionsUI(role, techObj) {
   }
 
   if (assignTaskHeaderBtn) {
-    assignTaskHeaderBtn.classList.remove("hidden");
-    assignTaskHeaderBtn.classList.add("flex");
+    assignTaskHeaderBtn.className = "hidden sm:flex items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all whitespace-nowrap flex-shrink-0 cursor-pointer";
   }
 
   const assignTaskSectionBtn = document.getElementById("assignTaskSectionBtn");

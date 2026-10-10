@@ -20,14 +20,14 @@
     <div class="max-w-[1600px] mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
       
       <!-- Brand & Logo -->
-      <div class="flex items-center space-x-2.5 cursor-pointer select-none flex-shrink-0" onclick="window.handleBrandClick()">
-        <img src="/foresee-logo.png" alt="Foresee Technology" class="h-8 w-auto object-contain select-none flex-shrink-0">
+      <div class="flex items-center space-x-2 sm:space-x-2.5 cursor-pointer select-none flex-shrink-0" onclick="window.handleBrandClick()">
+        <img src="/foresee-logo.png" alt="Foresee Technology" class="h-7 sm:h-8 w-auto object-contain select-none flex-shrink-0">
         <div class="flex flex-col sm:border-l sm:border-slate-300 sm:pl-2.5 min-w-0">
-          <div class="flex items-center space-x-1.5">
+          <div class="flex items-center space-x-1 sm:space-x-1.5">
             <span class="font-black text-xs sm:text-sm tracking-tight text-slate-950 whitespace-nowrap">FORESEE</span>
             <span id="appRoleBadgeTitle" class="text-[9px] bg-slate-900 text-white font-extrabold px-1.5 py-0.5 rounded shadow-2xs whitespace-nowrap">FIELD 2.0</span>
           </div>
-          <div id="appHeaderSubtitle" class="text-[10px] text-slate-500 font-semibold whitespace-nowrap truncate max-w-[120px] sm:max-w-none">ระบบมอบหมายงาน</div>
+          <div id="appHeaderSubtitle" class="text-[10px] text-slate-500 font-semibold whitespace-nowrap hidden sm:block">ระบบมอบหมายงาน</div>
         </div>
       </div>
 
@@ -54,7 +54,7 @@
         <div class="relative flex-shrink-0">
           <button id="userRoleBadge" type="button" onclick="handleRoleBadgeClick()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 whitespace-nowrap" title="แตะเพื่อเลือกมุมมองหรือจัดการสิทธิ์">
             <span id="userRoleIcon">👤</span>
-            <span id="userRoleText">ผู้ปฏิบัติงาน</span>
+            <span id="userRoleText" class="max-w-[125px] sm:max-w-none truncate">ผู้ปฏิบัติงาน</span>
             <svg id="userRoleArrow" class="w-3 h-3 opacity-60 ml-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
 
@@ -126,14 +126,13 @@
           </div>
         </div>
 
-        <!-- + มอบหมายงาน (Compact & Sleek) -->
-        <button id="assignTaskHeaderBtn" type="button" onclick="openAssignModal()" class="flex items-center space-x-1 sm:space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all whitespace-nowrap flex-shrink-0">
-          <span class="hidden sm:inline">+ มอบหมายงาน</span>
-          <span class="sm:hidden">+ งาน</span>
+        <!-- + มอบหมายงาน (Shown on tablet/desktop, mobile uses section button) -->
+        <button id="assignTaskHeaderBtn" type="button" onclick="openAssignModal()" class="hidden sm:flex items-center space-x-1.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all whitespace-nowrap flex-shrink-0 cursor-pointer">
+          <span>+ มอบหมายงาน</span>
         </button>
 
-        <!-- Compact LINE Status -->
-        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-colors whitespace-nowrap flex-shrink-0">
+        <!-- Compact LINE Status (Shown on desktop) -->
+        <button id="lineLoginBtn" type="button" onclick="handleLineLoginToggle()" class="hidden md:flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-colors whitespace-nowrap flex-shrink-0 cursor-pointer">
           <span id="lineLoginDot" class="w-2 h-2 rounded-full bg-slate-300 flex-shrink-0"></span>
           <span id="lineLoginText">เข้าสู่ระบบ LINE</span>
         </button>
@@ -574,23 +573,25 @@
     <section id="tasksSection" class="hidden space-y-4 max-w-5xl mx-auto">
       
       <!-- Operations Header -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-200/90">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/90">
         <div>
-          <h1 id="tasksSectionTitle" class="text-xl md:text-2xl font-bold tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
-          <p id="tasksSectionDesc" class="text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงานและมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
+          <h1 id="tasksSectionTitle" class="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
+          <p id="tasksSectionDesc" class="text-[11px] sm:text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงานและมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
         </div>
-        <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-          <div class="relative">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+          <div class="relative w-full sm:w-60">
             <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-            <input id="taskSearchInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน..." class="bg-white border border-slate-200 rounded-lg pl-7 pr-7 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-800 w-40 sm:w-56 shadow-2xs">
+            <input id="taskSearchInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน..." class="w-full bg-white border border-slate-300 rounded-xl pl-8 pr-7 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 shadow-2xs">
             <button type="button" id="taskSearchClearBtn" onclick="window.clearTaskSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
           </div>
-          <button id="manageTechSectionBtn" type="button" onclick="openManageTechModal()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-2xs active:scale-95">
-            <span>👥 จัดการทีมผู้ปฏิบัติงาน</span>
-          </button>
-          <button id="assignTaskSectionBtn" type="button" onclick="openAssignModal()" class="bg-slate-950 hover:bg-slate-800 text-white font-medium text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition-all flex items-center space-x-1.5 active:scale-95">
-            <span>+ มอบหมายงานใหม่</span>
-          </button>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button id="assignTaskSectionBtn" type="button" onclick="openAssignModal()" class="flex-1 sm:flex-initial w-full sm:w-auto bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 active:scale-95 cursor-pointer whitespace-nowrap">
+              <span>+ มอบหมายงานใหม่</span>
+            </button>
+            <button id="manageTechSectionBtn" type="button" onclick="openManageTechModal()" class="flex-1 sm:flex-initial w-full sm:w-auto px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap">
+              <span>👥 จัดการทีมงาน</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -600,7 +601,7 @@
         <!-- Top Line: Status Filters (Full width, no crushing) + View Switcher -->
         <div class="flex items-center justify-between gap-2">
           <!-- Status Filters -->
-          <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1 min-w-0">
+          <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1 min-w-0 pr-4 touch-pan-x">
             <button type="button" onclick="setStatusFilter('ทั้งหมด')" id="statusFilterBtn-ทั้งหมด" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-white transition-all flex items-center space-x-1.5 flex-shrink-0">
               <span>ทั้งหมด</span>
               <span id="statTotalTasks" class="font-mono text-[11px] px-1.5 py-0.2 rounded-full bg-slate-800 text-white">0</span>
@@ -642,9 +643,9 @@
         <div id="taskTechFilterRow" class="flex items-center space-x-2 pt-2 border-t border-slate-100 overflow-x-auto no-scrollbar">
           <span class="text-[11px] font-bold text-slate-500 flex items-center space-x-1 flex-shrink-0 pl-0.5">
             <span>👤</span>
-            <span>ผู้ปฏิบัติงาน:</span>
+            <span class="hidden sm:inline">ผู้ปฏิบัติงาน:</span>
           </span>
-          <div id="techFilterChipsContainer" class="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5 flex-1"></div>
+          <div id="techFilterChipsContainer" class="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5 flex-1 pr-4 touch-pan-x"></div>
         </div>
 
       </div>
