@@ -6,7 +6,7 @@
 
 import { formatThaiDateDisplay, getDeadlineCountdownBadge, isTaskOverdue } from '../utils/date.js';
 import { getRecentNewTaskIds } from './taskAssignModal.js';
-import { state } from './state.js';
+import { state, getEffectiveOperatorName } from './state.js';
 
 // Re-export submodules for full backward compatibility
 export * from './taskLightbox.js';
@@ -183,11 +183,12 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
   const recentNewTaskIds = getRecentNewTaskIds();
 
   // 1. Role Scoping: Admin ALWAYS sees all tasks 100%!
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
   const isAdmin = (typeof isAdminArg === "boolean")
-    ? isAdminArg
-    : (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+    ? (!isSimTech && isAdminArg)
+    : (!isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin())));
 
-  const opName = activeOperatorName || state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name");
+  const opName = activeOperatorName || getEffectiveOperatorName();
 
   let baseTasks = tasksList || state.tasksList;
 

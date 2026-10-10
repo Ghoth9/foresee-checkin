@@ -10,6 +10,8 @@ export const state = {
   allTechnicians: [],
   techniciansList: [],
   currentLinkedTech: null,
+  realLinkedTech: null,
+  simulatedOperator: null,
   currentUserRole: "technician",
   simulatedRole: null,
   selectedCheckinTechs: [],
@@ -104,4 +106,36 @@ export function getSelectedCheckoutOutcome() {
 
 export function setSelectedCheckoutOutcome(outcome) {
   state.selectedCheckoutOutcome = outcome;
+}
+
+/**
+ * Returns the effective operator object according to current context.
+ * Prioritizes active simulation operator (if in technician preview),
+ * then currentLinkedTech, then localStorage operator.
+ */
+export function getEffectiveOperator() {
+  const isSim = state.simulatedRole === "technician" || sessionStorage.getItem("fs_simulated_role") === "technician";
+  if (isSim) {
+    if (state.simulatedOperator) return state.simulatedOperator;
+    const simName = sessionStorage.getItem("fs_simulated_operator_name");
+    const simId = sessionStorage.getItem("fs_simulated_operator_id");
+    if (simName) {
+      return { id: simId || "", name: simName, role: "technician" };
+    }
+  }
+  if (state.currentLinkedTech) return state.currentLinkedTech;
+  const storedName = localStorage.getItem("fs_current_operator_name");
+  const storedId = localStorage.getItem("fs_current_operator_id");
+  if (storedName) {
+    return { id: storedId || "", name: storedName, role: state.currentUserRole };
+  }
+  return null;
+}
+
+/**
+ * Returns the effective operator name string.
+ */
+export function getEffectiveOperatorName() {
+  const op = getEffectiveOperator();
+  return op?.name || "";
 }

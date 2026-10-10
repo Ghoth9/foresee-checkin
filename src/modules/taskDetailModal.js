@@ -10,7 +10,7 @@ import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
 import { openCustomCalendar } from '../utils/calendar.js';
 import { openImageLightbox } from './taskLightbox.js';
 import { getTaskTechs, getAssigneeSubmissionsStatus } from './tasks.js';
-import { state } from './state.js';
+import { state, getEffectiveOperatorName } from './state.js';
 
 let currentDetailTaskId = null;
 let currentDetailStatus = "กำลังทำ";
@@ -76,13 +76,14 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
   if (!task) return;
 
   // Security & Privacy Check: Admins can open any task. Non-admins cannot open tasks not assigned to them.
-  const isActualAdmin = (state.currentUserRole === "admin") ||
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+  const isActualAdmin = !isSimTech && ((state.currentUserRole === "admin") ||
     (typeof window.isCurrentUserAdmin === 'function' && window.isCurrentUserAdmin()) ||
     (state.currentLinkedTech && state.currentLinkedTech.role === "admin") ||
-    (typeof window.isUserAdminActual === 'function' && window.isUserAdminActual());
+    (typeof window.isUserAdminActual === 'function' && window.isUserAdminActual()));
 
-  const opName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name") || "";
-  const isNameAdmin = opName.includes("ใบปอ") || opName.includes("สุพิชชาญาต์") || opName.includes("nonmarn") || opName.includes("อาร์ม") || opName.includes("ชัยวัฒน์");
+  const opName = getEffectiveOperatorName();
+  const isNameAdmin = !isSimTech && (opName.includes("ใบปอ") || opName.includes("สุพิชชาญาต์") || opName.includes("nonmarn") || opName.includes("อาร์ม") || opName.includes("ชัยวัฒน์"));
 
   const isAdmin = isActualAdmin || isNameAdmin;
 

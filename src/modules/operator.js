@@ -121,6 +121,9 @@ export async function chooseOperatorProfile(techId) {
     state.simulatedRole = "technician";
     sessionStorage.setItem("fs_simulated_role", "technician");
     state.currentUserRole = "technician";
+    if (!state.realLinkedTech && state.currentLinkedTech) {
+      state.realLinkedTech = state.currentLinkedTech;
+    }
     state.currentLinkedTech = tech;
     state.selectedCheckinTechs = [tech.name];
 

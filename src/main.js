@@ -4,7 +4,7 @@
  */
 
 import './style.css';
-import { state } from './modules/state.js';
+import { state, getEffectiveOperator, getEffectiveOperatorName } from './modules/state.js';
 import { initLiff, isLineLoggedIn, getLineUserName, getLineUserProfile, loginLine, logoutLine } from './liff/line.js';
 import { requestLocation, getCurrentCoords } from './utils/gps.js';
 import { fetchInitialData, deleteCheckinApi, deletePhotoFromSupabaseApi, subscribeToRealtimeChanges } from './api/supabase.js';
@@ -44,7 +44,8 @@ import {
   openTeamRoleModal, closeTeamRoleModal, setTeamRoleFilter, renderTeamRoleList,
   setNewMemberRole, handleChangeMemberRole, submitAddNewMember, handleDeleteMember,
   bindCurrentLineUserToTech, unbindTechLineUser, openManageTechModal, closeManageTechModal,
-  renderManageTechList, confirmAddTech, deleteTech, renderCheckinTechChips, setCheckinTechs
+  renderManageTechList, confirmAddTech, deleteTech, renderCheckinTechChips, setCheckinTechs,
+  updateTeamRoleBanner
 } from './modules/team.js';
 
 import {
@@ -142,15 +143,17 @@ export function switchTab(tab) {
 // SCOPED TASK VIEWS
 // -------------------------------------------------------------
 export function renderTasksListScoped() {
-  const isAdmin = state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin());
-  const opName = state.currentLinkedTech ? state.currentLinkedTech.name : localStorage.getItem("fs_current_operator_name");
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+  const opName = getEffectiveOperatorName();
   renderTasksList(state.tasksList, opName, isAdmin);
 }
 window.renderTasksListScoped = renderTasksListScoped;
 
 export function renderAssignedTasksBannerScoped() {
-  const isAdmin = state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin());
-  const opName = state.currentLinkedTech ? state.currentLinkedTech.name : localStorage.getItem("fs_current_operator_name");
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+  const opName = getEffectiveOperatorName();
   renderAssignedTasksBanner(state.tasksList, state.allTechnicians, (tId) => selectAssignedTask(tId, state.tasksList, setCheckinTechs), opName, isAdmin);
 }
 window.renderAssignedTasksBannerScoped = renderAssignedTasksBannerScoped;
@@ -605,6 +608,8 @@ window.renderCheckinTechChips = renderCheckinTechChips;
 window.resolveUserRole = resolveUserRole;
 
 // Role and Team Management Bindings
+window.applyRolePermissionsUI = applyRolePermissionsUI;
+window.updateTeamRoleBanner = updateTeamRoleBanner;
 window.handleRoleBadgeClick = handleRoleBadgeClick;
 window.switchSimulatedRole = switchSimulatedRole;
 window.toggleRoleDropdownMenu = toggleRoleDropdownMenu;

@@ -14,7 +14,7 @@ import { saveCheckinApi } from '../api/supabase.js';
 import { formatThaiDateDisplay } from '../utils/date.js';
 import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
 import { matchesOperator } from './tasks.js';
-import { state } from './state.js';
+import { state, getEffectiveOperatorName } from './state.js';
 
 let isSubmittingCheckin = false;
 let checkinPhotos = [];
@@ -117,11 +117,12 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
   const container = document.getElementById("assignedTasksCheckinContainer");
   if (!container) return;
 
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
   const isAdmin = (typeof isAdminArg === "boolean")
-    ? isAdminArg
-    : (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+    ? (!isSimTech && isAdminArg)
+    : (!isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin())));
 
-  const opName = currentOperatorName || state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name");
+  const opName = currentOperatorName || getEffectiveOperatorName();
 
   // Filter tasks that are in progress or pending
   let pendingTasks = (tasksList || []).filter(t => t.status !== "เสร็จสิ้น");
@@ -336,7 +337,7 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
     const dateStr = now.toLocaleDateString("th-TH");
     const mapUrl = coords.isReady ? getMapUrl(coords.lat, coords.lng) : "";
 
-    const currentOpName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name") || "";
+    const currentOpName = getEffectiveOperatorName() || "";
     const checkinRecord = {
       id: checkinId,
       taskId: selectedAssignedTaskId,

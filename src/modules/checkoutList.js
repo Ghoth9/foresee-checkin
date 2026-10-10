@@ -4,7 +4,7 @@
  * horizontal drag photo gallery, and today's activity logs.
  */
 
-import { state } from './state.js';
+import { state, getEffectiveOperatorName } from './state.js';
 import { formatGasTime, formatDisplayTime } from '../utils/date.js';
 import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
 import { deleteCheckinApi, clearAllCheckinsApi } from '../api/supabase.js';
@@ -180,8 +180,9 @@ export function renderActiveCheckoutList() {
   const clearBtn = document.getElementById("clearAllCheckinsBtn");
   if (!container) return;
 
-  const isAdmin = state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin());
-  const opName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name");
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+  const opName = getEffectiveOperatorName();
 
   let displayActiveTasks = state.activeTasks;
   if (!isAdmin) {
@@ -456,8 +457,9 @@ export function renderTodayLogs() {
   const badge = document.getElementById("todayLogsBadge");
   if (!container) return;
 
-  const isAdmin = state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin());
-  const opName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name");
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+  const opName = getEffectiveOperatorName();
 
   let displayLogs = state.dailyLogs;
   if (!isAdmin) {

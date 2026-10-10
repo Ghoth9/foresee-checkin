@@ -4,7 +4,7 @@
  * Admin PIN unlock, member management, and technician chips.
  */
 
-import { state } from './state.js';
+import { state, getEffectiveOperator, getEffectiveOperatorName } from './state.js';
 import { 
   bindTechnicianLineUserApi, 
   updateTechnicianRoleApi, 
@@ -27,7 +27,7 @@ export const MASTER_ADMIN_PIN = "8888";
 let currentTeamRoleFilter = "all";
 
 export function isCurrentUserAdmin() {
-  if (state.simulatedRole === "technician") return false;
+  if (state.simulatedRole === "technician" || sessionStorage.getItem("fs_simulated_role") === "technician") return false;
   return state.currentUserRole === "admin" || isUserAdminActual();
 }
 
@@ -121,12 +121,18 @@ export async function resolveUserRole() {
 
   // Persist matched operator and auto-select in check-in form
   if (matchedTech) {
-    state.currentLinkedTech = matchedTech;
-    localStorage.setItem("fs_current_operator_id", matchedTech.id);
-    localStorage.setItem("fs_current_operator_name", matchedTech.name);
-    if (!state.selectedCheckinTechs || state.selectedCheckinTechs.length === 0) {
-      state.selectedCheckinTechs = [matchedTech.name];
-      renderCheckinTechChips();
+    if (!state.realLinkedTech) {
+      state.realLinkedTech = matchedTech;
+    }
+    const isSimulating = state.simulatedRole === "technician" || sessionStorage.getItem("fs_simulated_role") === "technician";
+    if (!isSimulating) {
+      state.currentLinkedTech = matchedTech;
+      localStorage.setItem("fs_current_operator_id", matchedTech.id);
+      localStorage.setItem("fs_current_operator_name", matchedTech.name);
+      if (!state.selectedCheckinTechs || state.selectedCheckinTechs.length === 0) {
+        state.selectedCheckinTechs = [matchedTech.name];
+        renderCheckinTechChips();
+      }
     }
   }
 
@@ -134,7 +140,7 @@ export async function resolveUserRole() {
   let actualRole = isUserAdminActual() ? "admin" : (matchedTech?.role === "admin" ? "admin" : "technician");
 
   // If actual admin, clear stale simulated role unless explicitly simulating
-  if (actualRole === "admin" && !state.simulatedRole) {
+  if (actualRole === "admin" && !state.simulatedRole && !sessionStorage.getItem("fs_simulated_role")) {
     sessionStorage.removeItem("fs_simulated_role");
   }
 
@@ -143,7 +149,8 @@ export async function resolveUserRole() {
   if (sim && actualRole === "admin") {
     state.simulatedRole = sim;
     state.currentUserRole = sim;
-    applyRolePermissionsUI(state.currentUserRole, state.currentLinkedTech);
+    const simOp = getEffectiveOperator();
+    applyRolePermissionsUI(state.currentUserRole, simOp);
     if (typeof window.renderTasksListScoped === "function") window.renderTasksListScoped();
     if (typeof window.renderAssignedTasksBannerScoped === "function") window.renderAssignedTasksBannerScoped();
     renderActiveCheckoutList();
@@ -189,7 +196,8 @@ export function switchSimulatedRole(mode) {
 
   closeRoleDropdownMenu();
   closeTeamRoleModal();
-  applyRolePermissionsUI(state.currentUserRole, state.currentLinkedTech);
+  const effectiveOp = getEffectiveOperator();
+  applyRolePermissionsUI(state.currentUserRole, effectiveOp);
   updateTeamRoleBanner();
 
   // Switch to appropriate primary workspace
@@ -223,7 +231,8 @@ export function handleRoleBadgeClick() {
 }
 
 export function applyRolePermissionsUI(role, techObj) {
-  const isAdmin = role === "admin" || (state.simulatedRole !== "technician" && isUserAdminActual());
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+  const isAdmin = !isSimTech && (role === "admin" || isUserAdminActual());
 
   // 1. Header Role Badge
   const badge = document.getElementById("userRoleBadge");
@@ -249,7 +258,14 @@ export function applyRolePermissionsUI(role, techObj) {
       badge.title = "คุณมีสิทธิ์แอดมิน (แตะเพื่อสลับมุมมองหรือจัดการสิทธิ์)";
     } else {
       icon.innerText = "👤";
-      const cleanName = techObj?.name ? techObj.name.replace(/K\./g, '').split(' ')[0] : (getLineUserName() || "ทั่วไป");
+      const effectiveOp = techObj || getEffectiveOperator();
+      const opFullName = effectiveOp?.name || "";
+      let cleanName = "";
+      if (opFullName) {
+        cleanName = opFullName.replace(/K\./g, '').split('(')[0].trim().split(' ')[0];
+      } else {
+        cleanName = getLineUserName() || "ทั่วไป";
+      }
       const shortName = cleanName && cleanName.length > 8 ? cleanName.slice(0, 7) + '…' : cleanName;
       text.innerText = `ผู้ปฏิบัติงาน: ${shortName}`;
       badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0";
@@ -277,7 +293,8 @@ export function applyRolePermissionsUI(role, techObj) {
       banner.classList.add("flex");
       const bannerText = banner.querySelector("span:nth-child(2)");
       if (bannerText) {
-        const opName = state.simulatedOperator?.name || state.currentLinkedTech?.name || "ผู้ปฏิบัติงาน";
+        const effectiveOp = techObj || getEffectiveOperator();
+        const opName = effectiveOp?.name || "ผู้ปฏิบัติงาน";
         bannerText.innerHTML = `คุณกำลังจำลองมุมมองของ: <strong class="underline">${opName}</strong> (โหมดทดสอบเฉพาะแอดมิน)`;
       }
     } else {
@@ -368,7 +385,8 @@ export function applyRolePermissionsUI(role, techObj) {
     taskTitle.innerText = isAdmin ? "งานมอบหมายและติดตามงาน" : "รายการงานที่ได้รับมอบหมาย";
   }
   if (taskDesc) {
-    const opName = (techObj || state.currentLinkedTech)?.name;
+    const effectiveOp = techObj || getEffectiveOperator();
+    const opName = effectiveOp?.name;
     taskDesc.innerText = isAdmin
       ? "จัดการภาระงาน CCTV และมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ"
       : (opName ? `รายการงานที่คุณ (${opName}) ได้รับมอบหมายและต้องอัปเดตความคืบหน้า` : "ตรวจสอบรายละเอียดงานและกำหนดส่งของทีมผู้ปฏิบัติงาน");
@@ -377,8 +395,9 @@ export function applyRolePermissionsUI(role, techObj) {
   // 10. Dropdown Operator Name & Role Control visibility
   const dropOpName = document.getElementById("dropdownCurrentOperatorName");
   if (dropOpName) {
+    const effectiveOp = techObj || getEffectiveOperator();
     const lName = getLineUserName();
-    const opDisplay = (techObj || state.currentLinkedTech)?.name;
+    const opDisplay = effectiveOp?.name;
     dropOpName.innerText = opDisplay || (lName && lName.toLowerCase().includes("nonmarn") ? "nonmarn (System Admin)" : (lName ? `LINE: ${lName}` : "ยังไม่ได้เลือกชื่อ"));
   }
 
