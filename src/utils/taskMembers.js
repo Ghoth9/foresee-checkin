@@ -76,8 +76,12 @@ export function getTaskMemberStatuses(task, activeItem = null) {
 
     if (!matchedCheckin) {
       matchedCheckin = checkinRecords.find(cr => {
-        if (cr.checkedInBy && !matchesOperator(cr.checkedInBy, techFullName) && !matchesOperator(cr.checkedInBy, shortName)) {
-          return false; // Checked in by someone else explicitly
+        if (cr.checkedInBy) {
+          return matchesOperator(cr.checkedInBy, techFullName) || matchesOperator(cr.checkedInBy, shortName);
+        }
+        // If no checkedInBy was recorded and multiple techs exist, attribute only to the first tech who initiated it
+        if (cr.techs.length > 1) {
+          return matchesOperator(cr.techs[0], techFullName) || matchesOperator(cr.techs[0], shortName);
         }
         return cr.techs.some(t => matchesOperator(t, techFullName) || matchesOperator(t, shortName));
       });

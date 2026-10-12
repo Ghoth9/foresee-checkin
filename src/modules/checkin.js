@@ -403,7 +403,10 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
     const dateStr = now.toLocaleDateString("th-TH");
     const mapUrl = coords.isReady ? getMapUrl(coords.lat, coords.lng) : "";
 
-    const currentOpName = getEffectiveOperatorName() || "";
+    let currentOpName = getEffectiveOperatorName() || "";
+    if (!currentOpName && selectedTechs.length > 0) {
+      currentOpName = selectedTechs[0];
+    }
     // If checking in to an assigned task, attribute checkin to the person who actually checked in
     const checkinTechs = (selectedAssignedTaskId && currentOpName) ? [currentOpName] : (selectedTechs.length > 0 ? [...selectedTechs] : [currentOpName || "ผู้ปฏิบัติงาน"]);
 
