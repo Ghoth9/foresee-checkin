@@ -272,6 +272,7 @@
                 <span class="text-slate-500 block text-[11px] font-medium">📅 กำหนดส่งงาน:</span>
                 <strong id="quickCardDeadline" class="text-blue-800 font-bold block truncate mt-0.5">-</strong>
               </div>
+              <div id="quickCardLoopMembersBlock" class="col-span-2 hidden pt-2 border-t border-blue-100 flex flex-wrap gap-1"></div>
             </div>
 
             <!-- Big Instant 1-Click Check-in Button -->
@@ -1525,6 +1526,20 @@
             <strong id="checkoutModalCurrentTech" class="text-slate-900 font-bold">ผู้ปฏิบัติงานหน้างาน</strong>
           </div>
           <span class="text-[10px] text-slate-400 font-medium">บันทึกตามบัญชีผู้ใช้งานจริง</span>
+        </div>
+
+        <!-- Team Member Loop Section (ใครเช็กอินแล้ว / ยังไม่เช็กอิน / ใครเช็กเอาต์จบหน้าที่แล้ว) -->
+        <div id="checkoutModalMemberLoopContainer" class="hidden bg-slate-50/95 border border-slate-200/90 rounded-2xl p-3.5 space-y-2 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-xs font-bold text-slate-800">👥 ผู้รับผิดชอบในลูปงานนี้ (เช็กอิน & จบหน้าที่รายคน)</span>
+              <span id="checkoutModalMemberCountBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-mono">0 คน</span>
+            </div>
+            <span id="checkoutModalMemberSummaryBadge" class="text-[10px] text-slate-500 font-mono"></span>
+          </div>
+          <div id="checkoutModalMemberList" class="space-y-1.5 pt-0.5">
+            <!-- Rendered dynamically -->
+          </div>
         </div>
 
         <!-- Task Activity Logs Section (Who checked in, who updated) -->

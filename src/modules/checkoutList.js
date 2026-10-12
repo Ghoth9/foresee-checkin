@@ -7,10 +7,18 @@
 import { state, getEffectiveOperatorName } from './state.js';
 import { formatGasTime, formatDisplayTime } from '../utils/date.js';
 import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
-import { deleteCheckinApi, clearAllCheckinsApi, deleteTaskActivityLogApi } from '../api/supabase.js';
+import { deleteCheckinApi, clearAllCheckinsApi, deleteTaskActivityLogApi, submitDutyCheckoutApi } from '../api/supabase.js';
 import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState } from './checkout.js';
 import { matchesOperator } from './tasks.js';
 import { updateWorkHistoryBadge, renderWorkHistoryList } from './historyModal.js';
+import {
+  getTaskMemberStatuses,
+  getUniquePhotosForActiveTask,
+  formatLatestNoteText,
+  collectTaskActivityLogs
+} from '../utils/taskMembers.js';
+
+export { getUniquePhotosForActiveTask, formatLatestNoteText, collectTaskActivityLogs, getTaskMemberStatuses };
 
 export function matchTechName(techs, targetName) {
   if (!targetName || !techs) return false;
@@ -19,53 +27,6 @@ export function matchTechName(techs, targetName) {
     if (!t) return false;
     return matchesOperator(t, targetName);
   });
-}
-
-export function getUniquePhotosForActiveTask(activeItem) {
-  if (!activeItem) return [];
-  const linkedTask = state.tasksList.find(t => 
-    (activeItem.taskId && t.id === activeItem.taskId) || 
-    t.id === activeItem.id || 
-    t.title === activeItem.task
-  );
-
-  const photosList = [];
-
-  // 1. Photos in active checkin
-  if (Array.isArray(activeItem.photos)) {
-    activeItem.photos.forEach((p, idx) => {
-      const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
-      if (src) photosList.push({ src, caption: `${activeItem.task} • รูปเช็กอิน #${idx + 1}` });
-    });
-  }
-
-  // 2. Photos in task progress history
-  if (linkedTask && Array.isArray(linkedTask.progressHistory)) {
-    linkedTask.progressHistory.forEach(h => {
-      if (Array.isArray(h.photos)) {
-        h.photos.forEach((hp, idx) => {
-          const src = hp.dataUrl || hp.base64 || hp.url || (typeof hp === "string" ? hp : null);
-          if (src) photosList.push({ src, caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || h.tech || 'ผู้ปฏิบัติงาน'}) #${idx + 1}` });
-        });
-      }
-    });
-  }
-
-  return photosList;
-}
-
-export function formatLatestNoteText(rawText) {
-  if (!rawText || rawText === '-') return '';
-  let cleaned = rawText;
-  if (cleaned.includes(' | ')) {
-    const parts = cleaned.split(' | ').filter(Boolean);
-    cleaned = parts[parts.length - 1].trim();
-  }
-  return cleaned
-    .replace(/ติดตั้งเสร็จเรียบร้อย\s*ทดสอบภาพชัดเจนทุกจุด/g, 'ปฏิบัติงานเรียบร้อย')
-    .replace(/ทดสอบภาพชัดเจนทุกจุด/g, 'ปฏิบัติงานเรียบร้อย')
-    .replace(/ผู้ปฏิบัติงานหน้างาน/g, 'ผู้ปฏิบัติงาน')
-    .trim();
 }
 
 export function enableSmoothHorizontalDragScroll(container) {
@@ -137,67 +98,6 @@ export function renderActiveTaskPhotos(activeItem) {
   enableSmoothHorizontalDragScroll(grid);
 }
 
-export function collectTaskActivityLogs(item, linkedTask) {
-  const allLogs = [];
-
-  // 1. Checkin sessions from item
-  if (Array.isArray(item.checkinSessions) && item.checkinSessions.length > 0) {
-    item.checkinSessions.forEach(cs => {
-      const techNames = Array.isArray(cs.techs) ? cs.techs.join(", ") : (cs.checkedInBy || "ผู้ปฏิบัติงาน");
-      allLogs.push({
-        id: cs.id, type: "checkin", label: "เช็กอินเข้าเริ่มงาน", time: cs.time || "-", date: cs.date || "วันนี้",
-        tech: techNames, note: cs.note && cs.note !== "-" ? cs.note : "บันทึกเวลาเข้าปฏิบัติงานหน้างาน",
-        photos: Array.isArray(cs.photos) ? cs.photos : [], createdAt: cs.createdAt || null
-      });
-    });
-  } else if ((item.isCheckedIn === true || item.id?.startsWith("CHK-")) && item.time) {
-    allLogs.push({
-      id: item.id, type: "checkin", label: "เช็กอินเข้าเริ่มงาน", time: item.time || "-", date: item.date || "วันนี้",
-      tech: Array.isArray(item.techs) ? item.techs.join(", ") : (item.checkedInBy || "ผู้ปฏิบัติงาน"),
-      note: item.note && item.note !== "-" ? item.note : "บันทึกเวลาเข้าปฏิบัติงานหน้างาน",
-      photos: Array.isArray(item.photos) ? item.photos : [], createdAt: item.createdAt || null
-    });
-  }
-
-  // 2. Progress history from linkedTask
-  if (linkedTask) {
-    const rawHist = linkedTask.progressHistory || linkedTask.customer?.progress_history || [];
-    if (Array.isArray(rawHist)) {
-      rawHist.forEach(ph => {
-        if (ph.type === "checkin" && allLogs.some(l => l.type === "checkin" && l.time === ph.time && l.tech === ph.tech)) {
-          return;
-        }
-        let type = ph.type;
-        let label = "อัปเดตความคืบหน้า";
-        if (type === "close" || ph.status === "เสร็จสิ้น" || Number(ph.progress) === 100) {
-          type = "close";
-          label = "ปิดงาน 100%";
-        } else if (type === "extend" || ph.status === "ขอขยายเวลา") {
-          type = "extend";
-          label = "ขอขยายเวลา";
-        } else if (type === "checkin") {
-          label = "เช็กอินเข้าเริ่มงาน";
-        } else {
-          label = `อัปเดตงาน (${ph.progress || 0}%)`;
-        }
-
-        allLogs.push({
-          id: ph.id || `HIST-${Date.now().toString(36)}`, type: type || "update", label, progress: ph.progress,
-          status: ph.status, time: ph.time || "-", date: ph.date || "วันนี้", tech: ph.tech || ph.by || "ผู้ปฏิบัติงาน",
-          note: ph.note || "-", photos: Array.isArray(ph.photos) ? ph.photos : [], createdAt: ph.createdAt || null
-        });
-      });
-    }
-  }
-
-  allLogs.sort((a, b) => {
-    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return tB - tA;
-  });
-
-  return allLogs;
-}
 
 let checkoutSearchQuery = "";
 let checkoutStatusFilter = "all";
@@ -464,6 +364,7 @@ export function renderActiveCheckoutList() {
 
     // Collect all task activity logs
     const taskActivityLogs = collectTaskActivityLogs(item, linkedTask);
+    const memberStatuses = getTaskMemberStatuses(linkedTask || item, item);
 
     // Recent update snippet from task history
     let historySnippet = "";
@@ -516,20 +417,44 @@ export function renderActiveCheckoutList() {
           </div>
         ` : ''}
 
-        ${item.checkinSessions && item.checkinSessions.length > 1 ? `
-          <div class="mt-2 flex items-center space-x-1.5 flex-wrap gap-1 bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
-            <span class="text-[10px] text-emerald-900 font-bold">👥 เช็กอินแล้ว (${item.checkinSessions.length} คน/รอบ):</span>
-            ${item.checkinSessions.map(s => {
-              const sTech = Array.isArray(s.techs) ? s.techs.join(", ") : (s.checkedInBy || "ผู้ปฏิบัติงาน");
-              const sDate = s.date && s.date !== "วันนี้" && s.date !== "-" ? `${s.date} ` : "";
-              return `
-                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-white text-emerald-900 border border-emerald-300 text-[10px] font-semibold shadow-2xs">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  <span>${sTech}</span>
-                  <span class="text-emerald-700 font-mono">(${sDate}${s.time} น.)</span>
-                </span>
-              `;
-            }).join('')}
+        ${memberStatuses.length > 0 ? `
+          <div class="mt-2.5 p-2.5 bg-slate-50/95 rounded-xl border border-slate-200/90 space-y-1.5">
+            <div class="flex items-center justify-between flex-wrap gap-1">
+              <span class="text-[11px] font-bold text-slate-800 flex items-center space-x-1">
+                <span>👥 ผู้รับผิดชอบในลูปงานนี้</span>
+                <span class="text-slate-400 font-normal">(${memberStatuses.length} คน)</span>
+              </span>
+              <span class="text-[10px] font-medium text-slate-500 font-mono">
+                เข้างาน: ${memberStatuses.filter(m => m.hasCheckedIn).length}/${memberStatuses.length} • จบงาน: ${memberStatuses.filter(m => m.hasCheckedOut).length}/${memberStatuses.length}
+              </span>
+            </div>
+            <div class="space-y-1 pt-0.5">
+              ${memberStatuses.map(m => `
+                <div class="flex items-center justify-between p-1.5 px-2 rounded-lg bg-white border ${
+                  m.hasCheckedOut
+                    ? 'border-emerald-200 bg-emerald-50/40 text-emerald-900'
+                    : (m.hasCheckedIn ? 'border-blue-200 bg-blue-50/30 text-blue-900' : 'border-amber-200 bg-amber-50/40 text-amber-900')
+                } text-[11px] flex-wrap gap-1">
+                  <div class="flex items-center space-x-1.5 min-w-0 flex-1 pr-1">
+                    <span class="font-bold text-slate-900 truncate">${m.shortName}</span>
+                    ${m.hasCheckedOut ? `
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
+                        🏁 จบหน้าที่แล้ว (${m.checkoutTime})
+                      </span>
+                    ` : (m.hasCheckedIn ? `
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-800 text-[10px] font-semibold border border-blue-300">
+                        🟢 เช็กอินแล้ว (${m.checkinTime})
+                      </span>
+                    ` : `
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-800 text-[10px] font-medium border border-amber-300">
+                        ⏳ ยังไม่ได้เช็กอิน
+                      </span>
+                    `)}
+                  </div>
+                  ${m.checkoutNote ? `<span class="text-[10px] text-slate-500 truncate max-w-[150px] font-sans" title="${m.checkoutNote}">"${m.checkoutNote}"</span>` : ''}
+                </div>
+              `).join('')}
+            </div>
           </div>
         ` : ''}
 
@@ -786,6 +711,59 @@ export function openCheckoutModal(id) {
     currentTechEl.innerText = getEffectiveOperatorName() || "ผู้ปฏิบัติงานหน้างาน";
   }
 
+  // Render team member loop statuses
+  const memberStatuses = getTaskMemberStatuses(linkedTask || item, item);
+  const loopContainer = document.getElementById("checkoutModalMemberLoopContainer");
+  const memberCountBadge = document.getElementById("checkoutModalMemberCountBadge");
+  const memberSummaryBadge = document.getElementById("checkoutModalMemberSummaryBadge");
+  const memberListEl = document.getElementById("checkoutModalMemberList");
+
+  if (loopContainer && memberListEl) {
+    if (memberStatuses.length > 0) {
+      loopContainer.classList.remove("hidden");
+      const doneCount = memberStatuses.filter(m => m.hasCheckedOut).length;
+      const inCount = memberStatuses.filter(m => m.hasCheckedIn).length;
+      if (memberCountBadge) memberCountBadge.innerText = `${memberStatuses.length} คน`;
+      if (memberSummaryBadge) memberSummaryBadge.innerText = `เช็กอิน: ${inCount}/${memberStatuses.length} • จบหน้าที่: ${doneCount}/${memberStatuses.length}`;
+
+      memberListEl.innerHTML = memberStatuses.map(m => {
+        const canCheckOutThisDuty = !m.hasCheckedOut;
+        return `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-white border ${
+            m.hasCheckedOut 
+              ? 'border-emerald-200 bg-emerald-50/40 text-emerald-900' 
+              : (m.hasCheckedIn ? 'border-blue-200 bg-blue-50/30 text-blue-900' : 'border-amber-200 bg-amber-50/40 text-amber-900')
+          } text-xs flex-wrap gap-2">
+            <div class="flex items-center space-x-2 min-w-0 flex-1">
+              <span class="w-6 h-6 rounded-full ${m.hasCheckedOut ? 'bg-emerald-100 text-emerald-800' : (m.hasCheckedIn ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800')} flex items-center justify-center text-xs font-bold flex-shrink-0">
+                ${m.hasCheckedOut ? '🏁' : (m.hasCheckedIn ? '🟢' : '⏳')}
+              </span>
+              <div class="min-w-0">
+                <div class="font-bold text-slate-900 truncate">${m.fullName}</div>
+                <div class="text-[10px] text-slate-500 flex items-center space-x-1.5 flex-wrap">
+                  ${m.hasCheckedIn ? `<span class="text-blue-700 font-medium">เข้า: ${m.checkinTime}</span>` : `<span class="text-amber-700 font-medium">ยังไม่ได้เช็กอิน</span>`}
+                  ${m.hasCheckedOut ? `<span>•</span><span class="text-emerald-700 font-bold">จบหน้าที่: ${m.checkoutTime}</span>` : ''}
+                </div>
+                ${m.checkoutNote ? `<div class="text-[10px] text-slate-600 italic mt-0.5 font-sans">"${m.checkoutNote}"</div>` : ''}
+              </div>
+            </div>
+            ${canCheckOutThisDuty ? `
+              <button type="button" onclick="event.stopPropagation(); window.promptIndividualDutyCheckout('${item.id}', '${m.fullName.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="บันทึกเช็กเอาต์จบงานเฉพาะหน้าที่ของ ${m.shortName}">
+                <span>🏁 เช็กเอาต์จบหน้าที่</span>
+              </button>
+            ` : `
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
+                ✓ จบหน้าที่แล้ว
+              </span>
+            `}
+          </div>
+        `;
+      }).join('');
+    } else {
+      loopContainer.classList.add("hidden");
+    }
+  }
+
   // Render modal activity logs
   const activityLogs = collectTaskActivityLogs(item, linkedTask);
   const badgeEl = document.getElementById("checkoutModalActivityBadge");
@@ -954,18 +932,60 @@ export async function deleteTaskActivityLog(itemId, logIndex) {
   });
 }
 
-if (typeof window !== "undefined") {
-  window.toggleTaskLogs = toggleTaskLogs;
-  window.toggleCheckoutModalActivityList = toggleCheckoutModalActivityList;
-  window.deleteTaskActivityLog = deleteTaskActivityLog;
-}
+export function promptIndividualDutyCheckout(itemId, techName) {
+  const targetTech = techName || getEffectiveOperatorName() || "ผู้ปฏิบัติงาน";
+  const shortName = targetTech.replace(/K\./g, '').split('(')[0].trim() || targetTech;
 
-if (typeof window !== "undefined") {
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      const modal = document.getElementById("checkoutOutcomeModal");
-      if (modal && !modal.classList.contains("hidden")) {
-        closeCheckoutModal();
+  showAppConfirm({
+    title: `เช็กเอาต์จบงานเฉพาะหน้าที่: ${shortName}`,
+    message: `ยืนยันว่าคุณ (${shortName}) ปฏิบัติหน้าที่ในส่วนของคุณเสร็จสิ้นเรียบร้อยแล้วใช่หรือไม่?\n\n(งานจะยังคงเปิดให้สมาชิกท่านอื่นในลูปทำงานต่อจนครบทุกคน)`,
+    confirmText: "ยืนยันจบหน้าที่",
+    cancelText: "ยกเลิก",
+    isDanger: false,
+    onConfirm: async () => {
+      const note = window.prompt(`ระบุบันทึกผลการดำเนินงานของ ${shortName} (เช่น ส่งคืนซัพฯ แล้ว / ประสานงานเอกสารแล้ว / ได้รับ CN แล้ว):`, `ปฏิบัติหน้าที่เรียบร้อย`) || "ปฏิบัติหน้าที่เรียบร้อย";
+      try {
+        const item = state.activeTasks.find(a => a.id === itemId || a.taskId === itemId);
+        const taskId = item ? (item.taskId || item.id) : itemId;
+        const res = await submitDutyCheckoutApi({ taskId, tech: targetTech, note: note.trim(), photos: [] });
+
+        const linked = state.tasksList.find(t => t.id === taskId);
+        if (linked) {
+          if (!linked.customer) linked.customer = {};
+          if (!Array.isArray(linked.customer.progress_history)) linked.customer.progress_history = [];
+          linked.customer.progress_history.push(res.historyItem);
+          if (res.isAllDone) {
+            linked.status = 'เสร็จสิ้น';
+            linked.progress = 100;
+          } else if (res.autoProgress !== undefined) {
+            linked.progress = Math.max(linked.progress || 0, res.autoProgress);
+          }
+        }
+        if (item) {
+          if (res.isAllDone) {
+            item.progress = 100;
+            state.activeTasks = state.activeTasks.filter(a => a.id !== item.id);
+          } else if (res.autoProgress !== undefined) {
+            item.progress = Math.max(item.progress || 0, res.autoProgress);
+          }
+        }
+
+        showAppAlert({
+          type: "success",
+          title: "บันทึกจบหน้าที่สำเร็จ!",
+          message: res.isAllDone
+            ? `สมาชิกทุกคนในลูปจบหน้าที่ครบแล้ว ระบบทำการปิดงาน 100% เรียบร้อยครับ! 🎉`
+            : `บันทึกเช็กเอาต์จบหน้าที่ของ ${shortName} เรียบร้อยแล้ว งานยังคงเปิดอยู่สำหรับสมาชิกท่านอื่นในลูปครับ`
+        });
+
+        if (res.isAllDone) {
+          closeCheckoutModal();
+        } else {
+          openCheckoutModal(itemId);
+        }
+        renderActiveCheckoutList();
+      } catch (err) {
+        showAppAlert({ type: "error", title: "เกิดข้อผิดพลาด", message: `ไม่สามารถบันทึกจบหน้าที่ได้: ${err.message}` });
       }
     }
   });
@@ -1025,4 +1045,17 @@ export function toggleTodayLogsCollapse() {
   if (!container) return;
   const isHidden = container.classList.toggle("hidden");
   if (chevron) chevron.style.transform = isHidden ? "rotate(-90deg)" : "rotate(0deg)";
+}
+
+if (typeof window !== "undefined") {
+  window.toggleTaskLogs = toggleTaskLogs;
+  window.toggleCheckoutModalActivityList = toggleCheckoutModalActivityList;
+  window.deleteTaskActivityLog = deleteTaskActivityLog;
+  window.promptIndividualDutyCheckout = promptIndividualDutyCheckout;
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const modal = document.getElementById("checkoutOutcomeModal");
+      if (modal && !modal.classList.contains("hidden")) closeCheckoutModal();
+    }
+  });
 }

@@ -15,6 +15,7 @@ import { formatThaiDateDisplay } from '../utils/date.js';
 import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
 import { matchesOperator } from './tasks.js';
 import { state, getEffectiveOperatorName } from './state.js';
+import { getTaskMemberStatuses } from '../utils/taskMembers.js';
 
 let isSubmittingCheckin = false;
 let checkinPhotos = [];
@@ -61,6 +62,29 @@ export function updateQuickCardUI(task) {
     if (deadlineEl) deadlineEl.innerText = formatThaiDateDisplay(task.deadline);
     if (toggleTextEl) toggleTextEl.innerText = "📋 ขยายดูรายละเอียดงาน";
     if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
+
+    const loopContainer = document.getElementById("quickCardLoopMembersBlock");
+    if (loopContainer) {
+      const memberStatuses = getTaskMemberStatuses(task);
+      if (memberStatuses.length > 0) {
+        loopContainer.classList.remove("hidden");
+        loopContainer.innerHTML = memberStatuses.map(m => `
+          <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-md font-medium ${
+            m.hasCheckedOut 
+              ? 'bg-slate-100 text-slate-700 border border-slate-200' 
+              : (m.hasCheckedIn 
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold' 
+                  : 'bg-amber-50 text-amber-900 border border-amber-200')
+          }">
+            <span class="mr-1">${m.hasCheckedOut ? '🏁' : (m.hasCheckedIn ? '🟢' : '⏳')}</span>
+            <strong class="truncate max-w-[90px]">${m.shortName}:</strong>&nbsp;
+            <span>${m.hasCheckedOut ? `เสร็จ (${m.checkoutTime})` : (m.hasCheckedIn ? `เข้า ${m.checkinTime}` : 'ยังไม่เช็กอิน')}</span>
+          </span>
+        `).join('');
+      } else {
+        loopContainer.classList.add("hidden");
+      }
+    }
 
     if (normalHeader) normalHeader.classList.add("hidden");
     quickCard.classList.remove("hidden");
@@ -190,12 +214,13 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
         </span>
         <span class="text-[11px] text-blue-600 font-semibold">${pendingTasks.length} งาน</span>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-0.5 no-scrollbar">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[38rem] sm:max-h-[44rem] overflow-y-auto pr-1" style="scrollbar-width: thin;">
         ${pendingTasks.map(task => {
           const isSelected = selectedAssignedTaskId === task.id;
           const techList = Array.isArray(task.techs) ? task.techs.join(", ") : (task.techs || "ผู้ปฏิบัติงานทั่วไป");
+          const memberStatuses = getTaskMemberStatuses(task);
           return `
-            <div onclick="window.selectAssignedTaskForCheckin('${task.id}')" class="p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+            <div onclick="window.selectAssignedTaskForCheckin('${task.id}')" class="p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
               isSelected 
                 ? 'bg-blue-50 border-2 border-blue-600 shadow-sm ring-2 ring-blue-200' 
                 : 'bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs'
@@ -211,6 +236,23 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
                 <span class="flex-shrink-0 whitespace-nowrap font-semibold">👤 ผู้ปฏิบัติงาน:</span>
                 <strong class="text-slate-800 truncate min-w-0 font-bold block" title="${techList.replace(/"/g, '&quot;')}">${techList}</strong>
               </div>
+              ${memberStatuses.length > 0 ? `
+                <div class="mt-2 pt-1.5 border-t border-slate-100 flex flex-wrap gap-1">
+                  ${memberStatuses.map(m => `
+                    <span class="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-md font-medium ${
+                      m.hasCheckedOut 
+                        ? 'bg-slate-100 text-slate-700 border border-slate-200' 
+                        : (m.hasCheckedIn 
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold' 
+                            : 'bg-amber-50 text-amber-900 border border-amber-200')
+                    }">
+                      <span class="mr-1">${m.hasCheckedOut ? '🏁' : (m.hasCheckedIn ? '🟢' : '⏳')}</span>
+                      <strong class="truncate max-w-[85px]">${m.shortName}:</strong>&nbsp;
+                      <span>${m.hasCheckedOut ? `เสร็จ (${m.checkoutTime})` : (m.hasCheckedIn ? `เข้า ${m.checkinTime}` : 'ยังไม่เช็กอิน')}</span>
+                    </span>
+                  `).join('')}
+                </div>
+              ` : ''}
             </div>
           `;
         }).join('')}

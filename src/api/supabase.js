@@ -856,13 +856,65 @@ export async function deleteTaskActivityLogApi({ taskId, logId, logTime, logType
   }
 }
 
+export async function submitDutyCheckoutApi({ taskId, tech, note, photos = [] }) {
+  try {
+    const now = new Date();
+    const timeStr = formatGasTime(now.toTimeString().slice(0, 5));
+    const dateStr = now.toLocaleDateString('th-TH');
+    const dutyHistoryItem = {
+      id: `DUTY-${Date.now().toString(36)}`,
+      type: "duty_complete",
+      label: `🏁 เช็กเอาต์จบหน้าที่ (${tech})`,
+      tech: tech,
+      time: timeStr,
+      date: dateStr,
+      note: note || `เช็กเอาต์จบหน้าที่ของ ${tech}`,
+      photos: photos || [],
+      createdAt: now.toISOString()
+    };
+
+    if (taskId) {
+      const { data: currentTasks } = await supabase.from('tasks').select('*').eq('id', taskId).limit(1);
+      const currentTask = currentTasks && currentTasks[0] ? currentTasks[0] : null;
+      if (currentTask) {
+        const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
+        const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
+        const allTechs = Array.isArray(currentTask.techs) ? currentTask.techs : [];
+        const updatedHistory = [...existingHistory, dutyHistoryItem];
+
+        let completedCount = 0;
+        allTechs.forEach(t => {
+          const sName = t.replace(/K\./g, '').split('(')[0].trim();
+          if (updatedHistory.some(h => (h.type === 'duty_complete' || h.type === 'close') && (h.tech?.includes(sName) || t.includes(h.tech)))) {
+            completedCount++;
+          }
+        });
+
+        const autoProgress = allTechs.length > 0 ? Math.round((completedCount / allTechs.length) * 100) : (currentTask.progress || 0);
+        const newProgress = Math.max(currentTask.progress || 0, autoProgress);
+        const isAllDone = allTechs.length > 0 && completedCount >= allTechs.length;
+
+        await supabase.from('tasks').update({
+          status: isAllDone ? 'เสร็จสิ้น' : 'กำลังทำ',
+          progress: isAllDone ? 100 : newProgress,
+          latest_update: `เช็กเอาต์จบหน้าที่: ${tech}${note ? ` ("${note}")` : ''}`,
+          customer: { ...existingCust, progress_history: updatedHistory },
+          updated_at: now.toISOString()
+        }).eq('id', taskId);
+
+        return { success: true, historyItem: dutyHistoryItem, isAllDone, autoProgress };
+      }
+    }
+    return { success: true, historyItem: dutyHistoryItem };
+  } catch (err) {
+    console.warn("submitDutyCheckoutApi error:", err);
+    throw err;
+  }
+}
+
 export async function clearAllCheckinsApi() {
   try {
-    const { error } = await supabase
-      .from('checkins')
-      .delete()
-      .neq('id', '___NEVER_MATCH___');
-
+    const { error } = await supabase.from('checkins').delete().neq('id', '___NEVER_MATCH___');
     if (error) throw error;
     return { success: true };
   } catch (err) {
@@ -876,10 +928,7 @@ export async function clearAllCheckinsApi() {
 // -------------------------------------------------------------
 export async function addNewTechnicianApi(name) {
   try {
-    const { error } = await supabase
-      .from('technicians')
-      .insert({ name, role: 'technician' });
-
+    const { error } = await supabase.from('technicians').insert({ name, role: 'technician' });
     if (error) throw error;
     return { success: true };
   } catch (err) {
@@ -890,11 +939,7 @@ export async function addNewTechnicianApi(name) {
 
 export async function addNewTechnicianWithRoleApi(name, phone = '-', role = 'technician') {
   try {
-    const { data, error } = await supabase
-      .from('technicians')
-      .insert({ name, phone: phone || '-', role: role || 'technician' })
-      .select();
-
+    const { data, error } = await supabase.from('technicians').insert({ name, phone: phone || '-', role: role || 'technician' }).select();
     if (error) throw error;
     return { success: true, data: data?.[0] };
   } catch (err) {
@@ -905,11 +950,7 @@ export async function addNewTechnicianWithRoleApi(name, phone = '-', role = 'tec
 
 export async function updateTechnicianRoleApi(id, role) {
   try {
-    const { error } = await supabase
-      .from('technicians')
-      .update({ role })
-      .eq('id', id);
-
+    const { error } = await supabase.from('technicians').update({ role }).eq('id', id);
     if (error) throw error;
     return { success: true };
   } catch (err) {
@@ -920,11 +961,7 @@ export async function updateTechnicianRoleApi(id, role) {
 
 export async function bindTechnicianLineUserApi(id, lineUserId) {
   try {
-    const { error } = await supabase
-      .from('technicians')
-      .update({ line_user_id: lineUserId })
-      .eq('id', id);
-
+    const { error } = await supabase.from('technicians').update({ line_user_id: lineUserId }).eq('id', id);
     if (error) throw error;
     return { success: true };
   } catch (err) {
@@ -935,11 +972,7 @@ export async function bindTechnicianLineUserApi(id, lineUserId) {
 
 export async function deleteTechnicianApi(name) {
   try {
-    const { error } = await supabase
-      .from('technicians')
-      .delete()
-      .eq('name', name);
-
+    const { error } = await supabase.from('technicians').delete().eq('name', name);
     if (error) throw error;
     return { success: true };
   } catch (err) {
