@@ -688,9 +688,16 @@ export function openCheckoutModal(id) {
               </div>
             </div>
             ${m.hasCheckedOut ? `
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
-                ✓ จบหน้าที่แล้ว
-              </span>
+              <div class="flex items-center space-x-1.5 flex-shrink-0">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  ✓ เช็กเอาต์แล้ว
+                </span>
+                ${isMe ? `
+                  <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${item.taskId || item.id}')" class="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] border border-blue-300 shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer" title="แตะเพื่อเช็กอินรอบใหม่ในวันถัดไปหรือเริ่มกะใหม่">
+                    <span>📍 เช็กอินรอบใหม่</span>
+                  </button>
+                ` : ''}
+              </div>
             ` : (isMe ? (m.hasCheckedIn ? `
               <button type="button" onclick="event.stopPropagation(); window.promptIndividualDutyCheckout('${item.id}', '${m.fullName.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="บันทึกเช็กเอาต์จบงานหน้าที่ของคุณ">
                 <span>🏁 เช็กเอาต์จบหน้าที่</span>

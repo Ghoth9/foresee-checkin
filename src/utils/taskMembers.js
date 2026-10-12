@@ -53,14 +53,15 @@ export function getTaskMemberStatuses(task, activeItem = null) {
   progressHist.forEach(ph => {
     if (ph.type === 'checkin' && ph.time) {
       const pTechs = splitTechs(ph.tech || ph.by);
-      checkinRecords.push({ techs: pTechs, checkedInBy: ph.by || (pTechs.length === 1 ? pTechs[0] : null), time: ph.time, date: ph.date });
+      checkinRecords.push({ techs: pTechs, checkedInBy: ph.by || (pTechs.length === 1 ? pTechs[0] : null), time: ph.time, date: ph.date, createdAt: ph.createdAt || ph.created_at || null });
     }
     if (ph.type === 'duty_complete' || ph.type === 'close' || (ph.status === 'เสร็จสิ้น' && ph.tech)) {
       dutyCompleteRecords.push({
         tech: ph.tech || ph.by || '',
         time: ph.time,
         date: ph.date,
-        note: ph.note || ''
+        note: ph.note || '',
+        createdAt: ph.createdAt || ph.created_at || null
       });
     }
   });
@@ -69,37 +70,44 @@ export function getTaskMemberStatuses(task, activeItem = null) {
     let shortName = techFullName.replace(/K\./g, '').split('(')[0].trim();
     if (!shortName) shortName = techFullName;
 
-    // Match checkin: prioritize specific checkedInBy, fallback to unique tech match
-    let matchedCheckin = checkinRecords.find(cr =>
-      cr.checkedInBy && (matchesOperator(cr.checkedInBy, techFullName) || matchesOperator(cr.checkedInBy, shortName))
+    const matchedCheckins = checkinRecords.filter(cr =>
+      (cr.checkedInBy && (matchesOperator(cr.checkedInBy, techFullName) || matchesOperator(cr.checkedInBy, shortName))) ||
+      (cr.techs && cr.techs.some(t => matchesOperator(t, techFullName) || matchesOperator(t, shortName)))
     );
+    const latestCheckin = matchedCheckins.length > 0 ? matchedCheckins[matchedCheckins.length - 1] : null;
 
-    if (!matchedCheckin) {
-      matchedCheckin = checkinRecords.find(cr => {
-        if (cr.checkedInBy) {
-          return matchesOperator(cr.checkedInBy, techFullName) || matchesOperator(cr.checkedInBy, shortName);
-        }
-        // If no checkedInBy was recorded and multiple techs exist, attribute only to the first tech who initiated it
-        if (cr.techs.length > 1) {
-          return matchesOperator(cr.techs[0], techFullName) || matchesOperator(cr.techs[0], shortName);
-        }
-        return cr.techs.some(t => matchesOperator(t, techFullName) || matchesOperator(t, shortName));
-      });
-    }
-
-    const matchedDuty = dutyCompleteRecords.find(dr =>
+    const matchedDuties = dutyCompleteRecords.filter(dr =>
       matchesOperator(dr.tech, techFullName) || matchesOperator(dr.tech, shortName)
     );
+    const latestDuty = matchedDuties.length > 0 ? matchedDuties[matchedDuties.length - 1] : null;
 
-    const hasCheckedIn = !!matchedCheckin;
-    const hasCheckedOut = !!matchedDuty;
+    let hasCheckedIn = false;
+    let hasCheckedOut = false;
 
-    const checkinTime = matchedCheckin
-      ? `${matchedCheckin.date && matchedCheckin.date !== 'วันนี้' ? matchedCheckin.date + ' ' : ''}${matchedCheckin.time || ''} น.`
+    if (latestCheckin && latestDuty) {
+      const tIn = latestCheckin.createdAt ? new Date(latestCheckin.createdAt).getTime() : 0;
+      const tOut = latestDuty.createdAt ? new Date(latestDuty.createdAt).getTime() : 0;
+      if (tIn > tOut) {
+        hasCheckedIn = true;
+        hasCheckedOut = false;
+      } else {
+        hasCheckedIn = true;
+        hasCheckedOut = true;
+      }
+    } else if (latestCheckin) {
+      hasCheckedIn = true;
+      hasCheckedOut = false;
+    } else if (latestDuty) {
+      hasCheckedIn = true;
+      hasCheckedOut = true;
+    }
+
+    const checkinTime = latestCheckin
+      ? `${latestCheckin.date && latestCheckin.date !== 'วันนี้' ? latestCheckin.date + ' ' : ''}${latestCheckin.time || ''} น.`
       : null;
 
-    const checkoutTime = matchedDuty
-      ? `${matchedDuty.date && matchedDuty.date !== 'วันนี้' ? matchedDuty.date + ' ' : ''}${matchedDuty.time || ''} น.`
+    const checkoutTime = latestDuty
+      ? `${latestDuty.date && latestDuty.date !== 'วันนี้' ? latestDuty.date + ' ' : ''}${latestDuty.time || ''} น.`
       : null;
 
     let status = 'pending';
@@ -111,6 +119,7 @@ export function getTaskMemberStatuses(task, activeItem = null) {
       status = 'in_progress';
       statusLabel = `เช็กอินแล้ว (${checkinTime})`;
     }
+
 
     return {
       fullName: techFullName,

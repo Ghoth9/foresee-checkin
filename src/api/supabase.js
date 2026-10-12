@@ -891,19 +891,18 @@ export async function submitDutyCheckoutApi({ taskId, tech, note, photos = [] })
           }
         });
 
-        const autoProgress = allTechs.length > 0 ? Math.round((completedCount / allTechs.length) * 100) : (currentTask.progress || 0);
-        const newProgress = Math.max(currentTask.progress || 0, autoProgress);
-        const isAllDone = allTechs.length > 0 && completedCount >= allTechs.length;
+        const autoProgress = allTechs.length > 0 ? Math.min(90, Math.round((completedCount / allTechs.length) * 90)) : (currentTask.progress || 0);
+        const newProgress = Math.min(90, Math.max(currentTask.progress || 0, autoProgress));
 
         await supabase.from('tasks').update({
-          status: isAllDone ? 'เสร็จสิ้น' : 'กำลังทำ',
-          progress: isAllDone ? 100 : newProgress,
-          latest_update: `เช็กเอาต์จบหน้าที่: ${tech}${note ? ` ("${note}")` : ''}`,
+          status: 'กำลังทำ',
+          progress: newProgress,
+          latest_update: `เช็กเอาต์: ${tech}${note ? ` ("${note}")` : ''}`,
           customer: { ...existingCust, progress_history: updatedHistory },
           updated_at: now.toISOString()
         }).eq('id', taskId);
 
-        return { success: true, historyItem: dutyHistoryItem, isAllDone, autoProgress };
+        return { success: true, historyItem: dutyHistoryItem, isAllDone: false, autoProgress: newProgress };
       }
     }
     return { success: true, historyItem: dutyHistoryItem };
