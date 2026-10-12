@@ -60,7 +60,7 @@ import {
   setCheckoutOutcome, renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse
 } from './modules/checkoutList.js';
 
-import { openShareTaskLineModal, closeShareTaskLineModal, submitShareTaskChoice } from './modules/shareModal.js';
+import { openShareTaskLineModal, closeShareTaskLineModal, submitShareTaskChoice, shareActivityLogToLine } from './modules/shareModal.js';
 
 // -------------------------------------------------------------
 // LOCAL STATE INITIALIZATION FROM CACHE
@@ -861,6 +861,7 @@ window.openShareTaskLineModal = openShareTaskLineModal;
 window.closeShareTaskLineModal = closeShareTaskLineModal;
 window.submitShareTaskChoice = submitShareTaskChoice;
 window.shareActiveTaskToLine = (activeId) => openShareTaskLineModal(activeId);
+window.shareActivityLogToLine = shareActivityLogToLine;
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, state.tasksList, state.allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;
 window.saveEditedTask = () => window.saveTaskDetailChanges();

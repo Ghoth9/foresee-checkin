@@ -3,17 +3,20 @@
  * Allows user to choose between Assignment, Check-in, or Progress Update Flex Card.
  */
 
-import { state } from './state.js';
+import { state, getEffectiveOperatorName } from './state.js';
 import { formatGasTime } from '../utils/date.js';
 import { showAppAlert } from '../utils/dialog.js';
 import { 
   createAssignTaskFlexCard, 
   createProgressFlexCard, 
   createCheckinFlexCard, 
+  createCheckoutFlexCard,
+  createExtendDeadlineFlexCard,
   triggerLiffShare, 
   getLineUserName 
 } from '../liff/line.js';
-import { getUniquePhotosForActiveTask, formatLatestNoteText } from './checkoutList.js';
+import { getUniquePhotosForActiveTask, formatLatestNoteText, collectTaskActivityLogs } from './checkoutList.js';
+import { calculateDuration } from './checkout.js';
 
 let currentShareTaskItem = null;
 
@@ -95,6 +98,7 @@ export async function submitShareTaskChoice(choiceType) {
     });
     confirmMsg = `แชร์ข้อมูลมอบหมายงาน ${item.task} เข้า LINE สำเร็จ!`;
   } else if (choiceType === "progress") {
+    const currentOp = getEffectiveOperatorName();
     flexCard = createProgressFlexCard({
       id: item.id,
       taskId: item.taskId || item.id,
@@ -103,7 +107,7 @@ export async function submitShareTaskChoice(choiceType) {
       progress: itemProg,
       status: item.status || "กำลังทำ",
       note: cleanNote || "อัปเดตสถานะงานปัจจุบัน",
-      updateBy: getLineUserName() || techList,
+      updateBy: currentOp || getLineUserName() || techList,
       updateTime: new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }),
       photoCount: uniquePhotos.length,
       totalPhotos: uniquePhotos.length
@@ -123,6 +127,100 @@ export async function submitShareTaskChoice(choiceType) {
       photoCount: uniquePhotos.length
     });
     confirmMsg = `แชร์ข้อมูลเช็กอินงาน ${item.task} เข้า LINE สำเร็จ!`;
+  }
+
+  if (flexCard) {
+    await triggerLiffShare(flexCard, confirmMsg);
+  }
+}
+
+/**
+ * Share an individual activity log / movement to LINE.
+ * Supports sharing specific check-ins, progress updates, extensions, and close logs.
+ */
+export async function shareActivityLogToLine(activeId, logIndex) {
+  const item = state.activeTasks.find(a => a.id === activeId);
+  if (!item) {
+    showAppAlert({
+      type: "warning",
+      title: "ไม่พบข้อมูลงาน",
+      message: "ไม่พบข้อมูลรายการงานที่ต้องการแชร์ครับ"
+    });
+    return;
+  }
+
+  const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+  const activityLogs = collectTaskActivityLogs(item, linkedTask);
+  const log = activityLogs[logIndex];
+  if (!log) {
+    showAppAlert({
+      type: "warning",
+      title: "ไม่พบกิจกรรม",
+      message: "ไม่พบข้อมูลประวัติกิจกรรมที่ต้องการแชร์ครับ"
+    });
+    return;
+  }
+
+  let flexCard = null;
+  let confirmMsg = "";
+
+  const displayTaskId = item.taskId || item.id;
+  const taskTitle = item.task;
+  const photoCount = Array.isArray(log.photos) ? log.photos.length : 0;
+  const logTech = log.tech || getEffectiveOperatorName() || getLineUserName() || "ผู้ปฏิบัติงาน";
+
+  if (log.type === "checkin") {
+    flexCard = createCheckinFlexCard({
+      id: item.id,
+      taskId: displayTaskId,
+      task: taskTitle,
+      techs: logTech,
+      time: log.time || "-",
+      coords: item.coords,
+      mapUrl: item.mapUrl,
+      photoCount: photoCount
+    });
+    confirmMsg = `แชร์การเช็กอินของ "${logTech}" เข้า LINE สำเร็จ!`;
+  } else if (log.type === "close") {
+    flexCard = createCheckoutFlexCard({
+      id: item.id,
+      task: taskTitle,
+      techs: logTech,
+      inTime: item.time,
+      outTime: log.time || "-",
+      duration: calculateDuration(item.time, item.date, item.createdAt),
+      outcome: log.status || "เสร็จสิ้น",
+      note: log.note && log.note !== "-" ? log.note : "บันทึกปิดงาน 100%",
+      photoCount: photoCount
+    });
+    confirmMsg = `แชร์การปิดงานของ "${taskTitle}" เข้า LINE สำเร็จ!`;
+  } else if (log.type === "extend") {
+    flexCard = createExtendDeadlineFlexCard({
+      taskId: displayTaskId,
+      taskTitle: taskTitle,
+      oldDeadline: item.deadline || "-",
+      newDeadline: log.time || "-",
+      reason: log.note || "ขอขยายเวลาปฏิบัติงาน",
+      requestBy: logTech
+    });
+    confirmMsg = `แชร์การขอขยายเวลาของ "${taskTitle}" เข้า LINE สำเร็จ!`;
+  } else {
+    // update / progress
+    const cleanNote = log.note && log.note !== "-" ? log.note : (log.label || "อัปเดตความคืบหน้า");
+    flexCard = createProgressFlexCard({
+      id: item.id,
+      taskId: displayTaskId,
+      taskTitle: taskTitle,
+      techs: item.techs,
+      progress: log.progress !== undefined ? Number(log.progress) : (item.progress || 0),
+      status: log.status || "กำลังทำ",
+      note: cleanNote,
+      updateBy: logTech,
+      updateTime: log.time || "-",
+      photoCount: photoCount,
+      totalPhotos: photoCount
+    });
+    confirmMsg = `แชร์อัปเดตกิจกรรม (${log.label}) เข้า LINE สำเร็จ!`;
   }
 
   if (flexCard) {

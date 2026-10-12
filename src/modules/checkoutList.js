@@ -419,15 +419,21 @@ export function renderActiveCheckoutList() {
               <span id="logToggleIcon-${item.id}" class="text-[10px] transform transition-transform">▼</span>
             </button>
             <div id="logAccordion-${item.id}" class="hidden mt-2 space-y-1.5 bg-slate-50/90 rounded-xl p-2.5 border border-slate-200/80 text-[11px] max-h-56 overflow-y-auto" style="scrollbar-width: thin;">
-              ${taskActivityLogs.map(log => `
-                <div class="p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs flex items-start space-x-2">
+              ${taskActivityLogs.map((log, lIdx) => `
+                <div class="p-2.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex items-start space-x-2">
                   <span class="text-sm flex-shrink-0 mt-0.5">
                     ${log.type === 'checkin' ? '🟢' : (log.type === 'close' ? '🏁' : (log.type === 'extend' ? '⏳' : '📊'))}
                   </span>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between flex-wrap gap-1">
-                      <strong class="text-slate-900">${log.label}</strong>
-                      <span class="text-[10px] text-slate-500 font-mono">${log.date && log.date !== 'วันนี้' ? log.date + ' ' : ''}${log.time} น.</span>
+                      <div class="flex items-center space-x-1.5 flex-wrap">
+                        <strong class="text-slate-900">${log.label}</strong>
+                        <span class="text-[10px] text-slate-500 font-mono">${log.date && log.date !== 'วันนี้' ? log.date + ' ' : ''}${log.time} น.</span>
+                      </div>
+                      <button type="button" onclick="event.stopPropagation(); window.shareActivityLogToLine('${item.id}', ${lIdx})" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-0.5 rounded-md border border-emerald-300 hover:border-emerald-600 text-[10px] font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="แชร์กิจกรรมนี้เข้า LINE">
+                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
+                        <span>แชร์</span>
+                      </button>
                     </div>
                     <div class="text-[10px] text-slate-600 mt-0.5">
                       โดย: <strong class="text-slate-800">${log.tech}</strong>
@@ -596,15 +602,21 @@ export function openCheckoutModal(id) {
     if (activityLogs.length === 0) {
       listEl.innerHTML = `<div class="text-center py-2 text-slate-400 text-[11px]">ยังไม่มีประวัติกิจกรรม</div>`;
     } else {
-      listEl.innerHTML = activityLogs.map(log => `
-        <div class="p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs flex items-start space-x-2 text-[11px]">
+      listEl.innerHTML = activityLogs.map((log, lIdx) => `
+        <div class="p-2.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex items-start space-x-2 text-[11px]">
           <span class="text-sm flex-shrink-0 mt-0.5">
             ${log.type === 'checkin' ? '🟢' : (log.type === 'close' ? '🏁' : (log.type === 'extend' ? '⏳' : '📊'))}
           </span>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between flex-wrap gap-1">
-              <strong class="text-slate-900">${log.label}</strong>
-              <span class="text-[10px] text-slate-500 font-mono">${log.date && log.date !== 'วันนี้' ? log.date + ' ' : ''}${log.time} น.</span>
+              <div class="flex items-center space-x-1.5 flex-wrap">
+                <strong class="text-slate-900">${log.label}</strong>
+                <span class="text-[10px] text-slate-500 font-mono">${log.date && log.date !== 'วันนี้' ? log.date + ' ' : ''}${log.time} น.</span>
+              </div>
+              <button type="button" onclick="event.stopPropagation(); window.shareActivityLogToLine('${item.id}', ${lIdx})" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-0.5 rounded-md border border-emerald-300 hover:border-emerald-600 text-[10px] font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="แชร์กิจกรรมนี้เข้า LINE">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
+                <span>แชร์</span>
+              </button>
             </div>
             <div class="text-[10px] text-slate-600 mt-0.5">
               โดย: <strong class="text-slate-800">${log.tech}</strong>

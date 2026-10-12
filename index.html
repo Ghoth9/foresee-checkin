@@ -1300,9 +1300,15 @@
             <h3 id="checkoutModalTaskTitle" class="text-sm sm:text-base font-bold text-slate-900 truncate mt-1">ชื่องาน</h3>
           </div>
         </div>
-        <button type="button" onclick="window.closeCheckoutModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold transition-all shadow-2xs active:scale-95 flex-shrink-0 cursor-pointer" title="ปิดหน้าต่าง">
-          ✕
-        </button>
+        <div class="flex items-center space-x-2 flex-shrink-0">
+          <button type="button" onclick="window.shareActiveTaskToLine(window.state ? window.state.selectedActiveCheckoutId : null)" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2.5 py-1.5 rounded-xl border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="แชร์ข้อมูลงานนี้เข้ากลุ่ม LINE">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
+            <span class="hidden sm:inline">แชร์เข้า LINE</span>
+          </button>
+          <button type="button" onclick="window.closeCheckoutModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold transition-all shadow-2xs active:scale-95 flex-shrink-0 cursor-pointer" title="ปิดหน้าต่าง">
+            ✕
+          </button>
+        </div>
       </div>
 
       <!-- Modal Body (Scrollable Single Unified Column) -->
