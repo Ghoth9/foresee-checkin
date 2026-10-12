@@ -41,13 +41,6 @@ export function getFilteredHistoryLogs() {
         const linkedTask = state.tasksList.find(t => (log.taskId && t.id === log.taskId) || t.id === log.id || t.title === log.task);
         if (linkedTask) {
           if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
-          const isCreatedByMe = matchesOperator(linkedTask.assignedBy, opName) ||
-            matchesOperator(linkedTask.creator, opName) ||
-            matchesOperator(linkedTask.customer?.assigned_by, opName) ||
-            matchesOperator(linkedTask.customer?.creator, opName) ||
-            matchesOperator(linkedTask.updateBy, opName) ||
-            matchesOperator(linkedTask.updated_by, opName);
-          if (isCreatedByMe) return true;
         }
         return false;
       });
@@ -98,10 +91,11 @@ export function renderWorkHistoryList() {
           📋
         </div>
         <div class="text-xs font-bold text-slate-700">
-          ${activeHistoryFilter === "today" ? "ยังไม่มีประวัติงานที่ทำเสร็จในวันนี้" : "ยังไม่มีประวัติงานในระบบ"}
+          ${activeHistoryFilter === "today" ? "ยังไม่มีงานที่บันทึกปิดงานเสร็จสิ้นในวันนี้" : "ยังไม่มีงานที่บันทึกปิดงานเสร็จสิ้น"}
         </div>
-        <p class="text-[11px] text-slate-400 max-w-xs mx-auto">
-          เมื่องานที่คุณปฏิบัติได้รับการอัปเดตและบันทึกปิดงานแล้ว ประวัติการทำงานจะปรากฏที่นี่ครับ
+        <p class="text-[11px] text-slate-500 max-w-xs mx-auto">
+          หน้านี้แสดงเฉพาะงานที่บันทึกปิดงานเสร็จสิ้นแล้ว (100% / เสร็จสิ้น)<br>
+          <span class="text-blue-600 font-medium">💡 สำหรับงานที่กำลังทำอยู่ สามารถตรวจสอบและอัปเดตได้ที่แท็บ "ส่งงาน" หรือ "รายการงาน"</span>
         </p>
       </div>
     `;

@@ -151,17 +151,10 @@ export function renderActiveCheckoutList() {
         // 2. Checked in by this user
         if (matchesOperator(item.checkedInBy, opName) || matchesOperator(item.closerName, opName) || matchesOperator(item.closer_name, opName) || matchesOperator(item.creator, opName)) return true;
 
-        // 3. Linked task check
+        // 3. Linked task check (strictly tasks assigned to this operator)
         const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
         if (linkedTask) {
           if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
-          const isCreatedByMe = matchesOperator(linkedTask.assignedBy, opName) ||
-            matchesOperator(linkedTask.creator, opName) ||
-            matchesOperator(linkedTask.customer?.assigned_by, opName) ||
-            matchesOperator(linkedTask.customer?.creator, opName) ||
-            matchesOperator(linkedTask.updateBy, opName) ||
-            matchesOperator(linkedTask.updated_by, opName);
-          if (isCreatedByMe) return true;
         }
         return false;
       });
@@ -211,7 +204,6 @@ export function renderActiveCheckoutList() {
         const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
         if (linkedTask) {
           if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
-          if (matchesOperator(linkedTask.assignedBy, opName) || matchesOperator(linkedTask.creator, opName)) return true;
         }
         return false;
       });
@@ -222,7 +214,6 @@ export function renderActiveCheckoutList() {
         const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
         if (linkedTask) {
           if (matchTechName(linkedTask.techs, checkoutTechFilter) || matchTechName(linkedTask.assignee, checkoutTechFilter)) return true;
-          if (matchesOperator(linkedTask.assignedBy, checkoutTechFilter) || matchesOperator(linkedTask.creator, checkoutTechFilter)) return true;
         }
         return false;
       });

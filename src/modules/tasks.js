@@ -70,31 +70,67 @@ export function getAssigneeSubmissionsStatus(task) {
     }
 
     const closeSub = userSubs.find(s => s.status === "เสร็จสิ้น" || s.status === "ปิดงานแล้ว" || Number(s.progress) === 100);
+    const dutySub = userSubs.find(s => s.type === "duty_complete");
     const latestSub = userSubs[userSubs.length - 1];
-    const targetSub = closeSub || latestSub;
+    const targetSub = closeSub || dutySub || latestSub;
     const isClosed = !!closeSub;
+    const isDutyDone = !!dutySub;
     const timeStr = targetSub.time ? `${targetSub.time} น.` : '';
+
+    const displayProg = (targetSub && targetSub.progress !== undefined && targetSub.progress !== null)
+      ? targetSub.progress
+      : (task.progress !== undefined ? task.progress : 0);
+
+    let displayLabel = cleanTech;
+    let displayStatus = `${displayProg}%`;
+    let dotColor = "bg-blue-500";
+    let badgeClass = "bg-blue-50 text-blue-800 border-blue-200 font-semibold";
+
+    if (isClosed) {
+      displayLabel = `${cleanTech} ✓`;
+      displayStatus = "ปิดงานแล้ว";
+      dotColor = "bg-emerald-500";
+      badgeClass = "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold";
+    } else if (isDutyDone) {
+      displayLabel = `${cleanTech} ✓`;
+      displayStatus = "เช็กเอาต์แล้ว";
+      dotColor = "bg-emerald-500";
+      badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold";
+    } else {
+      displayLabel = `${cleanTech} (${displayProg}%)`;
+    }
 
     return {
       techName: cleanTech,
       fullTechName: rawTechName,
       submitted: true,
       isClosed: isClosed,
-      status: isClosed ? "ปิดงานแล้ว" : `${targetSub.progress}%`,
+      isDutyDone: isDutyDone,
+      status: displayStatus,
       time: targetSub.time,
       date: targetSub.date,
       note: targetSub.note,
       photoCount: Array.isArray(targetSub.photos) ? targetSub.photos.length : 0,
-      dotColor: isClosed ? "bg-emerald-500" : "bg-blue-500",
-      badgeClass: isClosed
-        ? "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold"
-        : "bg-blue-50 text-blue-800 border-blue-200 font-semibold",
-      label: isClosed ? `${cleanTech} ✓` : `${cleanTech} (${targetSub.progress}%)`,
+      dotColor,
+      badgeClass,
+      label: displayLabel,
       tooltip: isClosed
         ? `${rawTechName}: ปิดงานแล้ว (${timeStr})`
-        : `${rawTechName}: คืบหน้า ${targetSub.progress}% (${timeStr})`
+        : (isDutyDone
+          ? `${rawTechName}: เช็กเอาต์จบหน้าที่แล้ว (${timeStr})`
+          : `${rawTechName}: คืบหน้า ${displayProg}% (${timeStr})`)
     };
   });
+}
+
+export function rerenderTasksListCurrent(tasksList) {
+  if (typeof window.renderTasksListScoped === "function") {
+    window.renderTasksListScoped();
+  } else {
+    const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+    const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+    renderTasksList(tasksList || state.tasksList, getEffectiveOperatorName(), isAdmin);
+  }
 }
 
 export function cleanLatestText(text) {
@@ -120,7 +156,7 @@ export function setTaskViewMode(mode, tasksList) {
       btnList.className = "p-1.5 rounded-md transition-all text-slate-500 hover:text-slate-900";
     }
   }
-  renderTasksList(tasksList);
+  rerenderTasksListCurrent(tasksList);
 }
 
 export function setStatusFilter(status, tasksList) {
@@ -135,7 +171,7 @@ export function setStatusFilter(status, tasksList) {
       }
     }
   });
-  renderTasksList(tasksList);
+  rerenderTasksListCurrent(tasksList);
 }
 
 export function setTechFilter(techName, tasksList, allTechnicians) {
@@ -144,7 +180,7 @@ export function setTechFilter(techName, tasksList, allTechnicians) {
     cachedTechnicians = allTechnicians;
   }
   renderTechFilterChips(tasksList, cachedTechnicians);
-  renderTasksList(tasksList);
+  rerenderTasksListCurrent(tasksList);
 }
 
 export function renderTechFilterChips(tasksList, allTechnicians = []) {
@@ -199,19 +235,13 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
   let baseTasks = tasksList || state.tasksList;
 
-  // Non-admins see tasks assigned to them OR tasks assigned/created by them!
+  // Non-admins (or simulated technician view) strictly see only tasks assigned to them!
   if (!isAdmin) {
     if (opName) {
       baseTasks = baseTasks.filter(t => {
         const techs = getTaskTechs(t);
         const isAssignedToMe = techs.some(tech => matchesOperator(tech, opName));
-        const isCreatedByMe = matchesOperator(t.assignedBy, opName) ||
-          matchesOperator(t.creator, opName) ||
-          matchesOperator(t.customer?.assigned_by, opName) ||
-          matchesOperator(t.customer?.creator, opName) ||
-          matchesOperator(t.updateBy, opName) ||
-          matchesOperator(t.updated_by, opName);
-        return isAssignedToMe || isCreatedByMe;
+        return isAssignedToMe;
       });
     } else {
       baseTasks = [];

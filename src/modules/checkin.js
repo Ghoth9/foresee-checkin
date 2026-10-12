@@ -175,19 +175,13 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
   // Filter tasks that are in progress or pending
   let pendingTasks = (tasksList || []).filter(t => t.status !== "เสร็จสิ้น");
 
-  // If Operator (non-admin), ONLY show their assigned tasks or tasks they created!
+  // If Operator (non-admin or simulated technician), ONLY show their assigned tasks!
   if (!isAdmin) {
     if (opName) {
       pendingTasks = pendingTasks.filter(t => {
         const techs = Array.isArray(t.techs) ? t.techs : (typeof t.techs === 'string' ? t.techs.split(',').map(s => s.trim()) : []);
         const isAssignedToMe = techs.some(tech => matchesOperator(tech, opName));
-        const isCreatedByMe = matchesOperator(t.assignedBy, opName) ||
-          matchesOperator(t.creator, opName) ||
-          matchesOperator(t.customer?.assigned_by, opName) ||
-          matchesOperator(t.customer?.creator, opName) ||
-          matchesOperator(t.updateBy, opName) ||
-          matchesOperator(t.updated_by, opName);
-        return isAssignedToMe || isCreatedByMe;
+        return isAssignedToMe;
       });
     } else {
       pendingTasks = [];
