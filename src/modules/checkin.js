@@ -253,6 +253,17 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
                   `).join('')}
                 </div>
               ` : ''}
+              ${isSelected ? `
+                <div class="mt-3 pt-2 border-t border-blue-200 flex items-center justify-between gap-2">
+                  <span class="text-[11px] font-bold text-blue-800 flex items-center space-x-1">
+                    <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse inline-block"></span>
+                    <span>เลือกงานนี้แล้ว</span>
+                  </span>
+                  <button type="button" onclick="event.stopPropagation(); window.submitCheckin();" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/30 flex items-center space-x-1 active:scale-95 transition-transform">
+                    <span>📍 กดเช็กอินเลย</span>
+                  </button>
+                </div>
+              ` : ''}
             </div>
           `;
         }).join('')}
@@ -288,6 +299,12 @@ export function selectAssignedTask(taskId, tasksList, setSelectedTechsCallback) 
 
     // Update Quick Card UI
     updateQuickCardUI(task);
+
+    // Auto-scroll up so the user immediately sees the Quick Card & Check-in button without scrolling down
+    const quickCard = document.getElementById("assignedTaskQuickCheckinCard");
+    if (quickCard) {
+      quickCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 
   // Highlight selected card
