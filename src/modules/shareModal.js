@@ -5,7 +5,7 @@
 
 import { state, getEffectiveOperatorName } from './state.js';
 import { formatGasTime } from '../utils/date.js';
-import { showAppAlert } from '../utils/dialog.js';
+import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
 import { 
   createAssignTaskFlexCard, 
   createProgressFlexCard, 
@@ -227,3 +227,48 @@ export async function shareActivityLogToLine(activeId, logIndex) {
     await triggerLiffShare(flexCard, confirmMsg);
   }
 }
+
+export function showDutyCheckoutShareDialog({ item, taskId, taskTitle, targetTech, shortName, note, res }) {
+  showSharePromptDialog({
+    title: res.isAllDone ? "🎉 ปิดงาน 100% เรียบร้อยแล้ว!" : `🏁 เช็กเอาต์จบหน้าที่สำเร็จ (${shortName})`,
+    message: res.isAllDone
+      ? `สมาชิกทุกคนในลูปจบหน้าที่ครบแล้ว ระบบทำการปิดงาน 100% เรียบร้อยครับ! 🎉\n\nต้องการส่งการ์ดสรุปปิดงานเข้ากลุ่ม LINE ตอนนี้หรือไม่?`
+      : `บันทึกเช็กเอาต์จบหน้าที่ของ ${shortName} เรียบร้อยแล้ว (ความคืบหน้าภาพรวม ${res.autoProgress || 50}%)\n\nต้องการส่งการ์ดแจ้งกลุ่ม LINE ตอนนี้หรือไม่?`,
+    shareBtnText: "💬 เลือกกลุ่ม LINE และส่งการ์ด",
+    skipBtnText: "เสร็จสิ้น / ไว้แชร์ทีหลัง",
+    onShare: async () => {
+      let flexCard = null;
+      if (res.isAllDone) {
+        flexCard = createCheckoutFlexCard({
+          id: item ? item.id : taskId,
+          task: taskTitle,
+          techs: targetTech,
+          inTime: item ? item.time : null,
+          outTime: res.historyItem?.time || "-",
+          duration: calculateDuration(item?.time, item?.date, item?.createdAt),
+          outcome: "เสร็จสิ้น",
+          note: note,
+          photoCount: 0
+        });
+      } else {
+        flexCard = createProgressFlexCard({
+          id: item ? item.id : taskId,
+          taskId: taskId,
+          taskTitle: taskTitle,
+          techs: (item && item.techs) ? item.techs : [targetTech],
+          progress: res.autoProgress || 50,
+          status: "กำลังทำ",
+          note: `🏁 เช็กเอาต์จบหน้าที่ (${shortName}): "${note}"`,
+          updateBy: targetTech,
+          updateTime: res.historyItem?.time || "-",
+          photoCount: 0,
+          totalPhotos: 0
+        });
+      }
+      if (flexCard) {
+        await triggerLiffShare(flexCard, "ส่งการ์ดเข้ากลุ่ม LINE เรียบร้อยแล้ว!");
+      }
+    }
+  });
+}
+

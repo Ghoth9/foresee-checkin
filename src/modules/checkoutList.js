@@ -11,6 +11,7 @@ import { deleteCheckinApi, clearAllCheckinsApi, deleteTaskActivityLogApi, submit
 import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState, setCheckoutOutcome } from './checkout.js';
 export { setCheckoutOutcome };
 import { matchesOperator } from './tasks.js';
+import { showDutyCheckoutShareDialog } from './shareModal.js';
 import { updateWorkHistoryBadge, renderWorkHistoryList, renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse } from './historyModal.js';
 export { renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse };
 import {
@@ -946,20 +947,16 @@ export function promptIndividualDutyCheckout(itemId, techName) {
           }
         }
 
-        showAppAlert({
-          type: "success",
-          title: "บันทึกจบหน้าที่สำเร็จ!",
-          message: res.isAllDone
-            ? `สมาชิกทุกคนในลูปจบหน้าที่ครบแล้ว ระบบทำการปิดงาน 100% เรียบร้อยครับ! 🎉`
-            : `บันทึกเช็กเอาต์จบหน้าที่ของ ${shortName} เรียบร้อยแล้ว งานยังคงเปิดอยู่สำหรับสมาชิกท่านอื่นในลูปครับ`
-        });
-
         if (res.isAllDone) {
           closeCheckoutModal();
         } else {
           openCheckoutModal(itemId);
         }
         renderActiveCheckoutList();
+
+        const taskTitle = item ? item.task : (linked ? linked.title : 'งาน');
+        showDutyCheckoutShareDialog({ item, taskId, taskTitle, targetTech, shortName, note, res });
+
       } catch (err) {
         showAppAlert({ type: "error", title: "เกิดข้อผิดพลาด", message: `ไม่สามารถบันทึกจบหน้าที่ได้: ${err.message}` });
       }
