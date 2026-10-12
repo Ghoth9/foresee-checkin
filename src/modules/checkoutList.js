@@ -780,8 +780,8 @@ export function openCheckoutModal(id) {
       ? "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-mono shadow-2xs" 
       : "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs";
   }
+  const isRealCheckin = (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00";
   if (timeEl) {
-    const isRealCheckin = (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00";
     const checkinDateLabel = (item.date && item.date !== "วันนี้" && item.date !== "-") ? `${item.date} ` : "";
     const durStr = calculateDuration(item.time, item.date, item.createdAt);
     timeEl.innerText = isRealCheckin ? `⏰ เช็กอิน: ${checkinDateLabel}${formatGasTime(item.time)} น. (${durStr})` : `📅 เริ่ม: ${item.date || 'วันนี้'}`;

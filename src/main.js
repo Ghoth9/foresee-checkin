@@ -73,6 +73,8 @@ import {
 // LOCAL STATE INITIALIZATION FROM CACHE
 // -------------------------------------------------------------
 let currentTab = "checkin";
+let pendingDeepLinkTarget = null;
+let hasHandledInitialDeepLink = false;
 
 try {
   const cachedTechRecords = localStorage.getItem("fs_technicians_list");
@@ -99,8 +101,12 @@ try {
 // -------------------------------------------------------------
 export function switchTab(tab) {
   currentTab = tab;
+  pendingDeepLinkTarget = null;
   try {
     sessionStorage.setItem("fs_active_tab", tab);
+    if (window.location.search) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   } catch (e) {}
   const sections = ["checkin", "checkout", "tasks"];
   sections.forEach(s => {
@@ -324,10 +330,9 @@ export async function refreshFromSupabase(force = false) {
       if (curActive) renderActiveTaskPhotos(curActive);
     }
 
-    // Re-check deep link params once fresh data arrives (if modal was not yet open)
-    const chkModal = document.getElementById("checkoutOutcomeModal");
-    if (!chkModal || chkModal.classList.contains("hidden")) {
-      handleDeepLink();
+    // If an initial deep link was waiting for fresh data, resolve it once
+    if (pendingDeepLinkTarget) {
+      tryOpenPendingDeepLink();
     }
   } catch (err) {
     console.warn("refreshFromSupabase error:", err);
@@ -373,7 +378,30 @@ export function updateLineStatusUI() {
 // -------------------------------------------------------------
 // DEEP LINK & QUERY PARAMS ROUTING
 // -------------------------------------------------------------
+export function tryOpenPendingDeepLink() {
+  if (!pendingDeepLinkTarget) return;
+  if (pendingDeepLinkTarget.type === "checkout") {
+    const matchId = pendingDeepLinkTarget.id;
+    const found = state.activeTasks && state.activeTasks.some(a => a.id === matchId || a.taskId === matchId);
+    if (found || (state.activeTasks && state.activeTasks.length > 0)) {
+      openCheckoutModal(matchId);
+      const chkModal = document.getElementById("checkoutOutcomeModal");
+      if (chkModal && !chkModal.classList.contains("hidden")) pendingDeepLinkTarget = null;
+    }
+  } else if (pendingDeepLinkTarget.type === "tasks") {
+    const targetTaskId = pendingDeepLinkTarget.id;
+    const subtab = pendingDeepLinkTarget.subtab;
+    const found = state.tasksList && state.tasksList.some(t => t.id === targetTaskId);
+    if (found || (state.tasksList && state.tasksList.length > 0)) {
+      openTaskDetailModal(targetTaskId, state.tasksList, state.allTechnicians, subtab === "timeline" ? "timeline" : "info");
+      pendingDeepLinkTarget = null;
+    }
+  }
+}
+
 export function handleDeepLink() {
+  if (hasHandledInitialDeepLink) return;
+  hasHandledInitialDeepLink = true;
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has("liff.state")) {
     try {
@@ -392,26 +420,24 @@ export function handleDeepLink() {
 
   if (urlTab === "checkout" || (!urlTab && (targetAction || targetId || targetTaskId))) {
     switchTab("checkout");
-    if (targetAction === "update") {
-      setActionTab("update");
-    } else if (targetAction === "close") {
-      setActionTab("close");
-    }
+    if (targetAction === "update") setActionTab("update");
+    else if (targetAction === "close") setActionTab("close");
     const matchId = targetId || targetTaskId;
     if (matchId) {
-      setTimeout(() => {
-        openCheckoutModal(matchId);
-      }, 50);
+      pendingDeepLinkTarget = { type: "checkout", id: matchId };
+      setTimeout(() => tryOpenPendingDeepLink(), 50);
     }
   } else if (urlTab === "tasks" && targetTaskId) {
     switchTab("tasks");
     const targetSubtab = urlParams.get("subtab");
-    setTimeout(() => {
-      openTaskDetailModal(targetTaskId, state.tasksList, state.allTechnicians, targetSubtab === "timeline" ? "timeline" : "info");
-    }, 150);
+    pendingDeepLinkTarget = { type: "tasks", id: targetTaskId, subtab: targetSubtab };
+    setTimeout(() => tryOpenPendingDeepLink(), 150);
   } else {
     switchTab(targetTab);
   }
+  try {
+    if (window.location.search) window.history.replaceState({}, document.title, window.location.pathname);
+  } catch (e) {}
 }
 
 // -------------------------------------------------------------
@@ -534,7 +560,7 @@ window.setActionTab = setActionTab;
 window.setCheckoutUpdatePercent = setUpdatePercent;
 window.setCheckoutUpdateStatus = setUpdateStatus;
 window.submitOngoingUpdate = () => {
-  const activeItem = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId);
+  const activeItem = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId || a.taskId === state.selectedActiveCheckoutId);
   const noteInput = document.getElementById("checkoutUpdateNoteInput");
   const uniquePhotos = getUniquePhotosForActiveTask(activeItem);
 
@@ -616,7 +642,7 @@ window.goCheckinForTask = (taskId) => {
 };
 window.setCheckoutOutcome = setCheckoutOutcome;
 window.submitCheckout = () => {
-  const activeItem = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId);
+  const activeItem = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId || a.taskId === state.selectedActiveCheckoutId);
   const noteInput = document.getElementById("checkoutNoteInput");
 
   submitCheckoutForm({
