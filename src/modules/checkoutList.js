@@ -727,7 +727,7 @@ export function openCheckoutModal(id) {
       if (memberSummaryBadge) memberSummaryBadge.innerText = `เช็กอิน: ${inCount}/${memberStatuses.length} • จบหน้าที่: ${doneCount}/${memberStatuses.length}`;
 
       memberListEl.innerHTML = memberStatuses.map(m => {
-        const canCheckOutThisDuty = !m.hasCheckedOut;
+        const canCheckOutThisDuty = m.hasCheckedIn && !m.hasCheckedOut;
         return `
           <div class="flex items-center justify-between p-2 rounded-xl bg-white border ${
             m.hasCheckedOut 
@@ -741,21 +741,25 @@ export function openCheckoutModal(id) {
               <div class="min-w-0">
                 <div class="font-bold text-slate-900 truncate">${m.fullName}</div>
                 <div class="text-[10px] text-slate-500 flex items-center space-x-1.5 flex-wrap">
-                  ${m.hasCheckedIn ? `<span class="text-blue-700 font-medium">เข้า: ${m.checkinTime}</span>` : `<span class="text-amber-700 font-medium">ยังไม่ได้เช็กอิน</span>`}
+                  ${m.hasCheckedIn ? `<span class="text-blue-700 font-medium">เข้า: ${m.checkinTime}</span>` : `<span class="text-amber-700 font-medium font-semibold">⚠️ ยังไม่ได้เช็กอินเข้างาน</span>`}
                   ${m.hasCheckedOut ? `<span>•</span><span class="text-emerald-700 font-bold">จบหน้าที่: ${m.checkoutTime}</span>` : ''}
                 </div>
                 ${m.checkoutNote ? `<div class="text-[10px] text-slate-600 italic mt-0.5 font-sans">"${m.checkoutNote}"</div>` : ''}
               </div>
             </div>
-            ${canCheckOutThisDuty ? `
+            ${m.hasCheckedOut ? `
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
+                ✓ จบหน้าที่แล้ว
+              </span>
+            ` : (m.hasCheckedIn ? `
               <button type="button" onclick="event.stopPropagation(); window.promptIndividualDutyCheckout('${item.id}', '${m.fullName.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="บันทึกเช็กเอาต์จบงานเฉพาะหน้าที่ของ ${m.shortName}">
                 <span>🏁 เช็กเอาต์จบหน้าที่</span>
               </button>
             ` : `
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
-                ✓ จบหน้าที่แล้ว
-              </span>
-            `}
+              <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${item.taskId || item.id}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="${m.shortName} ยังไม่ได้เช็กอินเข้างาน แตะเพื่อไปเช็กอิน">
+                <span>📍 ไปเช็กอินก่อน</span>
+              </button>
+            `)}
           </div>
         `;
       }).join('');
@@ -936,6 +940,21 @@ export function promptIndividualDutyCheckout(itemId, techName) {
   const targetTech = techName || getEffectiveOperatorName() || "ผู้ปฏิบัติงาน";
   const shortName = targetTech.replace(/K\./g, '').split('(')[0].trim() || targetTech;
 
+  const item = state.activeTasks.find(a => a.id === itemId || a.taskId === itemId);
+  const taskId = item ? (item.taskId || item.id) : itemId;
+  const linkedTask = state.tasksList.find(t => t.id === taskId);
+  const memberStatuses = getTaskMemberStatuses(linkedTask || item, item);
+  const currentMember = memberStatuses.find(m => matchesOperator(m.fullName, targetTech) || matchesOperator(m.shortName, shortName));
+
+  if (currentMember && !currentMember.hasCheckedIn) {
+    showAppAlert({
+      type: "warning",
+      title: "ยังไม่ได้เช็กอินเข้างาน",
+      message: `${shortName} ยังไม่ได้บันทึกเวลาเช็กอินเข้างานหน้างานครับ กรุณาบันทึกเช็กอินเข้าเริ่มงานก่อนทำการเช็กเอาต์จบหน้าที่ครับ`
+    });
+    return;
+  }
+
   showAppConfirm({
     title: `เช็กเอาต์จบงานเฉพาะหน้าที่: ${shortName}`,
     message: `ยืนยันว่าคุณ (${shortName}) ปฏิบัติหน้าที่ในส่วนของคุณเสร็จสิ้นเรียบร้อยแล้วใช่หรือไม่?\n\n(งานจะยังคงเปิดให้สมาชิกท่านอื่นในลูปทำงานต่อจนครบทุกคน)`,
@@ -945,8 +964,6 @@ export function promptIndividualDutyCheckout(itemId, techName) {
     onConfirm: async () => {
       const note = window.prompt(`ระบุบันทึกผลการดำเนินงานของ ${shortName} (เช่น ส่งคืนซัพฯ แล้ว / ประสานงานเอกสารแล้ว / ได้รับ CN แล้ว):`, `ปฏิบัติหน้าที่เรียบร้อย`) || "ปฏิบัติหน้าที่เรียบร้อย";
       try {
-        const item = state.activeTasks.find(a => a.id === itemId || a.taskId === itemId);
-        const taskId = item ? (item.taskId || item.id) : itemId;
         const res = await submitDutyCheckoutApi({ taskId, tech: targetTech, note: note.trim(), photos: [] });
 
         const linked = state.tasksList.find(t => t.id === taskId);
