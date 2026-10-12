@@ -8,131 +8,135 @@ import { state } from '../modules/state.js';
 import { matchesOperator } from '../modules/tasks.js';
 
 export function getTaskMemberStatuses(task, activeItem = null) {
-  if (!task) return [];
-  const techs = Array.isArray(task.techs)
-    ? task.techs
-    : (typeof task.techs === 'string' ? task.techs.split(',').map(s => s.trim()).filter(Boolean) : []);
+  try {
+    if (!task) return [];
+    const techs = Array.isArray(task.techs)
+      ? task.techs
+      : (typeof task.techs === 'string' ? task.techs.split(',').map(s => s.trim()).filter(Boolean) : []);
 
-  if (techs.length === 0) return [];
+    if (techs.length === 0) return [];
 
-  const act = activeItem || (state.activeTasks || []).find(a => a.taskId === task.id || a.id === task.id || a.task === task.title);
+    const act = activeItem || (state.activeTasks || []).find(a => a.taskId === task.id || a.id === task.id || a.task === task.title);
 
-  // 1. Collect all checkin records for this task
-  const checkinRecords = [];
-  function splitTechs(val) {
-    if (!val) return [];
-    if (Array.isArray(val)) return val.flatMap(v => typeof v === 'string' ? v.split(',').map(s => s.trim()).filter(Boolean) : [v]);
-    if (typeof val === 'string') return val.split(',').map(s => s.trim()).filter(Boolean);
-    return [val];
-  }
-
-  if (act && Array.isArray(act.checkinSessions)) {
-    act.checkinSessions.forEach(cs => {
-      const cTechs = splitTechs(cs.techs || cs.checkedInBy);
-      checkinRecords.push({ techs: cTechs, checkedInBy: cs.checkedInBy || (cTechs.length === 1 ? cTechs[0] : null), time: cs.time, date: cs.date });
-    });
-  }
-  if (act && (act.isCheckedIn || act.id?.startsWith('CHK-')) && act.time) {
-    const cTechs = splitTechs(act.techs || act.checkedInBy);
-    checkinRecords.push({ techs: cTechs, checkedInBy: act.checkedInBy || (cTechs.length === 1 ? cTechs[0] : null), time: act.time, date: act.date });
-  }
-  (state.dailyLogs || []).forEach(dl => {
-    if ((dl.taskId === task.id || dl.id === task.id) && dl.time) {
-      const cTechs = splitTechs(dl.techs || dl.checkedInBy);
-      checkinRecords.push({ techs: cTechs, checkedInBy: dl.checkedInBy || (cTechs.length === 1 ? cTechs[0] : null), time: dl.time, date: dl.date });
+    // 1. Collect all checkin records for this task
+    const checkinRecords = [];
+    function splitTechs(val) {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.flatMap(v => typeof v === 'string' ? v.split(',').map(s => s.trim()).filter(Boolean) : [v]);
+      if (typeof val === 'string') return val.split(',').map(s => s.trim()).filter(Boolean);
+      return [val];
     }
-  });
 
-  // 2. Collect all checkout / duty completion records
-  const dutyCompleteRecords = [];
-  const cust = (task && typeof task.customer === 'object') ? task.customer : {};
-  const progressHist = Array.isArray(task.progressHistory)
-    ? task.progressHistory
-    : (Array.isArray(cust.progress_history) ? cust.progress_history : []);
-
-  progressHist.forEach(ph => {
-    if (ph.type === 'checkin' && ph.time) {
-      const pTechs = splitTechs(ph.tech || ph.by);
-      checkinRecords.push({ techs: pTechs, checkedInBy: ph.by || (pTechs.length === 1 ? pTechs[0] : null), time: ph.time, date: ph.date, createdAt: ph.createdAt || ph.created_at || null });
-    }
-    if (ph.type === 'duty_complete' || ph.type === 'close' || (ph.status === 'เสร็จสิ้น' && ph.tech)) {
-      dutyCompleteRecords.push({
-        tech: ph.tech || ph.by || '',
-        time: ph.time,
-        date: ph.date,
-        note: ph.note || '',
-        createdAt: ph.createdAt || ph.created_at || null
+    if (act && Array.isArray(act.checkinSessions)) {
+      act.checkinSessions.forEach(cs => {
+        const cTechs = splitTechs(cs.techs || cs.checkedInBy);
+        checkinRecords.push({ techs: cTechs, checkedInBy: cs.checkedInBy || (cTechs.length === 1 ? cTechs[0] : null), time: cs.time, date: cs.date });
       });
     }
-  });
+    if (act && (act.isCheckedIn || act.id?.startsWith('CHK-')) && act.time) {
+      const cTechs = splitTechs(act.techs || act.checkedInBy);
+      checkinRecords.push({ techs: cTechs, checkedInBy: act.checkedInBy || (cTechs.length === 1 ? cTechs[0] : null), time: act.time, date: act.date });
+    }
+    (state.dailyLogs || []).forEach(dl => {
+      if ((dl.taskId === task.id || dl.id === task.id) && dl.time) {
+        const cTechs = splitTechs(dl.techs || dl.checkedInBy);
+        checkinRecords.push({ techs: cTechs, checkedInBy: dl.checkedInBy || (cTechs.length === 1 ? cTechs[0] : null), time: dl.time, date: dl.date });
+      }
+    });
 
-  return techs.map(techFullName => {
-    let shortName = techFullName.replace(/K\./g, '').split('(')[0].trim();
-    if (!shortName) shortName = techFullName;
+    // 2. Collect all checkout / duty completion records
+    const dutyCompleteRecords = [];
+    const cust = (task && typeof task.customer === 'object') ? task.customer : {};
+    const progressHist = Array.isArray(task.progressHistory)
+      ? task.progressHistory
+      : (Array.isArray(cust.progress_history) ? cust.progress_history : []);
 
-    const matchedCheckins = checkinRecords.filter(cr =>
-      (cr.checkedInBy && (matchesOperator(cr.checkedInBy, techFullName) || matchesOperator(cr.checkedInBy, shortName))) ||
-      (cr.techs && cr.techs.some(t => matchesOperator(t, techFullName) || matchesOperator(t, shortName)))
-    );
-    const latestCheckin = matchedCheckins.length > 0 ? matchedCheckins[matchedCheckins.length - 1] : null;
+    progressHist.forEach(ph => {
+      if (ph.type === 'checkin' && ph.time) {
+        const pTechs = splitTechs(ph.tech || ph.by);
+        checkinRecords.push({ techs: pTechs, checkedInBy: ph.by || (pTechs.length === 1 ? pTechs[0] : null), time: ph.time, date: ph.date, createdAt: ph.createdAt || ph.created_at || null });
+      }
+      if (ph.type === 'duty_complete' || ph.type === 'close' || (ph.status === 'เสร็จสิ้น' && ph.tech)) {
+        dutyCompleteRecords.push({
+          tech: ph.tech || ph.by || '',
+          time: ph.time,
+          date: ph.date,
+          note: ph.note || '',
+          createdAt: ph.createdAt || ph.created_at || null
+        });
+      }
+    });
 
-    const matchedDuties = dutyCompleteRecords.filter(dr =>
-      matchesOperator(dr.tech, techFullName) || matchesOperator(dr.tech, shortName)
-    );
-    const latestDuty = matchedDuties.length > 0 ? matchedDuties[matchedDuties.length - 1] : null;
+    return techs.map(techFullName => {
+      let shortName = techFullName.replace(/K\./g, '').split('(')[0].trim();
+      if (!shortName) shortName = techFullName;
 
-    let hasCheckedIn = false;
-    let hasCheckedOut = false;
+      const matchedCheckins = checkinRecords.filter(cr =>
+        (cr.checkedInBy && (matchesOperator(cr.checkedInBy, techFullName) || matchesOperator(cr.checkedInBy, shortName))) ||
+        (cr.techs && cr.techs.some(t => matchesOperator(t, techFullName) || matchesOperator(t, shortName)))
+      );
+      const latestCheckin = matchedCheckins.length > 0 ? matchedCheckins[matchedCheckins.length - 1] : null;
 
-    if (latestCheckin && latestDuty) {
-      const tIn = latestCheckin.createdAt ? new Date(latestCheckin.createdAt).getTime() : 0;
-      const tOut = latestDuty.createdAt ? new Date(latestDuty.createdAt).getTime() : 0;
-      if (tIn > tOut) {
+      const matchedDuties = dutyCompleteRecords.filter(dr =>
+        matchesOperator(dr.tech, techFullName) || matchesOperator(dr.tech, shortName)
+      );
+      const latestDuty = matchedDuties.length > 0 ? matchedDuties[matchedDuties.length - 1] : null;
+
+      let hasCheckedIn = false;
+      let hasCheckedOut = false;
+
+      if (latestCheckin && latestDuty) {
+        const tIn = latestCheckin.createdAt ? new Date(latestCheckin.createdAt).getTime() : 0;
+        const tOut = latestDuty.createdAt ? new Date(latestDuty.createdAt).getTime() : 0;
+        if (tIn > tOut) {
+          hasCheckedIn = true;
+          hasCheckedOut = false;
+        } else {
+          hasCheckedIn = true;
+          hasCheckedOut = true;
+        }
+      } else if (latestCheckin) {
         hasCheckedIn = true;
         hasCheckedOut = false;
-      } else {
+      } else if (latestDuty) {
         hasCheckedIn = true;
         hasCheckedOut = true;
       }
-    } else if (latestCheckin) {
-      hasCheckedIn = true;
-      hasCheckedOut = false;
-    } else if (latestDuty) {
-      hasCheckedIn = true;
-      hasCheckedOut = true;
-    }
 
-    const checkinTime = latestCheckin
-      ? `${latestCheckin.date && latestCheckin.date !== 'วันนี้' ? latestCheckin.date + ' ' : ''}${latestCheckin.time || ''} น.`
-      : null;
+      const checkinTime = latestCheckin
+        ? `${latestCheckin.date && latestCheckin.date !== 'วันนี้' ? latestCheckin.date + ' ' : ''}${latestCheckin.time || ''} น.`
+        : null;
 
-    const checkoutTime = latestDuty
-      ? `${latestDuty.date && latestDuty.date !== 'วันนี้' ? latestDuty.date + ' ' : ''}${latestDuty.time || ''} น.`
-      : null;
+      const checkoutTime = latestDuty
+        ? `${latestDuty.date && latestDuty.date !== 'วันนี้' ? latestDuty.date + ' ' : ''}${latestDuty.time || ''} น.`
+        : null;
 
-    let status = 'pending';
-    let statusLabel = 'ยังไม่เช็กอิน';
-    if (hasCheckedOut) {
-      status = 'completed';
-      statusLabel = `เช็กเอาต์แล้ว (${checkoutTime})`;
-    } else if (hasCheckedIn) {
-      status = 'in_progress';
-      statusLabel = `เช็กอินแล้ว (${checkinTime})`;
-    }
+      let status = 'pending';
+      let statusLabel = 'ยังไม่เช็กอิน';
+      if (hasCheckedOut) {
+        status = 'completed';
+        statusLabel = `เช็กเอาต์แล้ว (${checkoutTime})`;
+      } else if (hasCheckedIn) {
+        status = 'in_progress';
+        statusLabel = `เช็กอินแล้ว (${checkinTime})`;
+      }
 
-
-    return {
-      fullName: techFullName,
-      shortName,
-      hasCheckedIn,
-      checkinTime,
-      hasCheckedOut,
-      checkoutTime,
-      checkoutNote: matchedDuty ? matchedDuty.note : '',
-      status,
-      statusLabel
-    };
-  });
+      return {
+        fullName: techFullName,
+        shortName,
+        hasCheckedIn,
+        checkinTime,
+        hasCheckedOut,
+        checkoutTime,
+        checkoutNote: latestDuty ? latestDuty.note : '',
+        status,
+        statusLabel
+      };
+    });
+  } catch (err) {
+    console.warn("getTaskMemberStatuses error:", err);
+    return [];
+  }
 }
 
 export function getUniquePhotosForActiveTask(activeItem) {

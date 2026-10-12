@@ -203,15 +203,10 @@ export function switchSimulatedRole(mode) {
   updateTeamRoleBanner();
 
   // Reset any active task filters so view immediately reflects the selected role cleanly
-  if (typeof window.setStatusFilter === "function") {
-    try { window.setStatusFilter("ทั้งหมด"); } catch (e) {}
-  }
-  if (typeof window.setTaskTechFilter === "function") {
-    try { window.setTaskTechFilter("ทั้งหมด"); } catch (e) {}
-  }
-  if (typeof window.clearTaskSearch === "function") {
-    try { window.clearTaskSearch(); } catch (e) {}
-  }
+  try { if (typeof window.setStatusFilter === "function") window.setStatusFilter("ทั้งหมด"); } catch (e) {}
+  try { if (typeof window.setTaskTechFilter === "function") window.setTaskTechFilter("ทั้งหมด"); } catch (e) {}
+  try { if (typeof window.clearTaskSearch === "function") window.clearTaskSearch(); } catch (e) {}
+  try { if (typeof window.resetCheckoutFilters === "function") window.resetCheckoutFilters(); } catch (e) {}
 
   // Keep currently active tab and re-render immediately in place!
   const activeTab = (typeof window.getCurrentTab === "function" ? window.getCurrentTab() : null) || sessionStorage.getItem("fs_active_tab") || "tasks";

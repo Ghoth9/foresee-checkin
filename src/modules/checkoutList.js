@@ -275,7 +275,8 @@ export function renderActiveCheckoutList() {
   }
 
   container.innerHTML = filteredList.map(item => {
-    const isSelected = state.selectedActiveCheckoutId === item.id;
+    try {
+      const isSelected = state.selectedActiveCheckoutId === item.id;
     const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ผู้ปฏิบัติงานทั่วไป");
     const displayTaskId = item.taskId || item.id;
     const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
@@ -456,6 +457,10 @@ export function renderActiveCheckoutList() {
         </div>
       </div>
     `;
+    } catch (itemErr) {
+      console.warn("checkout item render error:", item?.id, itemErr);
+      return '';
+    }
   }).join('');
 }
 
