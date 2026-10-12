@@ -58,6 +58,10 @@ export async function initLiff() {
             title: "LINE Login ปฏิเสธการเข้าสู่ระบบ",
             message: `ข้อผิดพลาดจาก LINE: ${urlParams.get("error")}\nรายละเอียด: ${urlParams.get("error_description") || "-"}`
           });
+        } else if (typeof liff !== "undefined" && typeof liff.isInClient === "function" && liff.isInClient()) {
+          console.log("[LIFF] Inside LINE client and not logged in -> auto-login");
+          liff.login();
+          return false;
         }
       }
       return true;

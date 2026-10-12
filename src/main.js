@@ -100,6 +100,11 @@ try {
 // -------------------------------------------------------------
 // TAB SWITCHING
 // -------------------------------------------------------------
+export function getCurrentTab() {
+  return currentTab;
+}
+window.getCurrentTab = getCurrentTab;
+
 export function switchTab(tab) {
   currentTab = tab;
   pendingDeepLinkTarget = null;
@@ -351,7 +356,7 @@ export function updateLineStatusUI() {
 
   const liveLoggedIn = isLineLoggedIn();
   const profile = getLineUserProfile();
-  const name = getLineUserName() || profile?.displayName;
+  const name = getLineUserName() || profile?.displayName || state.currentLinkedTech?.name;
 
   if (liveLoggedIn) {
     // 🟢 1. Active LIVE LINE OAuth Session
@@ -362,10 +367,10 @@ export function updateLineStatusUI() {
     if (btn) btn.title = `เชื่อมต่อ LINE (${displayName}) สำเร็จ • แตะเพื่อออกจากระบบ`;
     if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
   } else if (profile || name) {
-    // 🟡 2. Expired or Unauthenticated Session (cached profile exists, but live OAuth token is not active)
+    // 🟡 2. Expired or Not Logged In, but Operator is known
     dot.className = "w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 animate-pulse";
-    text.innerText = "LINE: เข้าสู่ระบบใหม่";
-    if (btn) btn.title = `เซสชัน LINE ของ "${name || 'ผู้ใช้'}" หมดอายุ แตะเพื่อเข้าสู่ระบบใหม่`;
+    text.innerText = "เข้าสู่ระบบ LINE";
+    if (btn) btn.title = `แตะเพื่อเข้าสู่ระบบ LINE สำหรับ "${name || 'ผู้ใช้'}"`;
     if (banner) { banner.classList.remove("hidden"); banner.classList.add("flex"); }
   } else {
     // ⚪ 3. Completely Not Logged In
@@ -930,21 +935,7 @@ window.handleLineLoginToggle = async () => {
       confirmText: "ออกจากระบบ", cancelText: "ยกเลิก", isDanger: true, onConfirm: () => logoutLine()
     });
   } else {
-    const profile = getLineUserProfile();
-    if (profile) {
-      showAppConfirm({
-        title: "เข้าสู่ระบบ LINE ใหม่", message: `พบบัญชีเดิมที่จำไว้: "${profile.displayName || 'ผู้ใช้'}"\nคุณต้องการเชื่อมต่อเซสชัน LINE ใหม่ หรือต้องการล้างข้อมูลเพื่อสลับไปลองบัญชีอื่น?`,
-        confirmText: "เชื่อมต่อ LINE", cancelText: "สลับบัญชีอื่น / ล้างข้อมูล", onConfirm: () => loginLine(),
-        onCancel: () => {
-          localStorage.removeItem("fs_line_profile");
-          sessionStorage.removeItem("fs_line_logging_in");
-          updateLineStatusUI();
-          loginLine();
-        }
-      });
-    } else {
-      await loginLine();
-    }
+    await loginLine();
   }
 };
 

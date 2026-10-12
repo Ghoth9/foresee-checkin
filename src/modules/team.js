@@ -200,13 +200,18 @@ export function switchSimulatedRole(mode) {
   applyRolePermissionsUI(state.currentUserRole, effectiveOp);
   updateTeamRoleBanner();
 
-  // Switch to appropriate primary workspace
+  // Reset any active task filters so view immediately reflects the selected role cleanly
+  if (typeof window.setStatusFilter === "function") {
+    try { window.setStatusFilter("ทั้งหมด"); } catch (e) {}
+  }
+  if (typeof window.setTaskTechFilter === "function") {
+    try { window.setTaskTechFilter("ทั้งหมด"); } catch (e) {}
+  }
+
+  // Keep currently active tab and re-render immediately in place!
+  const activeTab = (typeof window.getCurrentTab === "function" ? window.getCurrentTab() : null) || sessionStorage.getItem("fs_active_tab") || "tasks";
   if (typeof window.switchTab === "function") {
-    if (mode === "admin") {
-      window.switchTab("tasks");
-    } else {
-      window.switchTab("checkin");
-    }
+    window.switchTab(activeTab);
   }
 
   if (typeof window.renderTasksListScoped === "function") window.renderTasksListScoped();
