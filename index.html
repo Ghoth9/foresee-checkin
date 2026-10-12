@@ -1488,6 +1488,25 @@
       <!-- Modal Body (Scrollable Single Unified Column) -->
       <div id="checkoutOutcomeSection" class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
         
+        <!-- Unchecked-In Task Notice & Quick Check-in Banner -->
+        <div id="checkoutModalUncheckedNotice" class="hidden bg-amber-50 border border-amber-300 rounded-2xl p-3.5 space-y-2 text-xs shadow-2xs animate-fade-in">
+          <div class="flex items-start space-x-2.5">
+            <span class="text-lg flex-shrink-0 mt-0.5">⚠️</span>
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-amber-950 text-xs">งานนี้ยังไม่ได้บันทึกเช็กอินเข้าหน้างาน</div>
+              <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                ตามขั้นตอน ช่างควรบันทึก <strong>"เช็กอินเข้าเริ่มงาน"</strong> เพื่อจับพิกัด GPS และเวลาเริ่มงานจริงก่อนรายงานความคืบหน้าครับ
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center justify-end space-x-2 pt-1 border-t border-amber-200/80">
+            <button type="button" id="checkoutModalGoCheckinBtn" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs flex items-center space-x-1.5 transition-all active:scale-95 cursor-pointer">
+              <span>📍 ไปหน้าเช็กอินเข้าเริ่มงานทันที</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+
         <!-- Segmented Mode Switcher: Full Width, Crisp & Modern -->
         <div class="bg-slate-100/90 p-1 rounded-2xl flex items-center gap-1 w-full shadow-inner border border-slate-200/60">
           <button type="button" id="actionTabBtnUpdate" onclick="window.setActionTab('update')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5 cursor-pointer active:scale-[0.98]">

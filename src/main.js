@@ -605,6 +605,15 @@ window.clearCheckoutSearch = () => clearCheckoutSearch();
 window.setCheckoutStatusFilter = (st) => setCheckoutStatusFilter(st);
 window.setCheckoutTechFilter = (tech) => setCheckoutTechFilter(tech);
 window.resetCheckoutFilters = () => resetCheckoutFilters();
+window.goCheckinForTask = (taskId) => {
+  closeCheckoutModal();
+  switchTab("checkin");
+  window.selectAssignedTaskForCheckin(taskId);
+  setTimeout(() => {
+    const card = document.getElementById("quickCheckinCard");
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 100);
+};
 window.setCheckoutOutcome = setCheckoutOutcome;
 window.submitCheckout = () => {
   const activeItem = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId);
@@ -940,22 +949,15 @@ window.submitUpdateProgress = () => submitProgressUpdate({
 window.handleLineLoginToggle = async () => {
   if (isLineLoggedIn()) {
     showAppConfirm({
-      title: "ออกจากระบบ LINE",
-      message: `ปัจจุบันเชื่อมต่อด้วยบัญชี: ${getLineUserName() || "LINE"}\nคุณต้องการออกจากระบบ LINE หรือไม่?`,
-      confirmText: "ออกจากระบบ",
-      cancelText: "ยกเลิก",
-      isDanger: true,
-      onConfirm: () => logoutLine()
+      title: "ออกจากระบบ LINE", message: `ปัจจุบันเชื่อมต่อด้วยบัญชี: ${getLineUserName() || "LINE"}\nคุณต้องการออกจากระบบ LINE หรือไม่?`,
+      confirmText: "ออกจากระบบ", cancelText: "ยกเลิก", isDanger: true, onConfirm: () => logoutLine()
     });
   } else {
     const profile = getLineUserProfile();
     if (profile) {
       showAppConfirm({
-        title: "เข้าสู่ระบบ LINE ใหม่",
-        message: `พบบัญชีเดิมที่จำไว้: "${profile.displayName || 'ผู้ใช้'}"\nคุณต้องการเชื่อมต่อเซสชัน LINE ใหม่ หรือต้องการล้างข้อมูลเพื่อสลับไปลองบัญชีอื่น?`,
-        confirmText: "เชื่อมต่อ LINE",
-        cancelText: "สลับบัญชีอื่น / ล้างข้อมูล",
-        onConfirm: () => loginLine(),
+        title: "เข้าสู่ระบบ LINE ใหม่", message: `พบบัญชีเดิมที่จำไว้: "${profile.displayName || 'ผู้ใช้'}"\nคุณต้องการเชื่อมต่อเซสชัน LINE ใหม่ หรือต้องการล้างข้อมูลเพื่อสลับไปลองบัญชีอื่น?`,
+        confirmText: "เชื่อมต่อ LINE", cancelText: "สลับบัญชีอื่น / ล้างข้อมูล", onConfirm: () => loginLine(),
         onCancel: () => {
           localStorage.removeItem("fs_line_profile");
           sessionStorage.removeItem("fs_line_logging_in");

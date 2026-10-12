@@ -210,17 +210,9 @@ export function collectTaskActivityLogs(item, linkedTask) {
         }
 
         allLogs.push({
-          id: ph.id || `HIST-${Date.now().toString(36)}`,
-          type: type || "update",
-          label: label,
-          progress: ph.progress,
-          status: ph.status,
-          time: ph.time || "-",
-          date: ph.date || "วันนี้",
-          tech: ph.tech || ph.by || "ผู้ปฏิบัติงาน",
-          note: ph.note || "-",
-          photos: Array.isArray(ph.photos) ? ph.photos : [],
-          createdAt: ph.createdAt || null
+          id: ph.id || `HIST-${Date.now().toString(36)}`, type: type || "update", label, progress: ph.progress,
+          status: ph.status, time: ph.time || "-", date: ph.date || "วันนี้", tech: ph.tech || ph.by || "ผู้ปฏิบัติงาน",
+          note: ph.note || "-", photos: Array.isArray(ph.photos) ? ph.photos : [], createdAt: ph.createdAt || null
         });
       });
     }
@@ -520,7 +512,7 @@ export function renderActiveCheckoutList() {
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
             ${isRealCheckin 
               ? `<span class="text-xs text-emerald-800 font-bold font-mono">⏰ เช็กอิน: ${checkinDateLabel}${formatGasTime(item.time)} น.</span>` 
-              : `<span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">📋 งานมอบหมาย (ยังไม่เช็กอิน)</span>`}
+              : `<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300 flex items-center space-x-1"><span class="animate-pulse">⚠️</span><span>ยังไม่ได้เช็กอินเข้างาน</span></span>`}
             <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs">คืบหน้า ${itemProg}%</span>
             ${totalPhotos > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">📸 ${totalPhotos} รูป</span>` : ''}
           </div>
@@ -616,12 +608,18 @@ export function renderActiveCheckoutList() {
           <span>👷 ผู้ปฏิบัติงาน: <strong class="text-slate-900">${techList}</strong></span>
           <div class="flex items-center space-x-2">
             ${isRealCheckin 
-              ? `<span class="text-xs text-slate-600 font-mono">⏱️ ${durationStr}</span>` 
-              : `<span class="text-xs text-slate-500 font-sans">📅 เริ่ม: ${item.date || 'วันนี้'}</span>`}
-            <button type="button" onclick="event.stopPropagation(); window.openCheckoutModal('${item.id}')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer">
-              <span>📝 อัปเดต / ปิดงาน</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </button>
+              ? `<span class="text-xs text-slate-600 font-mono">⏱️ ${durationStr}</span>
+                 <button type="button" onclick="event.stopPropagation(); window.openCheckoutModal('${item.id}')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer">
+                   <span>📝 อัปเดต / ปิดงาน</span>
+                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                 </button>` 
+              : `<span class="text-xs text-slate-500 font-sans">📅 เริ่ม: ${item.date || 'วันนี้'}</span>
+                 <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${item.taskId || item.id}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer" title="สลับไปหน้าเช็กอินเพื่อบันทึกเวลาและพิกัด GPS">
+                   <span>📍 เช็กอินเข้างาน</span>
+                 </button>
+                 <button type="button" onclick="event.stopPropagation(); window.openCheckoutModal('${item.id}')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-300 shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer" title="อัปเดตงาน">
+                   <span>📝 อัปเดต</span>
+                 </button>`}
           </div>
         </div>
       </div>
@@ -789,6 +787,17 @@ export function openCheckoutModal(id) {
     timeEl.innerText = isRealCheckin ? `⏰ เช็กอิน: ${checkinDateLabel}${formatGasTime(item.time)} น. (${durStr})` : `📅 เริ่ม: ${item.date || 'วันนี้'}`;
   }
 
+  const noticeEl = document.getElementById("checkoutModalUncheckedNotice");
+  const goCheckinBtn = document.getElementById("checkoutModalGoCheckinBtn");
+  if (noticeEl) {
+    if (!isRealCheckin) {
+      noticeEl.classList.remove("hidden");
+      if (goCheckinBtn) goCheckinBtn.onclick = () => window.goCheckinForTask(item.taskId || item.id);
+    } else {
+      noticeEl.classList.add("hidden");
+    }
+  }
+
   const currentTechEl = document.getElementById("checkoutModalCurrentTech");
   if (currentTechEl) {
     currentTechEl.innerText = getEffectiveOperatorName() || "ผู้ปฏิบัติงานหน้างาน";
@@ -862,6 +871,8 @@ export function closeCheckoutModal() {
     modal.classList.add("hidden");
     modal.classList.remove("flex");
   }
+  const noticeEl = document.getElementById("checkoutModalUncheckedNotice");
+  if (noticeEl) noticeEl.classList.add("hidden");
   document.body.classList.remove("overflow-hidden");
   state.selectedActiveCheckoutId = null;
   renderActiveTaskPhotos(null);
@@ -947,19 +958,12 @@ export function renderTodayLogs() {
 
 export function deleteTodayLog(id) {
   if (state.currentUserRole !== "admin") {
-    showAppAlert({
-      type: "warning",
-      title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)",
-      message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบประวัติงานได้ครับ"
-    });
+    showAppAlert({ type: "warning", title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)", message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบประวัติงานได้ครับ" });
     return;
   }
   showAppConfirm({
-    title: "ยืนยันการลบประวัติ",
-    message: `คุณต้องการลบประวัติงาน "${id}" ออกจากรายการหรือไม่?`,
-    confirmText: "ลบ",
-    cancelText: "ยกเลิก",
-    isDanger: true,
+    title: "ยืนยันการลบประวัติ", message: `คุณต้องการลบประวัติงาน "${id}" ออกจากรายการหรือไม่?`,
+    confirmText: "ลบ", cancelText: "ยกเลิก", isDanger: true,
     onConfirm: () => {
       state.dailyLogs = state.dailyLogs.filter(l => l.id !== id);
       state.activeTasks = state.activeTasks.filter(a => a.id !== id);
