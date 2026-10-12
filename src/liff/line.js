@@ -119,11 +119,7 @@ export function getLineUserId() {
 
 export async function loginLine() {
   if (typeof liff === "undefined") {
-    showAppAlert({
-      type: "warning",
-      title: "ไม่พบ LINE SDK",
-      message: "ไม่สามารถเรียกใช้งาน LINE SDK ได้ กรุณารีเฟรชหน้าเว็บ"
-    });
+    window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
     return;
   }
   try {
@@ -137,22 +133,24 @@ export async function loginLine() {
     if (!isLineLoggedIn()) {
       await initLiff();
       if (!isLineLoggedIn()) {
-        console.log("[LIFF] Calling liff.login() with default registered endpoint");
         try {
-          liff.login();
+          const cleanUrl = window.location.origin + window.location.pathname;
+          console.log("[LIFF] Calling liff.login with clean redirectUri:", cleanUrl);
+          liff.login({ redirectUri: cleanUrl });
         } catch (liffErr) {
-          console.warn("[LIFF] liff.login() error, retrying with origin:", liffErr);
-          liff.login({ redirectUri: window.location.origin });
+          console.warn("[LIFF] liff.login redirectUri failed, trying default liff.login:", liffErr);
+          try {
+            liff.login();
+          } catch (e2) {
+            console.warn("[LIFF] default login failed, redirecting to liff.line.me:", e2);
+            window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
+          }
         }
       }
     }
   } catch (err) {
-    console.error("loginLine error:", err);
-    showAppAlert({
-      type: "danger",
-      title: "เข้าสู่ระบบ LINE ไม่สำเร็จ",
-      message: err?.message || JSON.stringify(err)
-    });
+    console.error("loginLine error, falling back to gateway:", err);
+    window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
   }
 }
 

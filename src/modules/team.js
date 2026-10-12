@@ -480,6 +480,11 @@ export function quickUnlockNonmarnAdmin() {
   if (typeof window.renderAssignedTasksBannerScoped === "function") window.renderAssignedTasksBannerScoped();
   renderActiveCheckoutList();
   renderTodayLogs();
+  showAppAlert({
+    type: "success",
+    title: "ปลดล็อกสิทธิ์แอดมินสำเร็จ 👑",
+    message: "เข้าใช้งานในฐานะ nonmarn (System Admin) เรียบร้อยแล้ว ระบบเปิดสิทธิ์จัดการงานทั้งหมดให้คุณทันทีครับ"
+  });
 }
 
 export function updateTeamRoleBanner() {
@@ -908,8 +913,7 @@ export function openManageTechModal() {
 }
 
 export function closeManageTechModal() {
-  const modal = document.getElementById("manageTechModal");
-  if (modal) modal.classList.add("hidden");
+  document.getElementById("manageTechModal")?.classList.add("hidden");
 }
 
 export function renderManageTechList() {
@@ -924,8 +928,7 @@ export function renderManageTechList() {
         <span class="font-bold text-slate-800">${name}</span>
       </div>
       <button type="button" onclick="window.deleteTech('${name}')" title="ลบรายชื่อผู้ปฏิบัติงานนี้" class="text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-colors flex items-center space-x-1 text-[11px] font-semibold border border-rose-200 active:scale-95 cursor-pointer">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        <span>ลบ</span>
+        <span>✕ ลบ</span>
       </button>
     </div>
   `).join("");

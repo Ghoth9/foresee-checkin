@@ -286,25 +286,33 @@ export async function refreshFromSupabase(force = false) {
 export function updateLineStatusUI() {
   const dot = document.getElementById("lineLoginDot");
   const text = document.getElementById("lineLoginText");
+  const btn = document.getElementById("lineLoginBtn");
   const banner = document.getElementById("lineNotLoggedInBanner");
   if (!dot || !text) return;
 
+  const liveLoggedIn = isLineLoggedIn();
   const profile = getLineUserProfile();
   const name = getLineUserName() || profile?.displayName;
-  const loggedIn = isLineLoggedIn() || !!profile || !!name;
 
-  if (loggedIn && name) {
-    dot.className = "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0";
-    const shortName = name.length > 8 ? name.slice(0, 7) + '…' : name;
+  if (liveLoggedIn) {
+    // 🟢 1. Active LIVE LINE OAuth Session
+    dot.className = "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 shadow-xs";
+    const displayName = name || "เชื่อมต่อแล้ว";
+    const shortName = displayName.length > 8 ? displayName.slice(0, 7) + '…' : displayName;
     text.innerText = `LINE: ${shortName}`;
+    if (btn) btn.title = `เชื่อมต่อ LINE (${displayName}) สำเร็จ • แตะเพื่อออกจากระบบ`;
     if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
-  } else if (loggedIn) {
-    dot.className = "w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0";
-    text.innerText = "LINE เชื่อมต่อแล้ว";
-    if (banner) { banner.classList.add("hidden"); banner.classList.remove("flex"); }
+  } else if (profile || name) {
+    // 🟡 2. Expired or Unauthenticated Session (cached profile exists, but live OAuth token is not active)
+    dot.className = "w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 animate-pulse";
+    text.innerText = "LINE: เข้าสู่ระบบใหม่";
+    if (btn) btn.title = `เซสชัน LINE ของ "${name || 'ผู้ใช้'}" หมดอายุ แตะเพื่อเข้าสู่ระบบใหม่`;
+    if (banner) { banner.classList.remove("hidden"); banner.classList.add("flex"); }
   } else {
+    // ⚪ 3. Completely Not Logged In
     dot.className = "w-2 h-2 rounded-full bg-slate-300 flex-shrink-0";
     text.innerText = "เข้าสู่ระบบ LINE";
+    if (btn) btn.title = "แตะเพื่อเข้าสู่ระบบ LINE เพื่อแชร์เข้ากลุ่ม";
     if (banner) { banner.classList.remove("hidden"); banner.classList.add("flex"); }
   }
 }
@@ -858,16 +866,33 @@ window.submitUpdateProgress = () => submitProgressUpdate({
 
 window.handleLineLoginToggle = async () => {
   if (isLineLoggedIn()) {
-    const ok = await showAppConfirm({
-      type: "info",
-      title: "ออกจากระบบ LINE?",
-      message: `ปัจจุบันเชื่อมต่อด้วย LINE: ${getLineUserName() || "เชื่อมต่อแล้ว"}\nคุณต้องการออกจากระบบ LINE หรือไม่?`,
+    showAppConfirm({
+      title: "ออกจากระบบ LINE",
+      message: `ปัจจุบันเชื่อมต่อด้วยบัญชี: ${getLineUserName() || "LINE"}\nคุณต้องการออกจากระบบ LINE หรือไม่?`,
       confirmText: "ออกจากระบบ",
-      cancelText: "ยกเลิก"
+      cancelText: "ยกเลิก",
+      isDanger: true,
+      onConfirm: () => logoutLine()
     });
-    if (ok) logoutLine();
   } else {
-    await loginLine();
+    const profile = getLineUserProfile();
+    if (profile) {
+      showAppConfirm({
+        title: "เข้าสู่ระบบ LINE ใหม่",
+        message: `พบบัญชีเดิมที่จำไว้: "${profile.displayName || 'ผู้ใช้'}"\nคุณต้องการเชื่อมต่อเซสชัน LINE ใหม่ หรือต้องการล้างข้อมูลเพื่อสลับไปลองบัญชีอื่น?`,
+        confirmText: "เชื่อมต่อ LINE",
+        cancelText: "สลับบัญชีอื่น / ล้างข้อมูล",
+        onConfirm: () => loginLine(),
+        onCancel: () => {
+          localStorage.removeItem("fs_line_profile");
+          sessionStorage.removeItem("fs_line_logging_in");
+          updateLineStatusUI();
+          loginLine();
+        }
+      });
+    } else {
+      await loginLine();
+    }
   }
 };
 
