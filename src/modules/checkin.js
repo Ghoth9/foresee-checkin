@@ -33,11 +33,11 @@ export function clearCheckinPhotos() {
 
 export function updateQuickCardUI(task) {
   const normalHeader = document.getElementById("checkinNormalHeader");
-  const quickCard = document.getElementById("assignedTaskQuickCheckinCard");
+  const modal = document.getElementById("checkinConfirmModal");
   const detailsContainer = document.getElementById("checkinFormDetailsContainer");
   const detailsEditNotice = document.getElementById("checkinDetailsEditNotice");
 
-  if (!quickCard) return;
+  if (!modal) return;
 
   if (task) {
     const taskIdEl = document.getElementById("quickCardTaskId");
@@ -86,15 +86,15 @@ export function updateQuickCardUI(task) {
       }
     }
 
-    if (normalHeader) normalHeader.classList.add("hidden");
-    quickCard.classList.remove("hidden");
-    
-    // By default, collapse details container so the user sees the Quick Card + Big Check-in Button immediately!
-    if (detailsContainer) detailsContainer.classList.add("hidden");
-    if (detailsEditNotice) detailsEditNotice.classList.remove("hidden");
+    // Show Pop-up Modal!
+    modal.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
   } else {
+    // Hide Pop-up Modal!
+    modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
+
     if (normalHeader) normalHeader.classList.remove("hidden");
-    quickCard.classList.add("hidden");
     // Collapse manual form by default when no assigned task is selected so screen stays clean
     if (detailsContainer) detailsContainer.classList.add("hidden");
     if (detailsEditNotice) detailsEditNotice.classList.add("hidden");
@@ -122,23 +122,23 @@ export function deselectAssignedTask(tasksList = null) {
 }
 
 export function toggleCheckinFormDetails() {
+  const modal = document.getElementById("checkinConfirmModal");
   const detailsContainer = document.getElementById("checkinFormDetailsContainer");
   const toggleTextEl = document.getElementById("quickCardToggleText");
   const toggleChevronEl = document.getElementById("quickCardToggleChevron");
 
   if (!detailsContainer) return;
-  const isHidden = detailsContainer.classList.contains("hidden");
 
-  if (isHidden) {
-    detailsContainer.classList.remove("hidden");
-    if (toggleTextEl) toggleTextEl.innerText = "▲ ย่อรายละเอียดกลับ";
-    if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(180deg)";
-    detailsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } else {
-    detailsContainer.classList.add("hidden");
-    if (toggleTextEl) toggleTextEl.innerText = "📋 ขยายดูรายละเอียดงาน";
-    if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
+  // Close the popup modal so the user can edit or inspect the full inline form
+  if (modal) {
+    modal.classList.add("hidden");
+    document.body.classList.remove("overflow-hidden");
   }
+
+  detailsContainer.classList.remove("hidden");
+  if (toggleTextEl) toggleTextEl.innerText = "▲ ย่อรายละเอียดกลับ";
+  if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(180deg)";
+  detailsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 export function toggleManualCheckinForm() {
@@ -253,17 +253,13 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
                   `).join('')}
                 </div>
               ` : ''}
-              ${isSelected ? `
-                <div class="mt-3 pt-2 border-t border-blue-200 flex items-center justify-between gap-2">
-                  <span class="text-[11px] font-bold text-blue-800 flex items-center space-x-1">
-                    <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse inline-block"></span>
-                    <span>เลือกงานนี้แล้ว</span>
-                  </span>
-                  <button type="button" onclick="event.stopPropagation(); window.submitCheckin();" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/30 flex items-center space-x-1 active:scale-95 transition-transform">
-                    <span>📍 กดเช็กอินเลย</span>
-                  </button>
-                </div>
-              ` : ''}
+              <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-blue-600 font-semibold">
+                <span class="flex items-center space-x-1">
+                  <span>📍</span>
+                  <span>แตะเพื่อเช็กอิน</span>
+                </span>
+                <span class="text-slate-400 group-hover:text-blue-600 transition-colors">➔</span>
+              </div>
             </div>
           `;
         }).join('')}
@@ -277,35 +273,24 @@ export function selectAssignedTask(taskId, tasksList, setSelectedTechsCallback) 
   const task = tasksList.find(t => t.id === taskId);
   if (!task) return;
 
-  if (selectedAssignedTaskId === taskId) {
-    // Deselect if already selected
-    deselectAssignedTask(tasksList);
-  } else {
-    selectedAssignedTaskId = taskId;
-    const locInput = document.getElementById("fieldLocationInput");
-    const noteInput = document.getElementById("fieldNoteInput");
-    if (locInput) locInput.value = task.title;
-    if (noteInput) noteInput.value = task.desc && task.desc !== "-" ? task.desc : "";
+  selectedAssignedTaskId = taskId;
+  const locInput = document.getElementById("fieldLocationInput");
+  const noteInput = document.getElementById("fieldNoteInput");
+  if (locInput) locInput.value = task.title;
+  if (noteInput) noteInput.value = task.desc && task.desc !== "-" ? task.desc : "";
 
-    // Auto-select assigned technicians
-    if (setSelectedTechsCallback && task.techs && task.techs.length > 0) {
-      setSelectedTechsCallback(task.techs);
-    }
-
-    // Auto-link and select assigned Job Category!
-    if (task.category && typeof window.selectJobType === "function") {
-      window.selectJobType(task.category);
-    }
-
-    // Update Quick Card UI
-    updateQuickCardUI(task);
-
-    // Auto-scroll up so the user immediately sees the Quick Card & Check-in button without scrolling down
-    const quickCard = document.getElementById("assignedTaskQuickCheckinCard");
-    if (quickCard) {
-      quickCard.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+  // Auto-select assigned technicians
+  if (setSelectedTechsCallback && task.techs && task.techs.length > 0) {
+    setSelectedTechsCallback(task.techs);
   }
+
+  // Auto-link and select assigned Job Category!
+  if (task.category && typeof window.selectJobType === "function") {
+    window.selectJobType(task.category);
+  }
+
+  // Update Quick Card UI & Pop-up Modal!
+  updateQuickCardUI(task);
 
   // Highlight selected card
   renderAssignedTasksBanner(tasksList, [], null);
