@@ -249,7 +249,14 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
   const techFiltered = baseTasks.filter(t => {
     if (currentTechFilter === "ทั้งหมด") return true;
     const techs = getTaskTechs(t);
-    return techs.includes(currentTechFilter);
+    const isInTechs = techs.some(tech => matchesOperator(tech, currentTechFilter) || tech === currentTechFilter);
+    const isCreatedOrAssignedBy = matchesOperator(t.assignedBy, currentTechFilter) ||
+      matchesOperator(t.creator, currentTechFilter) ||
+      matchesOperator(t.customer?.assigned_by, currentTechFilter) ||
+      matchesOperator(t.customer?.creator, currentTechFilter) ||
+      matchesOperator(t.updateBy, currentTechFilter) ||
+      matchesOperator(t.updated_by, currentTechFilter);
+    return isInTechs || isCreatedOrAssignedBy;
   });
 
   let inprogCount = 0;

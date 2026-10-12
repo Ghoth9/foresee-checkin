@@ -48,20 +48,20 @@
       </nav>
 
       <!-- Right Actions: Role Badge & Dropdown, + มอบหมายงาน, LINE Login -->
-      <div class="flex items-center space-x-1.5 flex-shrink-0">
+      <div class="flex items-center space-x-1 sm:space-x-1.5 flex-shrink min-w-0">
         
         <!-- Work History Quick Access Button in Header -->
-        <button type="button" id="headerWorkHistoryBtn" onclick="window.openWorkHistoryModal()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap" title="ดูประวัติการปฏิบัติงานที่ทำเสร็จแล้ว">
+        <button type="button" id="headerWorkHistoryBtn" onclick="window.openWorkHistoryModal()" class="flex items-center space-x-1 text-xs px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0" title="ดูประวัติการปฏิบัติงานที่ทำเสร็จแล้ว">
           <span>📋</span>
           <span class="hidden sm:inline">ประวัติงาน</span>
           <span id="headerWorkHistoryBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-900 font-bold font-mono">0</span>
         </button>
 
         <!-- Role Badge & Switcher Dropdown -->
-        <div class="relative flex-shrink-0">
-          <button id="userRoleBadge" type="button" onclick="handleRoleBadgeClick()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 whitespace-nowrap" title="แตะเพื่อเลือกมุมมองหรือจัดการสิทธิ์">
+        <div class="relative flex-shrink min-w-0">
+          <button id="userRoleBadge" type="button" onclick="handleRoleBadgeClick()" class="flex items-center space-x-1 sm:space-x-1.5 text-xs px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 whitespace-nowrap min-w-0 flex-shrink" title="แตะเพื่อเลือกมุมมองหรือจัดการสิทธิ์">
             <span id="userRoleIcon">👤</span>
-            <span id="userRoleText" class="max-w-[125px] sm:max-w-none truncate">ผู้ปฏิบัติงาน</span>
+            <span id="userRoleText" class="max-w-[70px] xs:max-w-[100px] sm:max-w-none truncate">ผู้ปฏิบัติงาน</span>
             <svg id="userRoleArrow" class="w-3 h-3 opacity-60 ml-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
 

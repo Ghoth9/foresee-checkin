@@ -557,9 +557,53 @@ export function clearAllActiveCheckins() {
 }
 
 export function openCheckoutModal(id) {
+  if (!id) return;
   state.selectedActiveCheckoutId = id;
-  const item = state.activeTasks.find(a => a.id === id);
+  let item = state.activeTasks.find(a => a.id === id || a.taskId === id);
+  if (!item) {
+    const linked = state.tasksList.find(t => t.id === id || t.title === id || (t.customer && t.customer.checkinId === id));
+    if (linked) {
+      item = {
+        id: linked.id,
+        taskId: linked.id,
+        task: linked.title || "งานที่เลือก",
+        techs: Array.isArray(linked.techs) ? linked.techs : [],
+        time: null,
+        date: linked.startDate || "วันนี้",
+        createdAt: linked.createdAt || null,
+        progress: linked.progress || 0,
+        photos: [],
+        note: linked.latestUpdate || '',
+        isCheckedIn: false,
+        isSynthetic: true,
+        linkedTaskObj: linked
+      };
+      state.activeTasks.unshift(item);
+    } else {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlTask = urlParams.get("task");
+        if (urlTask || id) {
+          item = {
+            id: id,
+            taskId: urlParams.get("taskId") || (id.startsWith("TASK-") ? id : ""),
+            task: urlTask || (id.startsWith("TASK-") ? id : "งานที่กำลังดำเนินการ"),
+            techs: urlParams.get("techs") ? urlParams.get("techs").split(",").map(t => t.trim()) : [],
+            time: urlParams.get("time") || null,
+            date: "วันนี้",
+            createdAt: new Date().toISOString(),
+            progress: 0,
+            photos: [],
+            note: '',
+            isCheckedIn: true
+          };
+          state.activeTasks.unshift(item);
+        }
+      } catch (e) {}
+    }
+  }
   if (!item) return;
+  state.selectedActiveCheckoutId = item.id;
 
   const modal = document.getElementById("checkoutOutcomeModal");
   if (!modal) return;

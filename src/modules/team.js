@@ -252,9 +252,9 @@ export function applyRolePermissionsUI(role, techObj) {
       } else if (lineName) {
         cleanName = lineName;
       }
-      const shortName = cleanName && cleanName.length > 8 ? cleanName.slice(0, 7) + '…' : cleanName;
+      const shortName = cleanName && cleanName.length > 7 ? cleanName.slice(0, 6) + '…' : cleanName;
       text.innerText = `แอดมิน: ${shortName}`;
-      badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0";
+      badge.className = "flex items-center space-x-1 sm:space-x-1.5 text-xs px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap min-w-0 flex-shrink";
       badge.title = "คุณมีสิทธิ์แอดมิน (แตะเพื่อสลับมุมมองหรือจัดการสิทธิ์)";
     } else {
       icon.innerText = "👤";
@@ -266,9 +266,9 @@ export function applyRolePermissionsUI(role, techObj) {
       } else {
         cleanName = getLineUserName() || "ทั่วไป";
       }
-      const shortName = cleanName && cleanName.length > 8 ? cleanName.slice(0, 7) + '…' : cleanName;
+      const shortName = cleanName && cleanName.length > 7 ? cleanName.slice(0, 6) + '…' : cleanName;
       text.innerText = `ผู้ปฏิบัติงาน: ${shortName}`;
-      badge.className = "flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0";
+      badge.className = "flex items-center space-x-1 sm:space-x-1.5 text-xs px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap min-w-0 flex-shrink";
       badge.title = "เข้าสู่ระบบในฐานะผู้ปฏิบัติงาน (แตะเพื่อปลดล็อกแอดมินหรือสลับมุมมอง)";
     }
   }

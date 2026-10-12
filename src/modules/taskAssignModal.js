@@ -350,9 +350,15 @@ export async function submitAssignForm({ tasksList, onComplete }) {
 
   // 1. Update memory & localStorage immediately (Optimistic Update)
   tasksList.unshift(newTask);
-  localStorage.setItem("fs_tasks", JSON.stringify(tasksList));
+  // 2. Reset filters to 'ทั้งหมด' so the newly created task is immediately visible
+  if (typeof window.setTaskTechFilter === 'function') {
+    window.setTaskTechFilter("ทั้งหมด");
+  }
+  if (typeof window.setStatusFilter === 'function') {
+    window.setStatusFilter("ทั้งหมด");
+  }
 
-  // 2. Immediately re-render views so the user instantly sees the new task
+  // 3. Immediately re-render views so the user instantly sees the new task
   if (onComplete) onComplete([newTask]);
 
   // 3. Persist to Supabase Database

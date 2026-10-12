@@ -322,6 +322,12 @@ export async function refreshFromSupabase(force = false) {
       const curActive = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId || a.taskId === state.selectedActiveCheckoutId);
       if (curActive) renderActiveTaskPhotos(curActive);
     }
+
+    // Re-check deep link params once fresh data arrives (if modal was not yet open)
+    const chkModal = document.getElementById("checkoutOutcomeModal");
+    if (!chkModal || chkModal.classList.contains("hidden")) {
+      handleDeepLink();
+    }
   } catch (err) {
     console.warn("refreshFromSupabase error:", err);
   } finally {
@@ -364,9 +370,9 @@ export function updateLineStatusUI() {
 }
 
 // -------------------------------------------------------------
-// APP BOOTSTRAP
+// DEEP LINK & QUERY PARAMS ROUTING
 // -------------------------------------------------------------
-async function bootstrapApp() {
+export function handleDeepLink() {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has("liff.state")) {
     try {
@@ -377,17 +383,14 @@ async function bootstrapApp() {
   }
   const urlTab = urlParams.get("tab");
   let savedTab = null;
-  try {
-    savedTab = sessionStorage.getItem("fs_active_tab");
-  } catch (e) {}
+  try { savedTab = sessionStorage.getItem("fs_active_tab"); } catch (e) {}
   const targetTab = urlTab || savedTab || "checkin";
   const targetTaskId = urlParams.get("taskId");
   const targetAction = urlParams.get("action");
   const targetId = urlParams.get("id");
 
-  switchTab(targetTab);
-
-  if (targetTab === "checkout") {
+  if (urlTab === "checkout" || (!urlTab && (targetAction || targetId || targetTaskId))) {
+    switchTab("checkout");
     if (targetAction === "update") {
       setActionTab("update");
     } else if (targetAction === "close") {
@@ -395,17 +398,26 @@ async function bootstrapApp() {
     }
     const matchId = targetId || targetTaskId;
     if (matchId) {
-      const existing = state.activeTasks.find(a => a.id === matchId || a.taskId === matchId);
-      if (existing) {
-        selectActiveTaskForCheckout(existing.id);
-      }
+      setTimeout(() => {
+        openCheckoutModal(matchId);
+      }, 50);
     }
-  } else if (targetTab === "tasks" && targetTaskId) {
+  } else if (urlTab === "tasks" && targetTaskId) {
+    switchTab("tasks");
     const targetSubtab = urlParams.get("subtab");
     setTimeout(() => {
       openTaskDetailModal(targetTaskId, state.tasksList, state.allTechnicians, targetSubtab === "timeline" ? "timeline" : "info");
     }, 150);
+  } else {
+    switchTab(targetTab);
   }
+}
+
+// -------------------------------------------------------------
+// APP BOOTSTRAP
+// -------------------------------------------------------------
+async function bootstrapApp() {
+  handleDeepLink();
 
   // Clear search input
   const taskSearchInput = document.getElementById("taskSearchInput");
