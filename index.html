@@ -1318,6 +1318,34 @@
           </button>
         </div>
 
+        <!-- Current Active Operator Banner -->
+        <div class="flex items-center justify-between bg-slate-50 border border-slate-200/90 rounded-xl px-3.5 py-2 text-xs">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm">👤</span>
+            <span class="text-slate-600">ผู้บันทึก:</span>
+            <strong id="checkoutModalCurrentTech" class="text-slate-900 font-bold">ผู้ปฏิบัติงานหน้างาน</strong>
+          </div>
+          <button type="button" onclick="window.openSelectOperatorModal()" class="text-[11px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer transition-colors">
+            สลับผู้ปฏิบัติงาน
+          </button>
+        </div>
+
+        <!-- Task Activity Logs Section (Who checked in, who updated) -->
+        <div id="checkoutModalActivitySection" class="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-3.5 space-y-2 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-xs font-bold text-slate-800">📋 ประวัติกิจกรรม & การอัปเดตของงานนี้</span>
+              <span id="checkoutModalActivityBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-mono">0 รายการ</span>
+            </div>
+            <button type="button" id="checkoutModalActivityToggleBtn" onclick="window.toggleCheckoutModalActivityList()" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer transition-colors">
+              ดูประวัติ ▼
+            </button>
+          </div>
+          <div id="checkoutModalActivityList" class="hidden space-y-2 pt-1 max-h-48 overflow-y-auto pr-1" style="scrollbar-width: thin;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
         <!-- Existing Photos Gallery Card (Appears if task has existing photos) -->
         <div id="activeTaskExistingPhotosContainer" class="hidden bg-slate-50/90 border border-slate-200/90 rounded-2xl p-3.5 space-y-2.5 shadow-2xs">
           <div class="flex items-center justify-between">

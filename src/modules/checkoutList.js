@@ -174,6 +174,87 @@ export function renderActiveTaskPhotos(activeItem) {
   enableSmoothHorizontalDragScroll(grid);
 }
 
+export function collectTaskActivityLogs(item, linkedTask) {
+  const allLogs = [];
+
+  // 1. Checkin sessions from item
+  if (Array.isArray(item.checkinSessions) && item.checkinSessions.length > 0) {
+    item.checkinSessions.forEach(cs => {
+      const techNames = Array.isArray(cs.techs) ? cs.techs.join(", ") : (cs.checkedInBy || "ผู้ปฏิบัติงาน");
+      allLogs.push({
+        id: cs.id,
+        type: "checkin",
+        label: "เช็กอินเข้าเริ่มงาน",
+        time: cs.time || "-",
+        date: cs.date || "วันนี้",
+        tech: techNames,
+        note: cs.note && cs.note !== "-" ? cs.note : "บันทึกเวลาเข้าปฏิบัติงานหน้างาน",
+        photos: Array.isArray(cs.photos) ? cs.photos : [],
+        createdAt: cs.createdAt || null
+      });
+    });
+  } else if ((item.isCheckedIn === true || item.id?.startsWith("CHK-")) && item.time) {
+    allLogs.push({
+      id: item.id,
+      type: "checkin",
+      label: "เช็กอินเข้าเริ่มงาน",
+      time: item.time || "-",
+      date: item.date || "วันนี้",
+      tech: Array.isArray(item.techs) ? item.techs.join(", ") : (item.checkedInBy || "ผู้ปฏิบัติงาน"),
+      note: item.note && item.note !== "-" ? item.note : "บันทึกเวลาเข้าปฏิบัติงานหน้างาน",
+      photos: Array.isArray(item.photos) ? item.photos : [],
+      createdAt: item.createdAt || null
+    });
+  }
+
+  // 2. Progress history from linkedTask
+  if (linkedTask) {
+    const rawHist = linkedTask.progressHistory || linkedTask.customer?.progress_history || [];
+    if (Array.isArray(rawHist)) {
+      rawHist.forEach(ph => {
+        if (ph.type === "checkin" && allLogs.some(l => l.type === "checkin" && l.time === ph.time && l.tech === ph.tech)) {
+          return;
+        }
+        let type = ph.type;
+        let label = "อัปเดตความคืบหน้า";
+        if (type === "close" || ph.status === "เสร็จสิ้น" || Number(ph.progress) === 100) {
+          type = "close";
+          label = "ปิดงาน 100%";
+        } else if (type === "extend" || ph.status === "ขอขยายเวลา") {
+          type = "extend";
+          label = "ขอขยายเวลา";
+        } else if (type === "checkin") {
+          label = "เช็กอินเข้าเริ่มงาน";
+        } else {
+          label = `อัปเดตงาน (${ph.progress || 0}%)`;
+        }
+
+        allLogs.push({
+          id: ph.id || `HIST-${Date.now().toString(36)}`,
+          type: type || "update",
+          label: label,
+          progress: ph.progress,
+          status: ph.status,
+          time: ph.time || "-",
+          date: ph.date || "วันนี้",
+          tech: ph.tech || ph.by || "ผู้ปฏิบัติงาน",
+          note: ph.note || "-",
+          photos: Array.isArray(ph.photos) ? ph.photos : [],
+          createdAt: ph.createdAt || null
+        });
+      });
+    }
+  }
+
+  allLogs.sort((a, b) => {
+    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return tB - tA;
+  });
+
+  return allLogs;
+}
+
 export function renderActiveCheckoutList() {
   const container = document.getElementById("activeListContainer");
   const outcomeSection = document.getElementById("checkoutOutcomeSection");
@@ -256,6 +337,12 @@ export function renderActiveCheckoutList() {
     const rawNote = linkedTask?.latestUpdate || item.note;
     const cleanNote = formatLatestNoteText(rawNote);
     const isRealCheckin = (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00";
+    const durationStr = calculateDuration(item.time, item.date, item.createdAt);
+    const isToday = !item.date || item.date === "วันนี้" || item.date === "-";
+    const checkinDateLabel = (!isToday && item.date) ? `${item.date} ` : "";
+
+    // Collect all task activity logs
+    const taskActivityLogs = collectTaskActivityLogs(item, linkedTask);
 
     // Recent update snippet from task history
     let historySnippet = "";
@@ -275,7 +362,7 @@ export function renderActiveCheckoutList() {
           <div class="flex items-center space-x-2 flex-wrap gap-y-1">
             <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
             ${isRealCheckin 
-              ? `<span class="text-xs text-emerald-800 font-bold font-mono">⏰ เช็กอิน: ${formatGasTime(item.time)} น.</span>` 
+              ? `<span class="text-xs text-emerald-800 font-bold font-mono">⏰ เช็กอิน: ${checkinDateLabel}${formatGasTime(item.time)} น.</span>` 
               : `<span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">📋 งานมอบหมาย (ยังไม่เช็กอิน)</span>`}
             <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs">คืบหน้า ${itemProg}%</span>
             ${totalPhotos > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">📸 ${totalPhotos} รูป</span>` : ''}
@@ -294,6 +381,7 @@ export function renderActiveCheckoutList() {
           </div>
         </div>
         <div class="font-bold text-sm text-slate-950 mb-1">${item.task}</div>
+        
         ${cleanNote ? `
           <div class="text-[11px] text-blue-900 bg-blue-50/90 rounded-lg px-2.5 py-1.5 mt-1.5 font-medium border border-blue-200/70 flex items-start space-x-1.5">
             <span class="flex-shrink-0 text-blue-600 font-bold">📌 ล่าสุด:</span>
@@ -306,11 +394,66 @@ export function renderActiveCheckoutList() {
             <span class="truncate">${historySnippet}</span>
           </div>
         ` : ''}
+
+        ${item.checkinSessions && item.checkinSessions.length > 1 ? `
+          <div class="mt-2 flex items-center space-x-1.5 flex-wrap gap-1 bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
+            <span class="text-[10px] text-emerald-900 font-bold">👥 เช็กอินแล้ว (${item.checkinSessions.length} คน/รอบ):</span>
+            ${item.checkinSessions.map(s => {
+              const sTech = Array.isArray(s.techs) ? s.techs.join(", ") : (s.checkedInBy || "ผู้ปฏิบัติงาน");
+              const sDate = s.date && s.date !== "วันนี้" && s.date !== "-" ? `${s.date} ` : "";
+              return `
+                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-white text-emerald-900 border border-emerald-300 text-[10px] font-semibold shadow-2xs">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span>${sTech}</span>
+                  <span class="text-emerald-700 font-mono">(${sDate}${s.time} น.)</span>
+                </span>
+              `;
+            }).join('')}
+          </div>
+        ` : ''}
+
+        ${taskActivityLogs.length > 0 ? `
+          <div class="mt-2.5 pt-2 border-t border-slate-100">
+            <button type="button" onclick="event.stopPropagation(); window.toggleTaskLogs('${item.id}')" class="text-[11px] font-bold text-slate-600 hover:text-blue-600 flex items-center space-x-1.5 transition-colors cursor-pointer select-none">
+              <span>📋 ดูประวัติกิจกรรม & การอัปเดต (${taskActivityLogs.length} รายการ)</span>
+              <span id="logToggleIcon-${item.id}" class="text-[10px] transform transition-transform">▼</span>
+            </button>
+            <div id="logAccordion-${item.id}" class="hidden mt-2 space-y-1.5 bg-slate-50/90 rounded-xl p-2.5 border border-slate-200/80 text-[11px] max-h-56 overflow-y-auto" style="scrollbar-width: thin;">
+              ${taskActivityLogs.map(log => `
+                <div class="p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs flex items-start space-x-2">
+                  <span class="text-sm flex-shrink-0 mt-0.5">
+                    ${log.type === 'checkin' ? '🟢' : (log.type === 'close' ? '🏁' : (log.type === 'extend' ? '⏳' : '📊'))}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between flex-wrap gap-1">
+                      <strong class="text-slate-900">${log.label}</strong>
+                      <span class="text-[10px] text-slate-500 font-mono">${log.date && log.date !== 'วันนี้' ? log.date + ' ' : ''}${log.time} น.</span>
+                    </div>
+                    <div class="text-[10px] text-slate-600 mt-0.5">
+                      โดย: <strong class="text-slate-800">${log.tech}</strong>
+                      ${log.note && log.note !== '-' ? ` • <span class="text-slate-700">"${log.note}"</span>` : ''}
+                    </div>
+                    ${Array.isArray(log.photos) && log.photos.length > 0 ? `
+                      <div class="flex items-center space-x-1.5 mt-1.5 overflow-x-auto py-0.5" style="scrollbar-width: thin;">
+                        ${log.photos.slice(0, 4).map(p => {
+                          const src = typeof p === 'string' ? p : (p.dataUrl || p.base64 || p.src || '');
+                          return `<img src="${src}" class="w-8 h-8 rounded-lg object-cover border border-slate-200 flex-shrink-0 hover:scale-105 transition-transform cursor-pointer" onclick="event.stopPropagation(); window.openImageLightbox('${src.replace(/'/g, "\\'")}', 'รูปกิจกรรม', '${item.id}')" />`;
+                        }).join('')}
+                        ${log.photos.length > 4 ? `<span class="text-[9px] text-slate-500 font-bold self-center">+${log.photos.length - 4}</span>` : ''}
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
         <div class="text-slate-600 mt-2.5 flex items-center justify-between font-medium pt-2 border-t border-slate-100 flex-wrap gap-2">
           <span>👷 ผู้ปฏิบัติงาน: <strong class="text-slate-900">${techList}</strong></span>
           <div class="flex items-center space-x-2">
             ${isRealCheckin 
-              ? `<span class="text-xs text-slate-600 font-mono">⏱️ ${calculateDuration(item.time)}</span>` 
+              ? `<span class="text-xs text-slate-600 font-mono">⏱️ ${durationStr}</span>` 
               : `<span class="text-xs text-slate-500 font-sans">📅 เริ่ม: ${item.date || 'วันนี้'}</span>`}
             <button type="button" onclick="event.stopPropagation(); window.openCheckoutModal('${item.id}')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer">
               <span>📝 อัปเดต / ปิดงาน</span>
@@ -434,7 +577,52 @@ export function openCheckoutModal(id) {
   }
   if (timeEl) {
     const isRealCheckin = (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00";
-    timeEl.innerText = isRealCheckin ? `⏰ เช็กอิน: ${formatGasTime(item.time)} น.` : `📅 เริ่ม: ${item.date || 'วันนี้'}`;
+    const checkinDateLabel = (item.date && item.date !== "วันนี้" && item.date !== "-") ? `${item.date} ` : "";
+    const durStr = calculateDuration(item.time, item.date, item.createdAt);
+    timeEl.innerText = isRealCheckin ? `⏰ เช็กอิน: ${checkinDateLabel}${formatGasTime(item.time)} น. (${durStr})` : `📅 เริ่ม: ${item.date || 'วันนี้'}`;
+  }
+
+  const currentTechEl = document.getElementById("checkoutModalCurrentTech");
+  if (currentTechEl) {
+    currentTechEl.innerText = getEffectiveOperatorName() || "ผู้ปฏิบัติงานหน้างาน";
+  }
+
+  // Render modal activity logs
+  const activityLogs = collectTaskActivityLogs(item, linkedTask);
+  const badgeEl = document.getElementById("checkoutModalActivityBadge");
+  const listEl = document.getElementById("checkoutModalActivityList");
+  if (badgeEl) badgeEl.innerText = `${activityLogs.length} รายการ`;
+  if (listEl) {
+    if (activityLogs.length === 0) {
+      listEl.innerHTML = `<div class="text-center py-2 text-slate-400 text-[11px]">ยังไม่มีประวัติกิจกรรม</div>`;
+    } else {
+      listEl.innerHTML = activityLogs.map(log => `
+        <div class="p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs flex items-start space-x-2 text-[11px]">
+          <span class="text-sm flex-shrink-0 mt-0.5">
+            ${log.type === 'checkin' ? '🟢' : (log.type === 'close' ? '🏁' : (log.type === 'extend' ? '⏳' : '📊'))}
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between flex-wrap gap-1">
+              <strong class="text-slate-900">${log.label}</strong>
+              <span class="text-[10px] text-slate-500 font-mono">${log.date && log.date !== 'วันนี้' ? log.date + ' ' : ''}${log.time} น.</span>
+            </div>
+            <div class="text-[10px] text-slate-600 mt-0.5">
+              โดย: <strong class="text-slate-800">${log.tech}</strong>
+              ${log.note && log.note !== '-' ? ` • <span class="text-slate-700">"${log.note}"</span>` : ''}
+            </div>
+            ${Array.isArray(log.photos) && log.photos.length > 0 ? `
+              <div class="flex items-center space-x-1.5 mt-1.5 overflow-x-auto py-0.5" style="scrollbar-width: thin;">
+                ${log.photos.slice(0, 4).map(p => {
+                  const src = typeof p === 'string' ? p : (p.dataUrl || p.base64 || p.src || '');
+                  return `<img src="${src}" class="w-8 h-8 rounded-lg object-cover border border-slate-200 flex-shrink-0 hover:scale-105 transition-transform cursor-pointer" onclick="event.stopPropagation(); window.openImageLightbox('${src.replace(/'/g, "\\'")}', 'รูปกิจกรรม', '${item.id}')" />`;
+                }).join('')}
+                ${log.photos.length > 4 ? `<span class="text-[9px] text-slate-500 font-bold self-center">+${log.photos.length - 4}</span>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
   }
 
   // Pre-fill / sync current progress in checkout module
@@ -468,6 +656,33 @@ export function closeCheckoutModal() {
 
 export function selectActiveTaskForCheckout(id) {
   openCheckoutModal(id);
+}
+
+export function toggleTaskLogs(id) {
+  const acc = document.getElementById(`logAccordion-${id}`);
+  const icon = document.getElementById(`logToggleIcon-${id}`);
+  if (acc) {
+    acc.classList.toggle("hidden");
+    if (icon) {
+      icon.innerText = acc.classList.contains("hidden") ? "▼" : "▲";
+    }
+  }
+}
+
+export function toggleCheckoutModalActivityList() {
+  const listEl = document.getElementById("checkoutModalActivityList");
+  const btn = document.getElementById("checkoutModalActivityToggleBtn");
+  if (listEl) {
+    listEl.classList.toggle("hidden");
+    if (btn) {
+      btn.innerText = listEl.classList.contains("hidden") ? "ดูประวัติ ▼" : "ซ่อนประวัติ ▲";
+    }
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.toggleTaskLogs = toggleTaskLogs;
+  window.toggleCheckoutModalActivityList = toggleCheckoutModalActivityList;
 }
 
 if (typeof window !== "undefined") {

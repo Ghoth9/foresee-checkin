@@ -8,7 +8,7 @@
 import { compressMultipleFiles } from '../utils/compressor.js';
 import { createCheckoutFlexCard, createProgressFlexCard, triggerLiffShare } from '../liff/line.js';
 import { saveCheckoutApi, updateTaskProgressApi } from '../api/supabase.js';
-import { formatGasTime } from '../utils/date.js';
+import { formatGasTime, parseDeadlineDate } from '../utils/date.js';
 import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
 
 let checkoutPhotos = [];
@@ -195,31 +195,64 @@ export function updateCheckoutSubmitButtonsState() {
   }
 }
 
-export function calculateDuration(checkinTimeStr) {
+export function calculateDuration(checkinTimeStr, checkinDateStr = null, createdAt = null) {
   if (!checkinTimeStr || checkinTimeStr === "-") return "ตามเวลาปฏิบัติงาน";
   try {
-    const cleanTime = formatGasTime(checkinTimeStr);
-    const parts = cleanTime.split(":");
-    if (parts.length < 2) return "ตามเวลาปฏิบัติงาน";
+    let inDate = null;
 
-    const inHours = parseInt(parts[0], 10);
-    const inMins = parseInt(parts[1], 10);
-    if (isNaN(inHours) || isNaN(inMins)) return "ตามเวลาปฏิบัติงาน";
+    // 1. If createdAt ISO timestamp is provided, use it directly
+    if (createdAt) {
+      const parsed = new Date(createdAt);
+      if (!isNaN(parsed.getTime())) {
+        inDate = parsed;
+      }
+    }
+
+    // 2. If not parsed yet, combine checkinDateStr and checkinTimeStr
+    if (!inDate) {
+      const cleanTime = formatGasTime(checkinTimeStr);
+      const parts = cleanTime.split(":");
+      if (parts.length >= 2) {
+        const inHours = parseInt(parts[0], 10);
+        const inMins = parseInt(parts[1], 10);
+        if (!isNaN(inHours) && !isNaN(inMins)) {
+          if (checkinDateStr && checkinDateStr !== "วันนี้" && checkinDateStr !== "-") {
+            const parsedDate = parseDeadlineDate(checkinDateStr);
+            if (parsedDate) {
+              inDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), inHours, inMins, 0, 0);
+            }
+          }
+          if (!inDate) {
+            inDate = new Date();
+            inDate.setHours(inHours, inMins, 0, 0);
+          }
+        }
+      }
+    }
+
+    if (!inDate) return "ตามเวลาปฏิบัติงาน";
 
     const now = new Date();
-    const inDate = new Date();
-    inDate.setHours(inHours, inMins, 0, 0);
-
     let diffMs = now.getTime() - inDate.getTime();
     if (diffMs < 0) diffMs = 0;
 
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
+    if (diffDays > 0) {
+      if (diffHours > 0) {
+        return `${diffDays} วัน ${diffHours} ชม.`;
+      }
+      return `${diffDays} วัน`;
+    }
     if (diffHours > 0) {
       return `${diffHours} ชม. ${diffMinutes} นาที`;
     }
-    return `${diffMinutes} นาที`;
+    if (diffMinutes > 0) {
+      return `${diffMinutes} นาที`;
+    }
+    return "เพิ่งเริ่มงาน";
   } catch (e) {
     return "ตามเวลาปฏิบัติงาน";
   }
@@ -398,7 +431,7 @@ export async function submitCheckoutForm({
   try {
     const now = new Date();
     const outTimeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-    const durationStr = calculateDuration(activeItem.time);
+    const durationStr = calculateDuration(activeItem.time, activeItem.date, activeItem.createdAt);
 
     const payload = {
       id: activeItem.id,

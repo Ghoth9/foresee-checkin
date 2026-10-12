@@ -214,6 +214,7 @@ export async function refreshFromSupabase(force = false) {
         techs: Array.isArray(a.techs) && a.techs.length > 0 ? a.techs : (a.tech ? [a.tech] : ["ผู้ปฏิบัติงานทั่วไป"]),
         time: formatGasTime(a.time),
         date: formatGasDate(a.date),
+        createdAt: a.createdAt || a.created_at || null,
         progress: a.progress !== undefined && a.progress > 0 ? a.progress : (linkedT?.progress || 0),
         photos: a.photos || [],
         note: a.note || '',
@@ -232,6 +233,7 @@ export async function refreshFromSupabase(force = false) {
           techs: Array.isArray(t.techs) ? t.techs : (t.assignee ? t.assignee.split(", ") : ["ผู้ปฏิบัติงานประจำทีม"]),
           time: null,
           date: t.startDate || "วันนี้",
+          createdAt: t.createdAt || t.created_at || null,
           progress: t.progress || 0,
           photos: [],
           note: t.latestUpdate || '',
@@ -242,12 +244,24 @@ export async function refreshFromSupabase(force = false) {
       }
     });
 
-    // Deduplicate activeTasks
+    // Deduplicate activeTasks & preserve checkin sessions
     const uniqueActivesMap = new Map();
     checkinActives.forEach(item => {
       const key = item.taskId || item.id;
       if (!uniqueActivesMap.has(key)) {
-        uniqueActivesMap.set(key, item);
+        uniqueActivesMap.set(key, {
+          ...item,
+          checkinSessions: item.isCheckedIn ? [{
+            id: item.id,
+            techs: item.techs,
+            time: item.time,
+            date: item.date,
+            createdAt: item.createdAt,
+            photos: item.photos || [],
+            note: item.note,
+            checkedInBy: item.checkedInBy
+          }] : []
+        });
       } else {
         const existing = uniqueActivesMap.get(key);
         const mergedTechs = Array.from(new Set([...(existing.techs || []), ...(item.techs || [])]));
@@ -255,9 +269,35 @@ export async function refreshFromSupabase(force = false) {
         if (item.photos && item.photos.length > 0) {
           existing.photos = Array.from(new Set([...(existing.photos || []), ...item.photos]));
         }
+        if (!existing.checkinSessions) existing.checkinSessions = [];
+        if (item.isCheckedIn && !existing.checkinSessions.some(s => s.id === item.id)) {
+          existing.checkinSessions.push({
+            id: item.id,
+            techs: item.techs,
+            time: item.time,
+            date: item.date,
+            createdAt: item.createdAt,
+            photos: item.photos || [],
+            note: item.note,
+            checkedInBy: item.checkedInBy
+          });
+        }
         if (item.isCheckedIn) {
           existing.isCheckedIn = true;
-          existing.time = item.time;
+          // Preserve earliest checkin time/date for accurate duration counter
+          const itemTime = item.createdAt ? new Date(item.createdAt).getTime() : 0;
+          const existTime = existing.createdAt ? new Date(existing.createdAt).getTime() : 0;
+          if (itemTime > 0 && existTime > 0) {
+            if (itemTime < existTime) {
+              existing.createdAt = item.createdAt;
+              existing.time = item.time;
+              existing.date = item.date;
+            }
+          } else if (!existing.time && item.time) {
+            existing.time = item.time;
+            existing.date = item.date;
+            existing.createdAt = item.createdAt;
+          }
         }
       }
     });
@@ -482,7 +522,7 @@ window.submitOngoingUpdate = () => {
   submitProgressOnly({
     activeItem: activeItem,
     noteText: noteInput ? noteInput.value : "",
-    closerName: getLineUserName() || "ผู้ปฏิบัติงานหน้างาน",
+    closerName: getEffectiveOperatorName() || getLineUserName() || "ผู้ปฏิบัติงานหน้างาน",
     totalPhotosCount: uniquePhotos.length,
     onComplete: (updatedInfo) => {
       const act = state.activeTasks.find(a => a.id === updatedInfo.id);
@@ -550,7 +590,7 @@ window.submitCheckout = () => {
     activeItem: activeItem,
     selectedOutcome: state.selectedCheckoutOutcome,
     noteText: noteInput ? noteInput.value : "",
-    closerName: getLineUserName() || "ผู้ปฏิบัติงานหน้างาน",
+    closerName: getEffectiveOperatorName() || getLineUserName() || "ผู้ปฏิบัติงานหน้างาน",
     onComplete: (closedRecord) => {
       const isProblem = closedRecord.outcome === "ติดปัญหา";
       state.activeTasks = state.activeTasks.filter(a => a.id !== closedRecord.id);

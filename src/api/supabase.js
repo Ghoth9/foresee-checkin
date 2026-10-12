@@ -76,6 +76,7 @@ export async function fetchInitialData() {
           photos: c.photos || [],
           progress: c.progress || 0,
           date: new Date(c.created_at).toLocaleDateString('th-TH'),
+          createdAt: c.created_at,
           checkedInBy: c.closer_name || '',
           closerName: c.closer_name || ''
         };
@@ -360,19 +361,50 @@ export async function updateTaskProgressApi({ taskId, taskTitle, progress, statu
 
 export async function extendTaskDeadlineApi({ taskId, newDeadline, oldDeadline, reason, updateBy }) {
   try {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("th-TH");
+    const extendHistoryItem = {
+      id: `EXT-${Date.now().toString(36)}`,
+      type: 'extend',
+      time: timeStr,
+      date: dateStr,
+      progress: 0,
+      status: 'ขอขยายเวลา',
+      note: `ขยายกำหนดส่งเป็น ${newDeadline}${reason && reason !== '-' ? ` (เหตุผล: ${reason})` : ''}`,
+      tech: updateBy || 'แอดมิน',
+      createdAt: now.toISOString()
+    };
+
+    let updatedHistory = null;
+    let existingCust = {};
+    try {
+      const { data: cur } = await supabase.from('tasks').select('customer').eq('id', taskId).limit(1);
+      if (cur && cur[0]) {
+        existingCust = (typeof cur[0].customer === 'object') ? cur[0].customer : {};
+        const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
+        updatedHistory = [...existingHistory, extendHistoryItem];
+      }
+    } catch (e) {}
+
+    const payload = {
+      deadline: newDeadline,
+      old_deadline: oldDeadline,
+      extend_reason: reason,
+      updated_by: updateBy,
+      updated_at: now.toISOString()
+    };
+    if (updatedHistory) {
+      payload.customer = { ...existingCust, progress_history: updatedHistory };
+    }
+
     const { error } = await supabase
       .from('tasks')
-      .update({
-        deadline: newDeadline,
-        old_deadline: oldDeadline,
-        extend_reason: reason,
-        updated_by: updateBy,
-        updated_at: new Date().toISOString()
-      })
+      .update(payload)
       .eq('id', taskId);
 
     if (error) throw error;
-    return { success: true };
+    return { success: true, historyItem: extendHistoryItem };
   } catch (err) {
     console.warn("extendTaskDeadlineApi error:", err);
     return { success: false, error: err.message };
@@ -407,6 +439,26 @@ export async function saveCheckinApi(data) {
       }
     }
 
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("th-TH");
+    const techDisplay = Array.isArray(data.techs) ? data.techs.join(", ") : (data.checkedInBy || data.closerName || "ผู้ปฏิบัติงาน");
+    const checkinHistoryItem = {
+      id: `CHK-LOG-${Date.now().toString(36)}`,
+      type: "checkin",
+      time: data.time || timeStr,
+      date: data.date || dateStr,
+      progress: 0,
+      status: "กำลังทำ",
+      note: data.note && data.note !== "-" ? `เช็กอินเข้าเริ่มงาน: ${data.note}` : "เช็กอินเข้าเริ่มงาน",
+      tech: techDisplay,
+      location: data.locationText || "-",
+      coords: data.coords ? (typeof data.coords === 'object' ? `${data.coords.lat}, ${data.coords.lng}` : data.coords) : '',
+      mapUrl: data.mapUrl || '',
+      photos: cleanPhotos,
+      createdAt: now.toISOString()
+    };
+
     // If taskId is specified, check if a checkin for this taskId already exists in 'กำลังทำ' status
     if (data.taskId) {
       const { data: existing } = await supabase
@@ -426,10 +478,41 @@ export async function saveCheckinApi(data) {
           .update({
             techs: mergedTechs,
             photos: mergedPhotos,
-            updated_at: new Date().toISOString()
+            updated_at: now.toISOString()
           })
           .eq('id', cur.id);
-        return { success: true, id: cur.id };
+
+        // Append checkin log to task's progress_history
+        try {
+          const { data: currentTasks } = await supabase.from('tasks').select('*').eq('id', data.taskId).limit(1);
+          const currentTask = currentTasks && currentTasks[0] ? currentTasks[0] : null;
+          if (currentTask) {
+            const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
+            const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
+            const isDuplicate = existingHistory.some(h => 
+              h.type === "checkin" && 
+              h.tech === techDisplay && 
+              (now.getTime() - new Date(h.createdAt || 0).getTime() < 10000)
+            );
+            if (!isDuplicate) {
+              await supabase
+                .from('tasks')
+                .update({
+                  status: 'กำลังทำ',
+                  customer: {
+                    ...existingCust,
+                    progress_history: [...existingHistory, checkinHistoryItem]
+                  },
+                  updated_at: now.toISOString()
+                })
+                .eq('id', data.taskId);
+            }
+          }
+        } catch (hErr) {
+          console.warn("Append checkin history error:", hErr);
+        }
+
+        return { success: true, id: cur.id, historyItem: checkinHistoryItem };
       }
     }
 
@@ -446,7 +529,7 @@ export async function saveCheckinApi(data) {
       status: 'กำลังทำ',
       photos: cleanPhotos,
       closer_name: data.checkedInBy || data.closerName || '',
-      created_at: new Date().toISOString()
+      created_at: now.toISOString()
     };
 
     const { error } = await supabase
@@ -456,16 +539,35 @@ export async function saveCheckinApi(data) {
     if (error) throw error;
 
     if (data.taskId) {
-      await supabase
-        .from('tasks')
-        .update({
-          status: 'กำลังทำ',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', data.taskId);
+      try {
+        const { data: currentTasks } = await supabase.from('tasks').select('*').eq('id', data.taskId).limit(1);
+        const currentTask = currentTasks && currentTasks[0] ? currentTasks[0] : null;
+        const existingCust = (currentTask && typeof currentTask.customer === 'object') ? currentTask.customer : {};
+        const existingHistory = Array.isArray(existingCust.progress_history) ? existingCust.progress_history : [];
+        const isDuplicate = existingHistory.some(h => 
+          h.type === "checkin" && 
+          h.tech === techDisplay && 
+          (now.getTime() - new Date(h.createdAt || 0).getTime() < 10000)
+        );
+        const updatedHistory = isDuplicate ? existingHistory : [...existingHistory, checkinHistoryItem];
+
+        await supabase
+          .from('tasks')
+          .update({
+            status: 'กำลังทำ',
+            customer: {
+              ...existingCust,
+              progress_history: updatedHistory
+            },
+            updated_at: now.toISOString()
+          })
+          .eq('id', data.taskId);
+      } catch (tErr) {
+        console.warn("Update task status error:", tErr);
+      }
     }
 
-    return { success: true, id: data.id };
+    return { success: true, id: data.id, historyItem: checkinHistoryItem };
   } catch (err) {
     console.warn("saveCheckinApi error:", err);
     return { success: false, error: err.message };
