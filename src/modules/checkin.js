@@ -404,11 +404,14 @@ export async function submitCheckinForm({ selectedTechs, selectedJobType, custom
     const mapUrl = coords.isReady ? getMapUrl(coords.lat, coords.lng) : "";
 
     const currentOpName = getEffectiveOperatorName() || "";
+    // If checking in to an assigned task, attribute checkin to the person who actually checked in
+    const checkinTechs = (selectedAssignedTaskId && currentOpName) ? [currentOpName] : (selectedTechs.length > 0 ? [...selectedTechs] : [currentOpName || "ผู้ปฏิบัติงาน"]);
+
     const checkinRecord = {
       id: checkinId,
       taskId: selectedAssignedTaskId,
       task: finalJobTitle,
-      techs: [...selectedTechs],
+      techs: checkinTechs,
       time: timeStr,
       date: dateStr,
       lat: coords.lat || "",
