@@ -130,6 +130,84 @@ export function closeAppDialog() {
   if (modal) modal.classList.add("hidden");
 }
 
+export function showAppPrompt({
+  title = "ระบุข้อมูล",
+  message = "",
+  placeholder = "พิมพ์ข้อความที่นี่...",
+  defaultValue = "",
+  confirmText = "ตกลง",
+  cancelText = "ยกเลิก",
+  onConfirm = null,
+  onCancel = null
+}) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("appDialogModal");
+    const iconContainer = document.getElementById("appDialogIconContainer");
+    const titleEl = document.getElementById("appDialogTitle");
+    const messageEl = document.getElementById("appDialogMessage");
+    const buttonsContainer = document.getElementById("appDialogButtonsContainer");
+
+    if (!modal || !titleEl || !messageEl || !buttonsContainer) {
+      const res = window.prompt(message || title, defaultValue);
+      if (res !== null && onConfirm) onConfirm(res);
+      if (res === null && onCancel) onCancel();
+      resolve(res);
+      return;
+    }
+
+    if (iconContainer) {
+      iconContainer.className = "w-12 h-12 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-2xs bg-blue-50 text-blue-600 border border-blue-200";
+      iconContainer.innerText = "✍️";
+    }
+
+    titleEl.innerText = title;
+    messageEl.innerHTML = `
+      <div class="space-y-2.5">
+        <div class="text-xs text-slate-600 leading-relaxed">${message}</div>
+        <textarea id="appDialogPromptInput" rows="2" placeholder="${placeholder}" class="w-full bg-slate-50 border border-slate-300 focus:bg-white focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all resize-y">${defaultValue}</textarea>
+      </div>
+    `;
+
+    buttonsContainer.innerHTML = `
+      <button type="button" id="appDialogPromptCancelBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors">
+        ${cancelText}
+      </button>
+      <button type="button" id="appDialogPromptConfirmBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-2xs active:scale-95">
+        ${confirmText}
+      </button>
+    `;
+
+    const cancelBtn = document.getElementById("appDialogPromptCancelBtn");
+    const confirmBtn = document.getElementById("appDialogPromptConfirmBtn");
+    const inputEl = document.getElementById("appDialogPromptInput");
+
+    if (cancelBtn) {
+      cancelBtn.onclick = () => {
+        closeAppDialog();
+        if (onCancel) onCancel();
+        resolve(null);
+      };
+    }
+
+    if (confirmBtn) {
+      confirmBtn.onclick = () => {
+        const val = inputEl ? inputEl.value : defaultValue;
+        closeAppDialog();
+        if (onConfirm) onConfirm(val);
+        resolve(val);
+      };
+    }
+
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.select();
+      }
+    }, 50);
+  });
+}
+
 export function showSharePromptDialog({
   title = "บันทึกข้อมูลเรียบร้อยแล้ว",
   message = "ต้องการแชร์การ์ดสรุปผลงานเข้ากลุ่ม LINE ทันทีหรือไม่?",
@@ -192,6 +270,7 @@ export function showSharePromptDialog({
 if (typeof window !== "undefined") {
   window.showAppAlert = showAppAlert;
   window.showAppConfirm = showAppConfirm;
+  window.showAppPrompt = showAppPrompt;
   window.showSharePromptDialog = showSharePromptDialog;
   window.closeAppDialog = closeAppDialog;
 }

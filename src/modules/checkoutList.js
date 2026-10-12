@@ -6,7 +6,7 @@
 
 import { state, getEffectiveOperatorName } from './state.js';
 import { formatGasTime, formatDisplayTime } from '../utils/date.js';
-import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
+import { showAppAlert, showAppConfirm, showAppPrompt } from '../utils/dialog.js';
 import { deleteCheckinApi, clearAllCheckinsApi, deleteTaskActivityLogApi, submitDutyCheckoutApi } from '../api/supabase.js';
 import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState } from './checkout.js';
 import { matchesOperator } from './tasks.js';
@@ -955,16 +955,17 @@ export function promptIndividualDutyCheckout(itemId, techName) {
     return;
   }
 
-  showAppConfirm({
+  showAppPrompt({
     title: `เช็กเอาต์จบงานเฉพาะหน้าที่: ${shortName}`,
-    message: `ยืนยันว่าคุณ (${shortName}) ปฏิบัติหน้าที่ในส่วนของคุณเสร็จสิ้นเรียบร้อยแล้วใช่หรือไม่?\n\n(งานจะยังคงเปิดให้สมาชิกท่านอื่นในลูปทำงานต่อจนครบทุกคน)`,
-    confirmText: "ยืนยันจบหน้าที่",
+    message: `บันทึกสรุปผลงานส่วนของ ${shortName} (เช่น ส่งคืนซัพฯ แล้ว / ประสานเอกสารแล้ว / ได้รับ CN แล้ว)\n\nเมื่อจบงานแล้ว งานจะยังเปิดให้เพื่อนร่วมงานท่านอื่นในลูปทำงานต่อจนครบ:`,
+    placeholder: "พิมพ์รายละเอียดการจบหน้าที่ เช่น ส่งคืนซัพฯ เรียบร้อยแล้ว...",
+    defaultValue: "ปฏิบัติหน้าที่เรียบร้อย",
+    confirmText: "🏁 ยืนยันจบหน้าที่",
     cancelText: "ยกเลิก",
-    isDanger: false,
-    onConfirm: async () => {
-      const note = window.prompt(`ระบุบันทึกผลการดำเนินงานของ ${shortName} (เช่น ส่งคืนซัพฯ แล้ว / ประสานงานเอกสารแล้ว / ได้รับ CN แล้ว):`, `ปฏิบัติหน้าที่เรียบร้อย`) || "ปฏิบัติหน้าที่เรียบร้อย";
+    onConfirm: async (noteVal) => {
+      const note = (noteVal && noteVal.trim()) ? noteVal.trim() : "ปฏิบัติหน้าที่เรียบร้อย";
       try {
-        const res = await submitDutyCheckoutApi({ taskId, tech: targetTech, note: note.trim(), photos: [] });
+        const res = await submitDutyCheckoutApi({ taskId, tech: targetTech, note, photos: [] });
 
         const linked = state.tasksList.find(t => t.id === taskId);
         if (linked) {
