@@ -318,3 +318,37 @@ export function deleteWorkHistoryLog(logId) {
     }
   });
 }
+
+export function renderTodayLogs() {
+  updateWorkHistoryBadge();
+  renderWorkHistoryList();
+}
+
+export function deleteTodayLog(id) {
+  if (state.currentUserRole !== "admin") {
+    showAppAlert({ type: "warning", title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)", message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบประวัติงานได้ครับ" });
+    return;
+  }
+  showAppConfirm({
+    title: "ยืนยันการลบประวัติ", message: `คุณต้องการลบประวัติงาน "${id}" ออกจากรายการหรือไม่?`,
+    confirmText: "ลบ", cancelText: "ยกเลิก", isDanger: true,
+    onConfirm: () => {
+      state.dailyLogs = state.dailyLogs.filter(l => l.id !== id);
+      state.activeTasks = state.activeTasks.filter(a => a.id !== id);
+      localStorage.setItem("fs_daily_logs", JSON.stringify(state.dailyLogs));
+      localStorage.setItem("fs_active_tasks", JSON.stringify(state.activeTasks));
+      renderTodayLogs();
+      if (typeof window.renderActiveCheckoutList === "function") window.renderActiveCheckoutList();
+      deleteCheckinApi(id);
+    }
+  });
+}
+
+export function toggleTodayLogsCollapse() {
+  const container = document.getElementById("todayLogsContainer");
+  const chevron = document.getElementById("todayLogsToggleChevron");
+  if (!container) return;
+  const isHidden = container.classList.toggle("hidden");
+  if (chevron) chevron.style.transform = isHidden ? "rotate(-90deg)" : "rotate(0deg)";
+}
+

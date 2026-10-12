@@ -8,95 +8,30 @@ import { state, getEffectiveOperatorName } from './state.js';
 import { formatGasTime, formatDisplayTime } from '../utils/date.js';
 import { showAppAlert, showAppConfirm, showAppPrompt } from '../utils/dialog.js';
 import { deleteCheckinApi, clearAllCheckinsApi, deleteTaskActivityLogApi, submitDutyCheckoutApi } from '../api/supabase.js';
-import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState } from './checkout.js';
+import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState, setCheckoutOutcome } from './checkout.js';
+export { setCheckoutOutcome };
 import { matchesOperator } from './tasks.js';
-import { updateWorkHistoryBadge, renderWorkHistoryList } from './historyModal.js';
+import { updateWorkHistoryBadge, renderWorkHistoryList, renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse } from './historyModal.js';
+export { renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse };
 import {
   getTaskMemberStatuses,
   getUniquePhotosForActiveTask,
   formatLatestNoteText,
-  collectTaskActivityLogs
+  collectTaskActivityLogs,
+  matchTechName,
+  enableSmoothHorizontalDragScroll,
+  renderActiveTaskPhotos
 } from '../utils/taskMembers.js';
 
-export { getUniquePhotosForActiveTask, formatLatestNoteText, collectTaskActivityLogs, getTaskMemberStatuses };
-
-export function matchTechName(techs, targetName) {
-  if (!targetName || !techs) return false;
-  const tArr = Array.isArray(techs) ? techs : [techs];
-  return tArr.some(t => {
-    if (!t) return false;
-    return matchesOperator(t, targetName);
-  });
-}
-
-export function enableSmoothHorizontalDragScroll(container) {
-  if (!container || container._hasSmoothDrag) return;
-  container._hasSmoothDrag = true;
-  container.addEventListener("wheel", (e) => {
-    if (e.deltaY !== 0 && container.scrollWidth > container.clientWidth) {
-      e.preventDefault();
-      container.scrollBy({ left: e.deltaY * 1.5, behavior: "auto" });
-    }
-  }, { passive: false });
-  let isDown = false, startX = 0, scrollLeft = 0, dragDistance = 0;
-  container.addEventListener("mousedown", (e) => {
-    if (e.target.closest("button") || e.target.closest("input")) return;
-    isDown = true; dragDistance = 0; startX = e.pageX - container.offsetLeft; scrollLeft = container.scrollLeft;
-  });
-  window.addEventListener("mouseup", () => { isDown = false; });
-  container.addEventListener("mouseleave", () => { isDown = false; });
-  container.addEventListener("mousemove", (e) => {
-    if (!isDown) return;
-    const walk = e.pageX - container.offsetLeft - startX;
-    dragDistance += Math.abs(walk);
-    if (Math.abs(walk) > 3) { e.preventDefault(); container.scrollLeft = scrollLeft - walk; }
-  });
-  container.addEventListener("click", (e) => {
-    if (dragDistance > 8) { e.stopPropagation(); e.preventDefault(); dragDistance = 0; }
-  }, true);
-}
-
-export function renderActiveTaskPhotos(activeItem) {
-  const container = document.getElementById("activeTaskExistingPhotosContainer");
-  const grid = document.getElementById("activeTaskPhotosGrid");
-  const badge = document.getElementById("activeTaskPhotosBadge");
-  if (!container || !grid) return;
-
-  if (!activeItem) {
-    container.classList.add("hidden");
-    grid.innerHTML = "";
-    return;
-  }
-
-  const photosList = getUniquePhotosForActiveTask(activeItem);
-
-  if (photosList.length === 0) {
-    container.classList.add("hidden");
-    grid.innerHTML = "";
-    return;
-  }
-
-  container.classList.remove("hidden");
-  if (badge) badge.innerText = `${photosList.length} รูป`;
-
-  grid.innerHTML = photosList.map((p, idx) => `
-    <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 cursor-pointer shadow-2xs hover:ring-2 hover:ring-blue-500 transition-all bg-slate-100 group select-none"
-         onclick="window.openImageLightbox('${p.src.replace(/'/g, "\\'")}', '${p.caption.replace(/'/g, "\\'")}', '${activeItem.id}')">
-      <img src="${p.src}" class="w-full h-full object-cover pointer-events-none" alt="รูปที่ ${idx + 1}" loading="lazy" draggable="false">
-      <div class="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/0 transition-colors flex items-center justify-center pointer-events-none">
-        <svg class="w-4 h-4 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>
-      </div>
-      <button type="button" onclick="event.stopPropagation(); window.deletePhotoFromTask('${p.src.replace(/'/g, "\\'")}', '${activeItem.id}')" class="absolute top-1 right-1 w-5 h-5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-md opacity-85 hover:opacity-100 hover:scale-110 transition-all z-10 cursor-pointer" title="ลบรูปนี้">
-        ✕
-      </button>
-      <div class="absolute bottom-0 inset-x-0 bg-slate-900/60 text-[9px] text-white text-center py-0.2 pointer-events-none">
-        #${idx + 1}
-      </div>
-    </div>
-  `).join("");
-
-  enableSmoothHorizontalDragScroll(grid);
-}
+export {
+  getUniquePhotosForActiveTask,
+  formatLatestNoteText,
+  collectTaskActivityLogs,
+  getTaskMemberStatuses,
+  matchTechName,
+  enableSmoothHorizontalDragScroll,
+  renderActiveTaskPhotos
+};
 
 
 let checkoutSearchQuery = "";
@@ -726,8 +661,9 @@ export function openCheckoutModal(id) {
       if (memberCountBadge) memberCountBadge.innerText = `${memberStatuses.length} คน`;
       if (memberSummaryBadge) memberSummaryBadge.innerText = `เช็กอิน: ${inCount}/${memberStatuses.length} • จบหน้าที่: ${doneCount}/${memberStatuses.length}`;
 
+      const opName = getEffectiveOperatorName();
       memberListEl.innerHTML = memberStatuses.map(m => {
-        const canCheckOutThisDuty = m.hasCheckedIn && !m.hasCheckedOut;
+        const isMe = matchesOperator(m.fullName, opName) || matchesOperator(m.shortName, opName);
         return `
           <div class="flex items-center justify-between p-2 rounded-xl bg-white border ${
             m.hasCheckedOut 
@@ -739,7 +675,10 @@ export function openCheckoutModal(id) {
                 ${m.hasCheckedOut ? '🏁' : (m.hasCheckedIn ? '🟢' : '⏳')}
               </span>
               <div class="min-w-0">
-                <div class="font-bold text-slate-900 truncate">${m.fullName}</div>
+                <div class="font-bold text-slate-900 truncate flex items-center space-x-1">
+                  <span>${m.fullName}</span>
+                  ${isMe ? `<span class="text-[9px] bg-slate-900 text-white font-semibold px-1.5 py-0.2 rounded-full">คุณ</span>` : ''}
+                </div>
                 <div class="text-[10px] text-slate-500 flex items-center space-x-1.5 flex-wrap">
                   ${m.hasCheckedIn ? `<span class="text-blue-700 font-medium">เข้า: ${m.checkinTime}</span>` : `<span class="text-amber-700 font-medium font-semibold">⚠️ ยังไม่ได้เช็กอินเข้างาน</span>`}
                   ${m.hasCheckedOut ? `<span>•</span><span class="text-emerald-700 font-bold">จบหน้าที่: ${m.checkoutTime}</span>` : ''}
@@ -751,15 +690,24 @@ export function openCheckoutModal(id) {
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
                 ✓ จบหน้าที่แล้ว
               </span>
-            ` : (m.hasCheckedIn ? `
-              <button type="button" onclick="event.stopPropagation(); window.promptIndividualDutyCheckout('${item.id}', '${m.fullName.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="บันทึกเช็กเอาต์จบงานเฉพาะหน้าที่ของ ${m.shortName}">
+            ` : (isMe ? (m.hasCheckedIn ? `
+              <button type="button" onclick="event.stopPropagation(); window.promptIndividualDutyCheckout('${item.id}', '${m.fullName.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="บันทึกเช็กเอาต์จบงานหน้าที่ของคุณ">
                 <span>🏁 เช็กเอาต์จบหน้าที่</span>
               </button>
             ` : `
-              <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${item.taskId || item.id}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="${m.shortName} ยังไม่ได้เช็กอินเข้างาน แตะเพื่อไปเช็กอิน">
+              <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${item.taskId || item.id}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="คุณยังไม่ได้เช็กอินเข้างาน แตะเพื่อไปเช็กอิน">
                 <span>📍 ไปเช็กอินก่อน</span>
               </button>
-            `)}
+            `) : (m.hasCheckedIn ? `
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 flex items-center space-x-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                <span>กำลังปฏิบัติงาน</span>
+              </span>
+            ` : `
+              <span class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">
+                ⏳ รอเช็กอิน
+              </span>
+            `))}
           </div>
         `;
       }).join('');
@@ -939,6 +887,16 @@ export async function deleteTaskActivityLog(itemId, logIndex) {
 export function promptIndividualDutyCheckout(itemId, techName) {
   const targetTech = techName || getEffectiveOperatorName() || "ผู้ปฏิบัติงาน";
   const shortName = targetTech.replace(/K\./g, '').split('(')[0].trim() || targetTech;
+  const opName = getEffectiveOperatorName();
+  const isMe = matchesOperator(targetTech, opName) || matchesOperator(shortName, opName);
+  if (!isMe) {
+    showAppAlert({
+      type: "warning",
+      title: "ไม่สามารถกดแทนผู้อื่นได้",
+      message: `คุณกำลังเข้าใช้งานในชื่อ "${opName || 'ผู้ใช้งาน'}" จึงไม่สามารถกดจบหน้าที่แทน "${shortName}" ได้ครับ สมาชิกแต่ละท่านต้องเป็นผู้กดบันทึกหน้าที่ของตนเองครับ`
+    });
+    return;
+  }
 
   const item = state.activeTasks.find(a => a.id === itemId || a.taskId === itemId);
   const taskId = item ? (item.taskId || item.id) : itemId;
@@ -1009,61 +967,7 @@ export function promptIndividualDutyCheckout(itemId, techName) {
   });
 }
 
-export function setCheckoutOutcome(outcome) {
-  state.selectedCheckoutOutcome = outcome;
-  const outcomes = [
-    { key: "ปฏิบัติงานเรียบร้อย", activeClass: "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs ring-1 ring-emerald-400" },
-    { key: "ติดปัญหา", activeClass: "bg-rose-50 border-rose-500 text-rose-800 shadow-2xs ring-1 ring-rose-400" }
-  ];
-  outcomes.forEach(oc => {
-    const btn = document.getElementById(`outcomeBtn-${oc.key}`);
-    if (btn) btn.className = oc.key === outcome ? `py-2.5 px-3 rounded-xl border text-xs font-bold text-left transition-all ${oc.activeClass}` : "py-2.5 px-3 rounded-xl border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
-  });
-  const detailLabel = document.getElementById("checkoutOutcomeDetailLabel");
-  const noteInput = document.getElementById("checkoutNoteInput");
-  if (detailLabel && noteInput) {
-    if (outcome === "ติดปัญหา") {
-      detailLabel.innerHTML = `รายละเอียดปัญหาที่พบ <span class="text-rose-500 font-bold">* (จำเป็นต้องระบุ)</span>`;
-      noteInput.placeholder = "เช่น กล้องจุดที่ 3 สัญญาณภาพไม่ออก รอเบิกสาย RG6 เส้นใหม่ หรือติดปัญหาระบบไฟฟ้า...";
-    } else {
-      detailLabel.innerHTML = `รายละเอียดผลการทำงาน / หมายเหตุ`;
-      noteInput.placeholder = "ระบุรายละเอียดการปฏิบัติงาน เช่น ปรับมุมกล้องและส่งมอบงานให้ลูกค้าเรียบร้อย...";
-    }
-  }
-}
 
-export function renderTodayLogs() {
-  if (typeof updateWorkHistoryBadge === "function") updateWorkHistoryBadge();
-  if (typeof renderWorkHistoryList === "function") renderWorkHistoryList();
-}
-
-export function deleteTodayLog(id) {
-  if (state.currentUserRole !== "admin") {
-    showAppAlert({ type: "warning", title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)", message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบประวัติงานได้ครับ" });
-    return;
-  }
-  showAppConfirm({
-    title: "ยืนยันการลบประวัติ", message: `คุณต้องการลบประวัติงาน "${id}" ออกจากรายการหรือไม่?`,
-    confirmText: "ลบ", cancelText: "ยกเลิก", isDanger: true,
-    onConfirm: () => {
-      state.dailyLogs = state.dailyLogs.filter(l => l.id !== id);
-      state.activeTasks = state.activeTasks.filter(a => a.id !== id);
-      localStorage.setItem("fs_daily_logs", JSON.stringify(state.dailyLogs));
-      localStorage.setItem("fs_active_tasks", JSON.stringify(state.activeTasks));
-      renderTodayLogs();
-      renderActiveCheckoutList();
-      deleteCheckinApi(id);
-    }
-  });
-}
-
-export function toggleTodayLogsCollapse() {
-  const container = document.getElementById("todayLogsContainer");
-  const chevron = document.getElementById("todayLogsToggleChevron");
-  if (!container) return;
-  const isHidden = container.classList.toggle("hidden");
-  if (chevron) chevron.style.transform = isHidden ? "rotate(-90deg)" : "rotate(0deg)";
-}
 
 if (typeof window !== "undefined") {
   window.toggleTaskLogs = toggleTaskLogs;

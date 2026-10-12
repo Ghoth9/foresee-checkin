@@ -488,3 +488,27 @@ export async function submitCheckoutForm({
     updateCheckoutSubmitButtonsState();
   }
 }
+
+export function setCheckoutOutcome(outcome) {
+  state.selectedCheckoutOutcome = outcome;
+  const outcomes = [
+    { key: "ปฏิบัติงานเรียบร้อย", activeClass: "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs ring-1 ring-emerald-400" },
+    { key: "ติดปัญหา", activeClass: "bg-rose-50 border-rose-500 text-rose-800 shadow-2xs ring-1 ring-rose-400" }
+  ];
+  outcomes.forEach(oc => {
+    const btn = document.getElementById(`outcomeBtn-${oc.key}`);
+    if (btn) btn.className = oc.key === outcome ? `py-2.5 px-3 rounded-xl border text-xs font-bold text-left transition-all ${oc.activeClass}` : "py-2.5 px-3 rounded-xl border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
+  });
+  const detailLabel = document.getElementById("checkoutOutcomeDetailLabel");
+  const noteInput = document.getElementById("checkoutNoteInput");
+  if (detailLabel && noteInput) {
+    if (outcome === "ติดปัญหา") {
+      detailLabel.innerHTML = `รายละเอียดปัญหาที่พบ <span class="text-rose-500 font-bold">* (จำเป็นต้องระบุ)</span>`;
+      noteInput.placeholder = "เช่น กล้องจุดที่ 3 สัญญาณภาพไม่ออก รอเบิกสาย RG6 เส้นใหม่ หรือติดปัญหาระบบไฟฟ้า...";
+    } else {
+      detailLabel.innerHTML = `รายละเอียดผลการทำงาน / หมายเหตุ`;
+      noteInput.placeholder = "ระบุรายละเอียดการปฏิบัติงาน เช่น ปรับมุมกล้องและส่งมอบงานให้ลูกค้าเรียบร้อย...";
+    }
+  }
+}
+

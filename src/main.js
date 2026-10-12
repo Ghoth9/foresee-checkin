@@ -68,6 +68,7 @@ import {
   shareCompletedLogToLine, shareSelectedCompletedLogToLine, deleteWorkHistoryLog,
   updateWorkHistoryBadge, renderWorkHistoryList
 } from './modules/historyModal.js';
+import { applyTaskDetailModalPermissions } from './modules/taskDetailModal.js';
 
 // -------------------------------------------------------------
 // LOCAL STATE INITIALIZATION FROM CACHE
@@ -797,57 +798,7 @@ window.isUserAdminActual = () => isUserAdminActual();
 window.openTaskDetailModal = (taskId, initialTab = "info") => {
   openTaskDetailModal(taskId, state.tasksList, state.allTechnicians, initialTab);
   const isAdmin = typeof window.isCurrentUserAdmin === "function" ? window.isCurrentUserAdmin() : (state.currentUserRole === "admin");
-  const inputs = [
-    "detailTitleInput",
-    "detailDescInput",
-    "detailLocationInput",
-    "detailCustNameInput",
-    "detailCustPhoneInput",
-    "detailCustAddressInput",
-    "detailCustEmailInput",
-    "detailCustLineInput",
-    "detailCategorySelect",
-    "detailLatestUpdateInput",
-    "detailProgressRange"
-  ];
-  inputs.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.disabled = !isAdmin;
-      if (!isAdmin) {
-        el.classList.add("bg-slate-100", "cursor-not-allowed", "text-slate-600");
-      } else {
-        el.classList.remove("bg-slate-100", "cursor-not-allowed", "text-slate-600");
-      }
-    }
-  });
-
-  const titleEl = document.getElementById("taskDetailModalTitle");
-  const subtitleEl = document.getElementById("taskDetailModalSubtitle");
-  if (titleEl) titleEl.innerText = isAdmin ? "รายละเอียด & แก้ไขข้อมูลงาน" : "รายละเอียดงาน";
-  if (subtitleEl) subtitleEl.innerText = isAdmin ? "ตรวจสอบ แก้ไขข้อมูลงาน ลูกค้า ผู้ปฏิบัติงานที่รับผิดชอบ และกำหนดส่ง" : "ตรวจสอบข้อมูลงาน ลูกค้า สถานที่หน้างาน และความคืบหน้า";
-
-  ["กำลังทำ", "เกินกำหนด", "เสร็จสิ้น", "ติดปัญหา"].forEach(st => {
-    const btn = document.getElementById(`detailStatus-${st}`);
-    if (btn) {
-      if (!isAdmin) {
-        btn.classList.add("pointer-events-none", "opacity-80", "cursor-default");
-      } else {
-        btn.classList.remove("pointer-events-none", "opacity-80", "cursor-default");
-      }
-    }
-  });
-  ["ปกติ", "ด่วน", "ด่วนที่สุด"].forEach(pr => {
-    const btn = document.getElementById(`detailPriority-${pr}`);
-    if (btn) {
-      if (!isAdmin) {
-        btn.classList.add("pointer-events-none", "opacity-80", "cursor-default");
-      } else {
-        btn.classList.remove("pointer-events-none", "opacity-80", "cursor-default");
-      }
-    }
-  });
-
+  applyTaskDetailModalPermissions(isAdmin);
   applyRolePermissionsUI(state.currentUserRole, state.currentLinkedTech);
 };
 window.closeTaskDetailModal = closeTaskDetailModal;
