@@ -179,13 +179,19 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
   // Filter tasks that are in progress or pending
   let pendingTasks = (tasksList || []).filter(t => t.status !== "เสร็จสิ้น");
 
-  // If Operator (non-admin or simulated technician), ONLY show their assigned tasks!
+  // If Operator (non-admin or simulated technician), show tasks assigned to them OR created by them!
   if (!isAdmin) {
     if (opName) {
       pendingTasks = pendingTasks.filter(t => {
         const techs = Array.isArray(t.techs) ? t.techs : (typeof t.techs === 'string' ? t.techs.split(',').map(s => s.trim()) : []);
         const isAssignedToMe = techs.some(tech => matchesOperator(tech, opName));
-        return isAssignedToMe;
+        const cust = (t && typeof t.customer === 'object') ? t.customer : {};
+        const isCreatedByMe = matchesOperator(t.assignedBy, opName) ||
+                              matchesOperator(t.creator, opName) ||
+                              matchesOperator(t.assigned_by, opName) ||
+                              matchesOperator(cust.assigned_by, opName) ||
+                              matchesOperator(cust.creator, opName);
+        return isAssignedToMe || isCreatedByMe;
       });
     } else {
       pendingTasks = [];
@@ -196,7 +202,7 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
     container.innerHTML = `
       <div class="text-xs text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-3 text-center">
         ${!isAdmin && opName
-          ? `ไม่มีงานมอบหมายค้างอยู่ของ <strong>${opName}</strong> ในขณะนี้ (สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย)`
+          ? `ไม่มีงานมอบหมายหรือสร้างโดย <strong>${opName}</strong> ในขณะนี้ (สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย)`
           : `ไม่มีงานมอบหมายค้างอยู่ สามารถกรอกสถานที่เพื่อเช็กอินงานทั่วไปได้เลย`}
       </div>
     `;
@@ -208,7 +214,7 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
       <div class="flex items-center justify-between text-xs">
         <span class="font-bold text-slate-800 flex items-center space-x-1.5">
           <span>📋</span>
-          <span>${!isAdmin && currentOperatorName ? `งานที่คุณได้รับมอบหมาย (${currentOperatorName}):` : `งานที่ได้รับมอบหมาย (แตะเพื่อเช็กอินทันที):`}</span>
+          <span>${!isAdmin && currentOperatorName ? `งานของคุณ (${currentOperatorName}):` : `งานที่ได้รับมอบหมาย (แตะเพื่อเช็กอินทันที):`}</span>
         </span>
         <span class="text-[11px] text-blue-600 font-semibold">${pendingTasks.length} งาน</span>
       </div>

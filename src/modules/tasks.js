@@ -243,13 +243,19 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
   let baseTasks = tasksList || state.tasksList;
 
-  // Non-admins (or simulated technician view) strictly see only tasks assigned to them!
+  // Non-admins (or simulated technician view) see tasks assigned to them OR tasks created/assigned by them!
   if (!isAdmin) {
     if (opName) {
       baseTasks = baseTasks.filter(t => {
         const techs = getTaskTechs(t);
         const isAssignedToMe = techs.some(tech => matchesOperator(tech, opName));
-        return isAssignedToMe;
+        const cust = (t && typeof t.customer === 'object') ? t.customer : {};
+        const isCreatedByMe = matchesOperator(t.assignedBy, opName) ||
+                              matchesOperator(t.creator, opName) ||
+                              matchesOperator(t.assigned_by, opName) ||
+                              matchesOperator(cust.assigned_by, opName) ||
+                              matchesOperator(cust.creator, opName);
+        return isAssignedToMe || isCreatedByMe;
       });
     } else {
       baseTasks = [];
@@ -261,8 +267,8 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
     container.innerHTML = `
       <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 p-8 shadow-xs">
         <div class="w-12 h-12 mx-auto mb-3 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center text-xl font-bold">📋</div>
-        <h3 class="text-sm font-bold text-slate-800">${opName ? `ไม่มีงานที่ได้รับมอบหมายของ "${opName}" ในขณะนี้` : 'ยังไม่มีงานมอบหมายค้างอยู่'}</h3>
-        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">${opName ? 'เมื่องานได้รับการมอบหมายจากแอดมิน รายการงานจะปรากฏที่นี่ทันทีครับ' : 'เมื่องานได้รับการมอบหมาย รายการงานจะปรากฏที่นี่ครับ'}</p>
+        <h3 class="text-sm font-bold text-slate-800">${opName ? `ไม่มีงานที่ได้รับมอบหมายหรือสร้างโดย "${opName}" ในขณะนี้` : 'ยังไม่มีงานมอบหมายค้างอยู่'}</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">${opName ? 'เมื่องานได้รับการมอบหมายหรือสร้างใหม่ รายการงานจะปรากฏที่นี่ทันทีครับ' : 'เมื่องานได้รับการมอบหมาย รายการงานจะปรากฏที่นี่ครับ'}</p>
         ${!opName ? `
           <button type="button" onclick="openSelectOperatorModal()" class="mt-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-xs transition-all inline-flex items-center space-x-1.5 active:scale-95 cursor-pointer">
             <span>👤</span>

@@ -142,25 +142,22 @@ export function renderActiveCheckoutList() {
   const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
   const opName = getEffectiveOperatorName();
 
+function isTaskAssignedOrCreatedBy(item, targetOp) {
+  if (!targetOp || !item) return false;
+  if (matchTechName(item.techs, targetOp)) return true;
+  if (matchesOperator(item.checkedInBy, targetOp) || matchesOperator(item.closerName, targetOp) || matchesOperator(item.closer_name, targetOp) || matchesOperator(item.creator, targetOp)) return true;
+  const linked = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+  if (linked) {
+    if (matchTechName(linked.techs, targetOp) || matchTechName(linked.assignee, targetOp)) return true;
+    const c = (linked && typeof linked.customer === 'object') ? linked.customer : {};
+    if (matchesOperator(linked.assignedBy, targetOp) || matchesOperator(linked.creator, targetOp) || matchesOperator(linked.assigned_by, targetOp) || matchesOperator(c.assigned_by, targetOp) || matchesOperator(c.creator, targetOp)) return true;
+  }
+  return false;
+}
+
   let displayActiveTasks = state.activeTasks;
   if (!isAdmin) {
-    if (opName) {
-      displayActiveTasks = state.activeTasks.filter(item => {
-        // 1. Matched in active checkin assigned techs
-        if (matchTechName(item.techs, opName)) return true;
-        // 2. Checked in by this user
-        if (matchesOperator(item.checkedInBy, opName) || matchesOperator(item.closerName, opName) || matchesOperator(item.closer_name, opName) || matchesOperator(item.creator, opName)) return true;
-
-        // 3. Linked task check (strictly tasks assigned to this operator)
-        const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
-        if (linkedTask) {
-          if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
-        }
-        return false;
-      });
-    } else {
-      displayActiveTasks = [];
-    }
+    displayActiveTasks = opName ? state.activeTasks.filter(item => isTaskAssignedOrCreatedBy(item, opName)) : [];
   }
 
   // 1. Calculate status pill counts
@@ -196,27 +193,9 @@ export function renderActiveCheckoutList() {
 
   // 4. Apply Tech Filter
   if (checkoutTechFilter && checkoutTechFilter !== "ทั้งหมด") {
-    if (checkoutTechFilter === "งานของฉัน") {
-      filteredList = filteredList.filter(item => {
-        if (!opName) return true;
-        if (matchTechName(item.techs, opName)) return true;
-        if (matchesOperator(item.checkedInBy, opName)) return true;
-        const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
-        if (linkedTask) {
-          if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
-        }
-        return false;
-      });
-    } else {
-      filteredList = filteredList.filter(item => {
-        if (matchTechName(item.techs, checkoutTechFilter)) return true;
-        if (matchesOperator(item.checkedInBy, checkoutTechFilter)) return true;
-        const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
-        if (linkedTask) {
-          if (matchTechName(linkedTask.techs, checkoutTechFilter) || matchTechName(linkedTask.assignee, checkoutTechFilter)) return true;
-        }
-        return false;
-      });
+    const filterTarget = checkoutTechFilter === "งานของฉัน" ? opName : checkoutTechFilter;
+    if (filterTarget) {
+      filteredList = filteredList.filter(item => isTaskAssignedOrCreatedBy(item, filterTarget));
     }
   }
 
