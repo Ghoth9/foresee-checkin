@@ -819,6 +819,43 @@ export async function deleteCheckinApi(id) {
   }
 }
 
+export async function deleteTaskActivityLogApi({ taskId, logId, logTime, logType, logTech }) {
+  try {
+    if (logId && (logId.startsWith("CHK-") || logType === "checkin")) {
+      await supabase.from('checkins').delete().eq('id', logId);
+    }
+    if (taskId) {
+      const { data: task } = await supabase.from('tasks').select('*').eq('id', taskId).maybeSingle();
+      if (task) {
+        const cust = (task && typeof task.customer === 'object') ? task.customer : {};
+        const oldHistory = Array.isArray(cust.progress_history) ? cust.progress_history : [];
+        const updatedHistory = oldHistory.filter(h => {
+          if (logId && h.id && h.id === logId) return false;
+          const matchTime = (h.time === logTime);
+          const matchType = (h.type === logType);
+          const matchTech = (h.tech === logTech || h.by === logTech);
+          return !(matchTime && matchType && matchTech);
+        });
+        const remaining = updatedHistory.slice();
+        const lastUpdate = remaining.length > 0 ? remaining[remaining.length - 1] : null;
+        const newProg = lastUpdate && lastUpdate.progress !== undefined ? Number(lastUpdate.progress) : 0;
+        const newLatest = lastUpdate ? `${lastUpdate.label || ''} โดย ${lastUpdate.tech || lastUpdate.by || ''}` : '';
+
+        await supabase.from('tasks').update({
+          customer: { ...cust, progress_history: updatedHistory },
+          progress: newProg,
+          latest_update: newLatest,
+          updated_at: new Date().toISOString()
+        }).eq('id', taskId);
+      }
+    }
+    return { success: true };
+  } catch (err) {
+    console.warn("deleteTaskActivityLogApi error:", err);
+    throw err;
+  }
+}
+
 export async function clearAllCheckinsApi() {
   try {
     const { error } = await supabase

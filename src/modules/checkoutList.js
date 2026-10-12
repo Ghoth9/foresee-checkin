@@ -7,7 +7,7 @@
 import { state, getEffectiveOperatorName } from './state.js';
 import { formatGasTime, formatDisplayTime } from '../utils/date.js';
 import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
-import { deleteCheckinApi, clearAllCheckinsApi } from '../api/supabase.js';
+import { deleteCheckinApi, clearAllCheckinsApi, deleteTaskActivityLogApi } from '../api/supabase.js';
 import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState } from './checkout.js';
 import { matchesOperator } from './tasks.js';
 import { updateWorkHistoryBadge, renderWorkHistoryList } from './historyModal.js';
@@ -71,55 +71,27 @@ export function formatLatestNoteText(rawText) {
 export function enableSmoothHorizontalDragScroll(container) {
   if (!container || container._hasSmoothDrag) return;
   container._hasSmoothDrag = true;
-
-  // 1. Mouse wheel horizontal scrolling
   container.addEventListener("wheel", (e) => {
     if (e.deltaY !== 0 && container.scrollWidth > container.clientWidth) {
       e.preventDefault();
       container.scrollBy({ left: e.deltaY * 1.5, behavior: "auto" });
     }
   }, { passive: false });
-
-  // 2. Drag-to-scroll with mouse
-  let isDown = false;
-  let startX = 0;
-  let scrollLeft = 0;
-  let dragDistance = 0;
-
+  let isDown = false, startX = 0, scrollLeft = 0, dragDistance = 0;
   container.addEventListener("mousedown", (e) => {
     if (e.target.closest("button") || e.target.closest("input")) return;
-    isDown = true;
-    dragDistance = 0;
-    startX = e.pageX - container.offsetLeft;
-    scrollLeft = container.scrollLeft;
+    isDown = true; dragDistance = 0; startX = e.pageX - container.offsetLeft; scrollLeft = container.scrollLeft;
   });
-
-  window.addEventListener("mouseup", () => {
-    isDown = false;
-  });
-
-  container.addEventListener("mouseleave", () => {
-    isDown = false;
-  });
-
+  window.addEventListener("mouseup", () => { isDown = false; });
+  container.addEventListener("mouseleave", () => { isDown = false; });
   container.addEventListener("mousemove", (e) => {
     if (!isDown) return;
-    const x = e.pageX - container.offsetLeft;
-    const walk = (x - startX);
+    const walk = e.pageX - container.offsetLeft - startX;
     dragDistance += Math.abs(walk);
-    if (Math.abs(walk) > 3) {
-      e.preventDefault();
-      container.scrollLeft = scrollLeft - walk;
-    }
+    if (Math.abs(walk) > 3) { e.preventDefault(); container.scrollLeft = scrollLeft - walk; }
   });
-
-  // Suppress lightbox click if user was dragging
   container.addEventListener("click", (e) => {
-    if (dragDistance > 8) {
-      e.stopPropagation();
-      e.preventDefault();
-      dragDistance = 0;
-    }
+    if (dragDistance > 8) { e.stopPropagation(); e.preventDefault(); dragDistance = 0; }
   }, true);
 }
 
@@ -579,10 +551,18 @@ export function renderActiveCheckoutList() {
                         <strong class="text-slate-900">${log.label}</strong>
                         <span class="text-[10px] text-slate-500 font-mono">${log.date && log.date !== 'วันนี้' ? log.date + ' ' : ''}${log.time} น.</span>
                       </div>
-                      <button type="button" onclick="event.stopPropagation(); window.shareActivityLogToLine('${item.id}', ${lIdx})" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-0.5 rounded-md border border-emerald-300 hover:border-emerald-600 text-[10px] font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="แชร์กิจกรรมนี้เข้า LINE">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
-                        <span>แชร์</span>
-                      </button>
+                      <div class="flex items-center space-x-1">
+                        <button type="button" onclick="event.stopPropagation(); window.shareActivityLogToLine('${item.id}', ${lIdx})" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-0.5 rounded-md border border-emerald-300 hover:border-emerald-600 text-[10px] font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="แชร์กิจกรรมนี้เข้า LINE">
+                          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
+                          <span>แชร์</span>
+                        </button>
+                        ${isAdmin ? `
+                          <button type="button" onclick="event.stopPropagation(); window.deleteTaskActivityLog('${item.id}', ${lIdx})" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2 py-0.5 rounded-md border border-rose-200 hover:border-rose-600 text-[10px] font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="ลบรายการประวัตินี้ (เฉพาะแอดมิน)">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span>ลบ</span>
+                          </button>
+                        ` : ''}
+                      </div>
                     </div>
                     <div class="text-[10px] text-slate-600 mt-0.5">
                       โดย: <strong class="text-slate-800">${log.tech}</strong>
@@ -766,6 +746,9 @@ export function openCheckoutModal(id) {
   const displayTaskId = item.taskId || item.id;
   const itemProg = item.progress !== undefined ? item.progress : (linkedTask?.progress || 0);
 
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+
   // Set modal header details
   const titleEl = document.getElementById("checkoutModalTaskTitle");
   const idEl = document.getElementById("checkoutModalTaskId");
@@ -823,10 +806,18 @@ export function openCheckoutModal(id) {
                 <strong class="text-slate-900">${log.label}</strong>
                 <span class="text-[10px] text-slate-500 font-mono">${log.date && log.date !== 'วันนี้' ? log.date + ' ' : ''}${log.time} น.</span>
               </div>
-              <button type="button" onclick="event.stopPropagation(); window.shareActivityLogToLine('${item.id}', ${lIdx})" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-0.5 rounded-md border border-emerald-300 hover:border-emerald-600 text-[10px] font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="แชร์กิจกรรมนี้เข้า LINE">
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
-                <span>แชร์</span>
-              </button>
+              <div class="flex items-center space-x-1">
+                <button type="button" onclick="event.stopPropagation(); window.shareActivityLogToLine('${item.id}', ${lIdx})" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2 py-0.5 rounded-md border border-emerald-300 hover:border-emerald-600 text-[10px] font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="แชร์กิจกรรมนี้เข้า LINE">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
+                  <span>แชร์</span>
+                </button>
+                ${isAdmin ? `
+                  <button type="button" onclick="event.stopPropagation(); window.deleteTaskActivityLog('${item.id}', ${lIdx})" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2 py-0.5 rounded-md border border-rose-200 hover:border-rose-600 text-[10px] font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer select-none" title="ลบรายการประวัตินี้ (เฉพาะแอดมิน)">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>ลบ</span>
+                  </button>
+                ` : ''}
+              </div>
             </div>
             <div class="text-[10px] text-slate-600 mt-0.5">
               โดย: <strong class="text-slate-800">${log.tech}</strong>
@@ -904,9 +895,69 @@ export function toggleCheckoutModalActivityList() {
   }
 }
 
+export async function deleteTaskActivityLog(itemId, logIndex) {
+  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
+  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+  if (!isAdmin) {
+    showAppAlert({ type: "warning", title: "สงวนสิทธิ์เฉพาะแอดมิน (Admin Only)", message: "เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถลบรายการประวัติกิจกรรมได้ครับ" });
+    return;
+  }
+  const item = state.activeTasks.find(a => a.id === itemId || a.taskId === itemId);
+  if (!item) return;
+  const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+  const logs = collectTaskActivityLogs(item, linkedTask);
+  const targetLog = logs[logIndex];
+  if (!targetLog) return;
+
+  showAppConfirm({
+    title: "ยืนยันการลบประวัติรายการนี้?",
+    message: `ต้องการลบรายการ "${targetLog.label}" (${targetLog.time || ''} น.) ออกจากประวัติงานใช่หรือไม่?`,
+    confirmText: "ลบรายการ", cancelText: "ยกเลิก", isDanger: true,
+    onConfirm: async () => {
+      try {
+        await deleteTaskActivityLogApi({
+          taskId: linkedTask?.id || item.taskId,
+          logId: targetLog.id,
+          logTime: targetLog.time,
+          logType: targetLog.type,
+          logTech: targetLog.tech
+        });
+        if (Array.isArray(item.checkinSessions)) {
+          item.checkinSessions = item.checkinSessions.filter(cs => cs.id !== targetLog.id && !(cs.time === targetLog.time && cs.date === targetLog.date));
+        }
+        if (linkedTask) {
+          const cust = (linkedTask && typeof linkedTask.customer === 'object') ? linkedTask.customer : {};
+          if (Array.isArray(cust.progress_history)) {
+            cust.progress_history = cust.progress_history.filter(h => {
+              if (targetLog.id && h.id && h.id === targetLog.id) return false;
+              return !(h.time === targetLog.time && h.type === targetLog.type);
+            });
+            linkedTask.progressHistory = cust.progress_history;
+            const remaining = cust.progress_history;
+            const lastUpdate = remaining.length > 0 ? remaining[remaining.length - 1] : null;
+            linkedTask.progress = lastUpdate && lastUpdate.progress !== undefined ? Number(lastUpdate.progress) : 0;
+            linkedTask.latestUpdate = lastUpdate ? `${lastUpdate.label || ''} โดย ${lastUpdate.tech || lastUpdate.by || ''}` : '';
+            item.progress = linkedTask.progress;
+          }
+        }
+        localStorage.setItem("fs_tasks", JSON.stringify(state.tasksList));
+        localStorage.setItem("fs_active_tasks", JSON.stringify(state.activeTasks));
+        showAppAlert({ type: "success", title: "ลบสำเร็จ", message: "ลบรายการประวัติเรียบร้อยแล้ว" });
+        openCheckoutModal(item.id);
+        renderActiveCheckoutList();
+        if (typeof window.renderTasksListScoped === "function") window.renderTasksListScoped();
+      } catch (err) {
+        console.error("deleteTaskActivityLog error:", err);
+        showAppAlert({ type: "error", title: "เกิดข้อผิดพลาด", message: "ไม่สามารถลบรายการได้: " + (err.message || err) });
+      }
+    }
+  });
+}
+
 if (typeof window !== "undefined") {
   window.toggleTaskLogs = toggleTaskLogs;
   window.toggleCheckoutModalActivityList = toggleCheckoutModalActivityList;
+  window.deleteTaskActivityLog = deleteTaskActivityLog;
 }
 
 if (typeof window !== "undefined") {
@@ -926,18 +977,10 @@ export function setCheckoutOutcome(outcome) {
     { key: "ปฏิบัติงานเรียบร้อย", activeClass: "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs ring-1 ring-emerald-400" },
     { key: "ติดปัญหา", activeClass: "bg-rose-50 border-rose-500 text-rose-800 shadow-2xs ring-1 ring-rose-400" }
   ];
-
   outcomes.forEach(oc => {
     const btn = document.getElementById(`outcomeBtn-${oc.key}`);
-    if (btn) {
-      if (oc.key === outcome) {
-        btn.className = `py-2.5 px-3 rounded-xl border text-xs font-bold text-left transition-all ${oc.activeClass}`;
-      } else {
-        btn.className = "py-2.5 px-3 rounded-xl border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
-      }
-    }
+    if (btn) btn.className = oc.key === outcome ? `py-2.5 px-3 rounded-xl border text-xs font-bold text-left transition-all ${oc.activeClass}` : "py-2.5 px-3 rounded-xl border text-xs font-medium text-left transition-all bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200";
   });
-
   const detailLabel = document.getElementById("checkoutOutcomeDetailLabel");
   const noteInput = document.getElementById("checkoutNoteInput");
   if (detailLabel && noteInput) {
@@ -981,7 +1024,5 @@ export function toggleTodayLogsCollapse() {
   const chevron = document.getElementById("todayLogsToggleChevron");
   if (!container) return;
   const isHidden = container.classList.toggle("hidden");
-  if (chevron) {
-    chevron.style.transform = isHidden ? "rotate(-90deg)" : "rotate(0deg)";
-  }
+  if (chevron) chevron.style.transform = isHidden ? "rotate(-90deg)" : "rotate(0deg)";
 }
