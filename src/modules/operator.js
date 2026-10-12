@@ -127,6 +127,9 @@ export async function chooseOperatorProfile(techId) {
     state.currentLinkedTech = tech;
     state.selectedCheckinTechs = [tech.name];
 
+    const curTechEl = document.getElementById("checkoutModalCurrentTech");
+    if (curTechEl) curTechEl.innerText = tech.name;
+
     closeSelectOperatorModal();
 
     if (typeof window.applyRolePermissionsUI === "function") {
@@ -149,6 +152,9 @@ export async function chooseOperatorProfile(techId) {
 
   // Auto-select their own name in check-in form
   state.selectedCheckinTechs = [tech.name];
+
+  const curTechEl = document.getElementById("checkoutModalCurrentTech");
+  if (curTechEl) curTechEl.innerText = tech.name;
 
   closeSelectOperatorModal();
 
