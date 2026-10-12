@@ -168,7 +168,11 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
   const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
   const isAdmin = (typeof isAdminArg === "boolean")
     ? (!isSimTech && isAdminArg)
-    : (!isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin())));
+    : (!isSimTech && (
+        state.currentUserRole === "admin" ||
+        sessionStorage.getItem("fs_admin_override") === "true" ||
+        (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin())
+      ));
 
   const opName = currentOperatorName || getEffectiveOperatorName();
 

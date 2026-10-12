@@ -128,7 +128,11 @@ export function rerenderTasksListCurrent(tasksList) {
     window.renderTasksListScoped();
   } else {
     const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
-    const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+    const isAdmin = !isSimTech && (
+      state.currentUserRole === "admin" ||
+      sessionStorage.getItem("fs_admin_override") === "true" ||
+      (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin())
+    );
     renderTasksList(tasksList || state.tasksList, getEffectiveOperatorName(), isAdmin);
   }
 }
@@ -229,7 +233,11 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
   const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
   const isAdmin = (typeof isAdminArg === "boolean")
     ? (!isSimTech && isAdminArg)
-    : (!isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin())));
+    : (!isSimTech && (
+        state.currentUserRole === "admin" ||
+        sessionStorage.getItem("fs_admin_override") === "true" ||
+        (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin())
+      ));
 
   const opName = activeOperatorName || getEffectiveOperatorName();
 

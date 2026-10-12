@@ -28,11 +28,11 @@ let currentTeamRoleFilter = "all";
 
 export function isCurrentUserAdmin() {
   if (state.simulatedRole === "technician" || sessionStorage.getItem("fs_simulated_role") === "technician") return false;
-  return state.currentUserRole === "admin" || isUserAdminActual();
+  return state.currentUserRole === "admin" || sessionStorage.getItem("fs_admin_override") === "true" || isUserAdminActual();
 }
 
 export function isUserAdminActual() {
-  if (sessionStorage.getItem("fs_admin_override") === "true") return true;
+  if (sessionStorage.getItem("fs_admin_override") === "true" || state.currentUserRole === "admin") return true;
   if (state.realLinkedTech && state.realLinkedTech.role === "admin") return true;
   if (state.currentLinkedTech && state.currentLinkedTech.role === "admin") return true;
 
@@ -182,14 +182,16 @@ export function switchSimulatedRole(mode) {
     sessionStorage.removeItem("fs_simulated_role");
     sessionStorage.removeItem("fs_simulated_operator_id");
     sessionStorage.removeItem("fs_simulated_operator_name");
+    sessionStorage.setItem("fs_admin_override", "true");
     state.simulatedRole = null;
     state.simulatedOperator = null;
+    state.currentUserRole = "admin";
     if (state.realLinkedTech) {
       state.currentLinkedTech = state.realLinkedTech;
     }
-    state.currentUserRole = isUserAdminActual() ? "admin" : (state.currentLinkedTech?.role === "admin" ? "admin" : "technician");
   } else {
     sessionStorage.setItem("fs_simulated_role", "technician");
+    sessionStorage.removeItem("fs_admin_override");
     state.simulatedRole = "technician";
     state.currentUserRole = "technician";
   }
@@ -206,6 +208,9 @@ export function switchSimulatedRole(mode) {
   }
   if (typeof window.setTaskTechFilter === "function") {
     try { window.setTaskTechFilter("ทั้งหมด"); } catch (e) {}
+  }
+  if (typeof window.clearTaskSearch === "function") {
+    try { window.clearTaskSearch(); } catch (e) {}
   }
 
   // Keep currently active tab and re-render immediately in place!

@@ -164,7 +164,12 @@ export function switchTab(tab) {
 // -------------------------------------------------------------
 export function renderTasksListScoped() {
   const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
-  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+  const isAdmin = !isSimTech && (
+    state.currentUserRole === "admin" ||
+    sessionStorage.getItem("fs_admin_override") === "true" ||
+    (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()) ||
+    (typeof isUserAdminActual === "function" && isUserAdminActual())
+  );
   const opName = getEffectiveOperatorName();
   renderTasksList(state.tasksList, opName, isAdmin);
 }
@@ -172,7 +177,12 @@ window.renderTasksListScoped = renderTasksListScoped;
 
 export function renderAssignedTasksBannerScoped() {
   const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
-  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
+  const isAdmin = !isSimTech && (
+    state.currentUserRole === "admin" ||
+    sessionStorage.getItem("fs_admin_override") === "true" ||
+    (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()) ||
+    (typeof isUserAdminActual === "function" && isUserAdminActual())
+  );
   const opName = getEffectiveOperatorName();
   renderAssignedTasksBanner(state.tasksList, state.allTechnicians, (tId) => selectAssignedTask(tId, state.tasksList, setCheckinTechs), opName, isAdmin);
 }
