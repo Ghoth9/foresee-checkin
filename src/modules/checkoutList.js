@@ -222,38 +222,26 @@ export function renderActiveCheckoutList() {
 
   // If selected task is no longer in visible list, close modal
   if (state.selectedActiveCheckoutId && !displayActiveTasks.some(a => a.id === state.selectedActiveCheckoutId)) {
-    closeCheckoutModal();
+    const modal = document.getElementById("checkoutOutcomeModal");
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+    state.selectedActiveCheckoutId = null;
   }
 
   if (displayActiveTasks.length === 0) {
-    if (!isAdmin && !opName) {
-      container.innerHTML = `
-        <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl p-5 md:p-6 text-center shadow-lg border border-slate-700/80 max-w-lg mx-auto my-2 animate-modal-in">
-          <div class="text-2xl mb-1.5">📊</div>
-          <h3 class="text-sm font-bold text-white">ยังไม่ได้เลือกชื่อผู้ปฏิบัติงาน</h3>
-          <p class="text-xs text-slate-300 mt-1 mb-4 leading-relaxed max-w-sm mx-auto">
-            เลือกชื่อของคุณเพื่อดูงานที่เช็กอินค้างอยู่ หรือปลดล็อกแอดมินเพื่อจัดการงานทั้งหมด:
-          </p>
-          <div class="flex flex-col sm:flex-row gap-2 justify-center max-w-xs mx-auto">
-            <button type="button" onclick="openSelectOperatorModal()" class="bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-3.5 py-2 rounded-xl border border-white/20 transition-all flex items-center justify-center space-x-1.5 cursor-pointer">
-              <span>👤</span>
-              <span>เลือกชื่อผู้ปฏิบัติงาน</span>
-            </button>
-            <button type="button" onclick="quickUnlockNonmarnAdmin()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer">
-              <span>👑</span>
-              <span>ปลดล็อกแอดมิน (nonmarn)</span>
-            </button>
-          </div>
-        </div>
-      `;
-    } else {
-      container.innerHTML = `
-        <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
-          ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
-        </div>
-      `;
+    container.innerHTML = `
+      <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
+        ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
+      </div>
+    `;
+    const modal = document.getElementById("checkoutOutcomeModal");
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
     }
-    closeCheckoutModal();
+    state.selectedActiveCheckoutId = null;
     return;
   }
 
@@ -476,7 +464,6 @@ export function closeCheckoutModal() {
   document.body.classList.remove("overflow-hidden");
   state.selectedActiveCheckoutId = null;
   renderActiveTaskPhotos(null);
-  renderActiveCheckoutList();
 }
 
 export function selectActiveTaskForCheckout(id) {

@@ -220,49 +220,19 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
   // If non-admin has no tasks
   if (!isAdmin && baseTasks.length === 0) {
-    if (!opName) {
-      container.innerHTML = `
-        <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl p-6 md:p-8 text-center shadow-lg border border-slate-700/80 max-w-lg mx-auto my-4 animate-modal-in">
-          <div class="w-12 h-12 mx-auto mb-3 bg-amber-400/20 text-amber-300 rounded-2xl flex items-center justify-center text-2xl border border-amber-400/30">
-            👋
-          </div>
-          <h3 class="text-sm md:text-base font-bold text-white tracking-tight">ยินดีต้อนรับสู่ระบบ Foresee Work Management</h3>
-          <p class="text-xs text-slate-300 mt-1 max-w-sm mx-auto leading-relaxed">
-            ยังไม่ได้ระบุตัวตนบนเบราว์เซอร์นี้ กรุณาเลือกวิธีเข้าใช้งานเพื่อแสดงรายการงานของคุณ:
-          </p>
-          <div class="mt-4 space-y-2 max-w-xs mx-auto">
-            <button type="button" onclick="quickUnlockNonmarnAdmin()" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer">
-              <span>👑</span>
-              <span>ฉันคือแอดมิน nonmarn (ปลดล็อกทันที)</span>
-            </button>
-            <button type="button" onclick="openSelectOperatorModal()" class="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-white/20 transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer">
-              <span>👤</span>
-              <span>เลือกชื่อผู้ปฏิบัติงานในทีม</span>
-            </button>
-            <button type="button" onclick="handleLineLoginToggle()" class="w-full bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 font-bold text-xs px-4 py-2 rounded-xl border border-emerald-500/30 transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer">
-              <span>💬</span>
-              <span>เข้าสู่ระบบด้วย LINE</span>
-            </button>
-          </div>
-        </div>
-      `;
-    } else {
-      container.innerHTML = `
-        <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 p-8 shadow-xs">
-          <div class="w-12 h-12 mx-auto mb-3 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center text-xl font-bold">📋</div>
-          <h3 class="text-sm font-bold text-slate-800">ไม่มีงานที่ได้รับมอบหมายของ "${opName}" ในขณะนี้</h3>
-          <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">เมื่องานได้รับการมอบหมายจากแอดมิน รายการงานจะปรากฏที่นี่ทันทีครับ</p>
-          <div class="mt-4 flex items-center justify-center space-x-2">
-            <button type="button" onclick="openSelectOperatorModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-3.5 py-1.5 rounded-xl transition-all cursor-pointer">
-              🔄 สลับชื่อผู้ปฏิบัติงาน
-            </button>
-            <button type="button" onclick="quickUnlockNonmarnAdmin()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs px-3.5 py-1.5 rounded-xl border border-amber-200 transition-all cursor-pointer">
-              👑 สลับเป็นแอดมิน
-            </button>
-          </div>
-        </div>
-      `;
-    }
+    container.innerHTML = `
+      <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 p-8 shadow-xs">
+        <div class="w-12 h-12 mx-auto mb-3 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center text-xl font-bold">📋</div>
+        <h3 class="text-sm font-bold text-slate-800">${opName ? `ไม่มีงานที่ได้รับมอบหมายของ "${opName}" ในขณะนี้` : 'ยังไม่มีงานมอบหมายค้างอยู่'}</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">${opName ? 'เมื่องานได้รับการมอบหมายจากแอดมิน รายการงานจะปรากฏที่นี่ทันทีครับ' : 'เมื่องานได้รับการมอบหมาย รายการงานจะปรากฏที่นี่ครับ'}</p>
+        ${!opName ? `
+          <button type="button" onclick="openSelectOperatorModal()" class="mt-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-xs transition-all inline-flex items-center space-x-1.5 active:scale-95 cursor-pointer">
+            <span>👤</span>
+            <span>เลือกชื่อผู้ปฏิบัติงาน</span>
+          </button>
+        ` : ''}
+      </div>
+    `;
     const elTotal = document.getElementById("statTotalTasks");
     if (elTotal) elTotal.innerText = 0;
     const elOver = document.getElementById("statOverdue");
