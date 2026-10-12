@@ -297,11 +297,27 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
     if (currentStatusFilter === "ติดปัญหา" && !isProblem) return false;
 
     if (taskSearchQuery) {
-      const q = taskSearchQuery.toLowerCase();
+      const q = taskSearchQuery.toLowerCase().trim();
+      const idMatch = (t.id || "").toLowerCase().includes(q);
       const titleMatch = (t.title || "").toLowerCase().includes(q);
       const descMatch = (t.desc || "").toLowerCase().includes(q);
+      const catMatch = (t.category || "").toLowerCase().includes(q);
+      const locMatch = (t.location || "").toLowerCase().includes(q);
       const techMatch = getTaskTechs(t).some(tech => tech.toLowerCase().includes(q));
-      if (!titleMatch && !descMatch && !techMatch) return false;
+      const custNameMatch = (t.customer?.name || "").toLowerCase().includes(q);
+      const custAddrMatch = (t.customer?.address || "").toLowerCase().includes(q);
+      const custPhoneMatch = (t.customer?.phone || "").toLowerCase().includes(q);
+      const assignByMatch = (t.assignedBy || "").toLowerCase().includes(q) ||
+        (t.creator || "").toLowerCase().includes(q) ||
+        (t.customer?.assigned_by || "").toLowerCase().includes(q) ||
+        (t.customer?.creator || "").toLowerCase().includes(q) ||
+        (t.updated_by || "").toLowerCase().includes(q) ||
+        (t.updateBy || "").toLowerCase().includes(q);
+      const noteMatch = (t.latestUpdate || t.latest_update || "").toLowerCase().includes(q);
+
+      if (!idMatch && !titleMatch && !descMatch && !catMatch && !locMatch && !techMatch && !custNameMatch && !custAddrMatch && !custPhoneMatch && !assignByMatch && !noteMatch) {
+        return false;
+      }
     }
     return true;
   });

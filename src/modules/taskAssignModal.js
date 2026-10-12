@@ -4,9 +4,10 @@
 
 import { formatThaiDateDisplay, getTodayYMD, getSevenDaysLaterYMD } from '../utils/date.js';
 import { saveTaskApi } from '../api/supabase.js';
-import { createAssignTaskFlexCard, triggerLiffShare } from '../liff/line.js';
+import { createAssignTaskFlexCard, triggerLiffShare, getLineUserName } from '../liff/line.js';
 import { showAppAlert } from '../utils/dialog.js';
 import { openCustomCalendar } from '../utils/calendar.js';
+import { state, getEffectiveOperatorName } from './state.js';
 
 let selectedAssignPriority = "ปกติ";
 let selectedAssignCategory = "ติดตั้งงานใหม่";
@@ -310,7 +311,7 @@ export async function submitAssignForm({ tasksList, onComplete }) {
   const taskId = `TASK-${Math.floor(100 + Math.random() * 900)}`;
   const titleDisplay = `${finalCategory} - ${custName}`;
 
-  const creatorName = state.currentLinkedTech?.name || localStorage.getItem("fs_current_operator_name") || "หัวหน้างาน";
+  const creatorName = getEffectiveOperatorName() || state.currentLinkedTech?.name || getLineUserName() || localStorage.getItem("fs_current_operator_name") || "หัวหน้างาน";
 
   const newTask = {
     id: taskId,
