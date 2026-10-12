@@ -56,7 +56,8 @@ import {
 import {
   matchTechName, getUniquePhotosForActiveTask, formatLatestNoteText, renderActiveTaskPhotos,
   renderActiveCheckoutList, deleteActiveCheckin, clearAllActiveCheckins, selectActiveTaskForCheckout,
-  openCheckoutModal, closeCheckoutModal,
+  openCheckoutModal, closeCheckoutModal, setCheckoutSearchQuery, clearCheckoutSearch,
+  setCheckoutStatusFilter, setCheckoutTechFilter, resetCheckoutFilters,
   setCheckoutOutcome, renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse
 } from './modules/checkoutList.js';
 
@@ -599,6 +600,11 @@ window.removeCheckoutPhoto = removeCheckoutPhoto;
 window.selectActiveTaskForCheckout = selectActiveTaskForCheckout;
 window.openCheckoutModal = openCheckoutModal;
 window.closeCheckoutModal = closeCheckoutModal;
+window.handleCheckoutSearch = (val) => setCheckoutSearchQuery(val);
+window.clearCheckoutSearch = () => clearCheckoutSearch();
+window.setCheckoutStatusFilter = (st) => setCheckoutStatusFilter(st);
+window.setCheckoutTechFilter = (tech) => setCheckoutTechFilter(tech);
+window.resetCheckoutFilters = () => resetCheckoutFilters();
 window.setCheckoutOutcome = setCheckoutOutcome;
 window.submitCheckout = () => {
   const activeItem = state.activeTasks.find(a => a.id === state.selectedActiveCheckoutId);

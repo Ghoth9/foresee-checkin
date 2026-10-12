@@ -35,12 +35,7 @@ export function getUniquePhotosForActiveTask(activeItem) {
   if (Array.isArray(activeItem.photos)) {
     activeItem.photos.forEach((p, idx) => {
       const src = p.dataUrl || p.base64 || p.url || (typeof p === "string" ? p : null);
-      if (src) {
-        photosList.push({
-          src,
-          caption: `${activeItem.task} • รูปเช็กอิน #${idx + 1}`
-        });
-      }
+      if (src) photosList.push({ src, caption: `${activeItem.task} • รูปเช็กอิน #${idx + 1}` });
     });
   }
 
@@ -50,12 +45,7 @@ export function getUniquePhotosForActiveTask(activeItem) {
       if (Array.isArray(h.photos)) {
         h.photos.forEach((hp, idx) => {
           const src = hp.dataUrl || hp.base64 || hp.url || (typeof hp === "string" ? hp : null);
-          if (src) {
-            photosList.push({
-              src,
-              caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || h.tech || 'ผู้ปฏิบัติงาน'}) #${idx + 1}`
-            });
-          }
+          if (src) photosList.push({ src, caption: `${linkedTask.title} • ความคืบหน้า ${h.progress || 0}% (${h.time || ''} โดย ${h.by || h.tech || 'ผู้ปฏิบัติงาน'}) #${idx + 1}` });
         });
       }
     });
@@ -183,28 +173,17 @@ export function collectTaskActivityLogs(item, linkedTask) {
     item.checkinSessions.forEach(cs => {
       const techNames = Array.isArray(cs.techs) ? cs.techs.join(", ") : (cs.checkedInBy || "ผู้ปฏิบัติงาน");
       allLogs.push({
-        id: cs.id,
-        type: "checkin",
-        label: "เช็กอินเข้าเริ่มงาน",
-        time: cs.time || "-",
-        date: cs.date || "วันนี้",
-        tech: techNames,
-        note: cs.note && cs.note !== "-" ? cs.note : "บันทึกเวลาเข้าปฏิบัติงานหน้างาน",
-        photos: Array.isArray(cs.photos) ? cs.photos : [],
-        createdAt: cs.createdAt || null
+        id: cs.id, type: "checkin", label: "เช็กอินเข้าเริ่มงาน", time: cs.time || "-", date: cs.date || "วันนี้",
+        tech: techNames, note: cs.note && cs.note !== "-" ? cs.note : "บันทึกเวลาเข้าปฏิบัติงานหน้างาน",
+        photos: Array.isArray(cs.photos) ? cs.photos : [], createdAt: cs.createdAt || null
       });
     });
   } else if ((item.isCheckedIn === true || item.id?.startsWith("CHK-")) && item.time) {
     allLogs.push({
-      id: item.id,
-      type: "checkin",
-      label: "เช็กอินเข้าเริ่มงาน",
-      time: item.time || "-",
-      date: item.date || "วันนี้",
+      id: item.id, type: "checkin", label: "เช็กอินเข้าเริ่มงาน", time: item.time || "-", date: item.date || "วันนี้",
       tech: Array.isArray(item.techs) ? item.techs.join(", ") : (item.checkedInBy || "ผู้ปฏิบัติงาน"),
       note: item.note && item.note !== "-" ? item.note : "บันทึกเวลาเข้าปฏิบัติงานหน้างาน",
-      photos: Array.isArray(item.photos) ? item.photos : [],
-      createdAt: item.createdAt || null
+      photos: Array.isArray(item.photos) ? item.photos : [], createdAt: item.createdAt || null
     });
   }
 
@@ -256,6 +235,103 @@ export function collectTaskActivityLogs(item, linkedTask) {
   return allLogs;
 }
 
+let checkoutSearchQuery = "";
+let checkoutStatusFilter = "all";
+let checkoutTechFilter = "ทั้งหมด";
+
+export function setCheckoutStatusFilter(status) {
+  checkoutStatusFilter = status;
+  ['all', 'checkin', 'assigned'].forEach(st => {
+    const btn = document.getElementById(`checkoutStatusFilter-${st}`);
+    if (btn) {
+      if (st === status) {
+        btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-2xs transition-all flex items-center space-x-1 cursor-pointer";
+        const badge = btn.querySelector("span:last-child");
+        if (badge) badge.className = "text-[10px] px-1.5 py-0.2 rounded-full bg-slate-700 font-mono";
+      } else {
+        btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all flex items-center space-x-1 cursor-pointer";
+        const badge = btn.querySelector("span:last-child");
+        if (badge) badge.className = "text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 font-mono";
+      }
+    }
+  });
+  renderActiveCheckoutList();
+}
+
+export function setCheckoutTechFilter(tech) {
+  checkoutTechFilter = tech;
+  renderActiveCheckoutList();
+}
+
+export function setCheckoutSearchQuery(q) {
+  checkoutSearchQuery = q || "";
+  const clearBtn = document.getElementById("checkoutSearchClearBtn");
+  if (clearBtn) {
+    if (checkoutSearchQuery) clearBtn.classList.remove("hidden");
+    else clearBtn.classList.add("hidden");
+  }
+  renderActiveCheckoutList();
+}
+
+export function clearCheckoutSearch() {
+  const input = document.getElementById("checkoutSearchInput");
+  if (input) input.value = "";
+  setCheckoutSearchQuery("");
+}
+
+export function resetCheckoutFilters() {
+  checkoutSearchQuery = "";
+  checkoutStatusFilter = "all";
+  checkoutTechFilter = "ทั้งหมด";
+  const input = document.getElementById("checkoutSearchInput");
+  if (input) input.value = "";
+  const clearBtn = document.getElementById("checkoutSearchClearBtn");
+  if (clearBtn) clearBtn.classList.add("hidden");
+  setCheckoutStatusFilter("all");
+}
+
+export function renderCheckoutTechChips(activeList = []) {
+  const container = document.getElementById("checkoutTechFilterContainer");
+  if (!container) return;
+
+  const techSet = new Set();
+  (activeList || []).forEach(item => {
+    if (Array.isArray(item.techs)) {
+      item.techs.forEach(t => { if (t && t.trim()) techSet.add(t.trim()); });
+    } else if (typeof item.techs === "string" && item.techs.trim()) {
+      item.techs.split(',').forEach(t => { if (t && t.trim()) techSet.add(t.trim()); });
+    }
+  });
+
+  const uniqueTechs = Array.from(techSet).sort((a, b) => a.localeCompare(b, 'th'));
+  const opName = getEffectiveOperatorName();
+
+  const chips = [
+    { id: "ทั้งหมด", label: "ทั้งหมด" }
+  ];
+  if (opName) {
+    chips.push({ id: "งานของฉัน", label: "⭐ งานของฉัน" });
+  }
+  uniqueTechs.forEach(t => {
+    let shortName = t.replace(/K\./g, '').split('(')[0].trim();
+    if (!shortName) shortName = t;
+    chips.push({ id: t, label: shortName });
+  });
+
+  container.innerHTML = chips.map(c => {
+    const isSelected = checkoutTechFilter === c.id;
+    return `
+      <button type="button" onclick="window.setCheckoutTechFilter('${c.id.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 cursor-pointer ${
+        isSelected
+          ? 'bg-blue-600 text-white font-bold shadow-2xs'
+          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+      }">
+        ${c.label}
+      </button>
+    `;
+  }).join('');
+}
+
 export function renderActiveCheckoutList() {
   const container = document.getElementById("activeListContainer");
   const outcomeSection = document.getElementById("checkoutOutcomeSection");
@@ -294,6 +370,21 @@ export function renderActiveCheckoutList() {
     }
   }
 
+  // 1. Calculate status pill counts
+  const countAll = displayActiveTasks.length;
+  const countCheckin = displayActiveTasks.filter(item => (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00").length;
+  const countAssigned = countAll - countCheckin;
+
+  const elCountAll = document.getElementById("checkoutCountAll");
+  const elCountCheckin = document.getElementById("checkoutCountCheckin");
+  const elCountAssigned = document.getElementById("checkoutCountAssigned");
+  if (elCountAll) elCountAll.innerText = countAll;
+  if (elCountCheckin) elCountCheckin.innerText = countCheckin;
+  if (elCountAssigned) elCountAssigned.innerText = countAssigned;
+
+  // 2. Render technician filter chips
+  renderCheckoutTechChips(displayActiveTasks);
+
   if (clearBtn) {
     if (isAdmin && displayActiveTasks.length > 1) {
       clearBtn.classList.remove("hidden");
@@ -302,8 +393,60 @@ export function renderActiveCheckoutList() {
     }
   }
 
+  // 3. Apply Status Filter
+  let filteredList = displayActiveTasks;
+  if (checkoutStatusFilter === "checkin") {
+    filteredList = filteredList.filter(item => (item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00");
+  } else if (checkoutStatusFilter === "assigned") {
+    filteredList = filteredList.filter(item => !((item.isCheckedIn === true || item.id.startsWith("CHK-")) && !!item.time && item.time !== "09:00"));
+  }
+
+  // 4. Apply Tech Filter
+  if (checkoutTechFilter && checkoutTechFilter !== "ทั้งหมด") {
+    if (checkoutTechFilter === "งานของฉัน") {
+      filteredList = filteredList.filter(item => {
+        if (!opName) return true;
+        if (matchTechName(item.techs, opName)) return true;
+        if (matchesOperator(item.checkedInBy, opName)) return true;
+        const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+        if (linkedTask) {
+          if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
+          if (matchesOperator(linkedTask.assignedBy, opName) || matchesOperator(linkedTask.creator, opName)) return true;
+        }
+        return false;
+      });
+    } else {
+      filteredList = filteredList.filter(item => {
+        if (matchTechName(item.techs, checkoutTechFilter)) return true;
+        if (matchesOperator(item.checkedInBy, checkoutTechFilter)) return true;
+        const linkedTask = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+        if (linkedTask) {
+          if (matchTechName(linkedTask.techs, checkoutTechFilter) || matchTechName(linkedTask.assignee, checkoutTechFilter)) return true;
+          if (matchesOperator(linkedTask.assignedBy, checkoutTechFilter) || matchesOperator(linkedTask.creator, checkoutTechFilter)) return true;
+        }
+        return false;
+      });
+    }
+  }
+
+  // 5. Apply Search Query
+  if (checkoutSearchQuery) {
+    const q = checkoutSearchQuery.toLowerCase().trim();
+    filteredList = filteredList.filter(item => {
+      const taskMatch = (item.task || "").toLowerCase().includes(q);
+      const idMatch = (item.id || "").toLowerCase().includes(q);
+      const taskIdMatch = (item.taskId || "").toLowerCase().includes(q);
+      const techMatch = (Array.isArray(item.techs) ? item.techs.join(" ") : String(item.techs || "")).toLowerCase().includes(q);
+      const noteMatch = (item.note || "").toLowerCase().includes(q);
+      const linked = state.tasksList.find(t => (item.taskId && t.id === item.taskId) || t.id === item.id || t.title === item.task);
+      const custMatch = (linked?.customer?.name || "").toLowerCase().includes(q) || (linked?.customer?.address || "").toLowerCase().includes(q);
+      const catMatch = (linked?.category || "").toLowerCase().includes(q);
+      return taskMatch || idMatch || taskIdMatch || techMatch || noteMatch || custMatch || catMatch;
+    });
+  }
+
   // If selected task is no longer in visible list, close modal
-  if (state.selectedActiveCheckoutId && !displayActiveTasks.some(a => a.id === state.selectedActiveCheckoutId)) {
+  if (state.selectedActiveCheckoutId && !filteredList.some(a => a.id === state.selectedActiveCheckoutId)) {
     const modal = document.getElementById("checkoutOutcomeModal");
     if (modal) {
       modal.classList.add("hidden");
@@ -312,12 +455,25 @@ export function renderActiveCheckoutList() {
     state.selectedActiveCheckoutId = null;
   }
 
-  if (displayActiveTasks.length === 0) {
-    container.innerHTML = `
-      <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
-        ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
-      </div>
-    `;
+  if (filteredList.length === 0) {
+    if (displayActiveTasks.length > 0) {
+      container.innerHTML = `
+        <div class="text-center py-8 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6">
+          <div class="text-2xl mb-1">🔍</div>
+          <div class="text-xs font-bold text-slate-700">ไม่พบงานที่ตรงกับตัวกรอง</div>
+          <p class="text-[11px] text-slate-400 mt-0.5">${checkoutSearchQuery ? `ไม่พบงานที่มีคำว่า "${checkoutSearchQuery}"` : 'ลองเปลี่ยนช่างหรือสถานะที่เลือก'}</p>
+          <button type="button" onclick="window.resetCheckoutFilters()" class="mt-2.5 px-3 py-1 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-2xs transition-all active:scale-95 cursor-pointer">
+            ✕ ล้างตัวกรองทั้งหมด
+          </button>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
+          ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
+        </div>
+      `;
+    }
     const modal = document.getElementById("checkoutOutcomeModal");
     if (modal) {
       modal.classList.add("hidden");
@@ -327,7 +483,7 @@ export function renderActiveCheckoutList() {
     return;
   }
 
-  container.innerHTML = displayActiveTasks.map(item => {
+  container.innerHTML = filteredList.map(item => {
     const isSelected = state.selectedActiveCheckoutId === item.id;
     const techList = Array.isArray(item.techs) ? item.techs.join(", ") : (item.techs || "ผู้ปฏิบัติงานทั่วไป");
     const displayTaskId = item.taskId || item.id;
