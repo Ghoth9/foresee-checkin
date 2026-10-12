@@ -61,6 +61,12 @@ import {
 } from './modules/checkoutList.js';
 
 import { openShareTaskLineModal, closeShareTaskLineModal, submitShareTaskChoice, shareActivityLogToLine } from './modules/shareModal.js';
+import { 
+  openWorkHistoryModal, closeWorkHistoryModal, setWorkHistoryFilter,
+  openCompletedTaskDetailModal, closeCompletedTaskDetailModal,
+  shareCompletedLogToLine, shareSelectedCompletedLogToLine, deleteWorkHistoryLog,
+  updateWorkHistoryBadge, renderWorkHistoryList
+} from './modules/historyModal.js';
 
 // -------------------------------------------------------------
 // LOCAL STATE INITIALIZATION FROM CACHE
@@ -862,6 +868,14 @@ window.closeShareTaskLineModal = closeShareTaskLineModal;
 window.submitShareTaskChoice = submitShareTaskChoice;
 window.shareActiveTaskToLine = (activeId) => openShareTaskLineModal(activeId);
 window.shareActivityLogToLine = shareActivityLogToLine;
+window.openWorkHistoryModal = openWorkHistoryModal;
+window.closeWorkHistoryModal = closeWorkHistoryModal;
+window.setWorkHistoryFilter = setWorkHistoryFilter;
+window.openCompletedTaskDetailModal = openCompletedTaskDetailModal;
+window.closeCompletedTaskDetailModal = closeCompletedTaskDetailModal;
+window.shareCompletedLogToLine = shareCompletedLogToLine;
+window.shareSelectedCompletedLogToLine = shareSelectedCompletedLogToLine;
+window.deleteWorkHistoryLog = deleteWorkHistoryLog;
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, state.tasksList, state.allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;
 window.saveEditedTask = () => window.saveTaskDetailChanges();

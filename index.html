@@ -50,6 +50,13 @@
       <!-- Right Actions: Role Badge & Dropdown, + มอบหมายงาน, LINE Login -->
       <div class="flex items-center space-x-1.5 flex-shrink-0">
         
+        <!-- Work History Quick Access Button in Header -->
+        <button type="button" id="headerWorkHistoryBtn" onclick="window.openWorkHistoryModal()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap" title="ดูประวัติการปฏิบัติงานที่ทำเสร็จแล้ว">
+          <span>📋</span>
+          <span class="hidden sm:inline">ประวัติงาน</span>
+          <span id="headerWorkHistoryBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-900 font-bold font-mono">0</span>
+        </button>
+
         <!-- Role Badge & Switcher Dropdown -->
         <div class="relative flex-shrink-0">
           <button id="userRoleBadge" type="button" onclick="handleRoleBadgeClick()" class="flex items-center space-x-1.5 text-xs px-2.5 py-1.5 rounded-xl font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 shadow-2xs transition-all active:scale-95 whitespace-nowrap" title="แตะเพื่อเลือกมุมมองหรือจัดการสิทธิ์">
@@ -71,6 +78,18 @@
                 <span>สลับคน</span>
               </button>
             </div>
+
+            <!-- Work History Dropdown Option -->
+            <button type="button" onclick="closeRoleDropdownMenu(); window.openWorkHistoryModal();" class="w-full text-left p-2 rounded-xl hover:bg-blue-50/70 text-xs font-semibold text-slate-800 flex items-center justify-between transition-colors mb-1.5 border border-slate-200/60 shadow-2xs">
+              <div class="flex items-center space-x-2">
+                <span class="text-base">📋</span>
+                <div>
+                  <div class="font-bold text-slate-900">ประวัติงานที่ทำเสร็จแล้ว</div>
+                  <div class="text-[10px] text-slate-500">ดูงานที่บันทึกเสร็จสิ้น & กิจกรรมของฉัน</div>
+                </div>
+              </div>
+              <span id="dropdownHistoryBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-900 font-mono font-bold">0</span>
+            </button>
 
             <!-- Admin Controls (Shown for admins) -->
             <div id="roleDropdownAdminControls" class="hidden space-y-1">
@@ -342,26 +361,7 @@
           </div>
         </div>
 
-        <!-- Today's Activity Log Card (Collapsible) -->
-        <div class="bg-white rounded-2xl border border-slate-300 shadow-xs overflow-hidden transition-all">
-          <div onclick="window.toggleTodayLogsCollapse()" class="p-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 cursor-pointer select-none transition-colors border-b border-slate-200">
-            <div class="flex items-center space-x-2">
-              <span class="text-base">📋</span>
-              <span class="text-xs md:text-sm font-extrabold text-slate-950">ประวัติการปฏิบัติงานวันนี้</span>
-              <span id="todayLogsBadge" class="text-[10px] bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-0.5 rounded-full font-bold">0 งาน</span>
-            </div>
-            <div class="flex items-center space-x-1.5 text-xs text-slate-600 font-semibold">
-              <span id="todayLogsToggleText">ย่อ/ขยาย</span>
-              <svg id="todayLogsToggleChevron" class="w-4 h-4 text-slate-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </div>
-          </div>
-          <div id="todayLogsContainer" class="p-3.5 space-y-2.5 max-h-64 overflow-y-auto">
-            <!-- Rendered dynamically -->
-          </div>
-        </div>
-
+        <!-- End of Check-in Tab -->
       </div>
     </section>
 
@@ -1278,6 +1278,140 @@
           ยกเลิก
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- 9.1 WORK HISTORY MODAL (ประวัติการปฏิบัติงานที่ทำเสร็จแล้ว) -->
+  <div id="workHistoryModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-4 md:p-6 z-[75] overflow-y-auto modal-scroll-container" onclick="if(event.target === this) window.closeWorkHistoryModal()">
+    <div class="relative w-full max-w-lg bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[90vh] animate-scale-in">
+      
+      <!-- Modal Header -->
+      <div class="px-5 py-4 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-base shadow-2xs">
+            📋
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 class="text-sm sm:text-base font-bold text-slate-900">ประวัติการปฏิบัติงาน</h3>
+              <span id="workHistoryModalBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-mono">0 งาน</span>
+            </div>
+            <p class="text-[11px] text-slate-500">บันทึกงานที่ทำเสร็จแล้วและกิจกรรมของคุณ</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeWorkHistoryModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold transition-all shadow-2xs active:scale-95 cursor-pointer" title="ปิดหน้าต่าง">
+          ✕
+        </button>
+      </div>
+
+      <!-- Filter Tabs: วันนี้ vs ทั้งหมด -->
+      <div class="px-5 pt-3.5 pb-2 bg-white flex-shrink-0 border-b border-slate-100">
+        <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1">
+          <button type="button" id="historyFilterBtnToday" onclick="window.setWorkHistoryFilter('today')" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition-all bg-white text-blue-700 shadow-2xs border border-slate-200 cursor-pointer">
+            📅 งานวันนี้
+          </button>
+          <button type="button" id="historyFilterBtnAll" onclick="window.setWorkHistoryFilter('all')" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-medium transition-all text-slate-500 hover:text-slate-800 cursor-pointer">
+            🗂️ เสร็จสิ้นทั้งหมด
+          </button>
+        </div>
+      </div>
+
+      <!-- History List Container -->
+      <div id="workHistoryListContainer" class="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 max-h-[60vh]" style="scrollbar-width: thin;">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
+        <span class="text-[11px]">💡 แตะที่รายการเพื่อดูรายละเอียดแบบเต็ม</span>
+        <button type="button" onclick="window.closeWorkHistoryModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer">
+          ปิดหน้าต่าง
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9.2 COMPLETED TASK DETAIL POPUP MODAL (รายละเอียดงานที่เสร็จสิ้น) -->
+  <div id="completedTaskDetailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-[3px] flex items-center justify-center p-3 sm:p-4 md:p-6 z-[85] overflow-y-auto modal-scroll-container" onclick="if(event.target === this) window.closeCompletedTaskDetailModal()">
+    <div class="relative w-full max-w-lg bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[92vh] animate-scale-in">
+      
+      <!-- Detail Modal Header -->
+      <div class="px-5 py-4 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-base shadow-2xs">
+            🏁
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span id="completedModalTaskId" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">TASK-XXX</span>
+              <span id="completedModalTaskStatus" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-mono">เสร็จสิ้น</span>
+            </div>
+            <h3 id="completedModalTaskTitle" class="text-sm sm:text-base font-bold text-slate-900 truncate mt-0.5">ชื่องาน</h3>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeCompletedTaskDetailModal()" class="w-8 h-8 rounded-full bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold transition-all shadow-2xs active:scale-95 cursor-pointer" title="ปิดหน้าต่าง">
+          ✕
+        </button>
+      </div>
+
+      <!-- Detail Modal Body -->
+      <div class="p-5 overflow-y-auto space-y-4 flex-1 max-h-[65vh]" style="scrollbar-width: thin;">
+        
+        <!-- Summary Cards Grid -->
+        <div class="grid grid-cols-2 gap-2.5 text-xs">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ช่วงเวลาทำงาน</span>
+            <div id="completedModalTimeRange" class="font-mono font-bold text-slate-900 text-xs">08:00 - 10:00 น.</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ระยะเวลาทั้งหมด</span>
+            <div id="completedModalDuration" class="font-bold text-blue-700 text-xs">⏱️ 2 ชม.</div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 text-xs">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">👷 ผู้ปฏิบัติงาน</span>
+          <div id="completedModalTechs" class="font-bold text-slate-900">-</div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 text-xs">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ผลการปฏิบัติงาน</span>
+          <div id="completedModalOutcome" class="font-bold text-emerald-700 text-xs">ปฏิบัติงานเรียบร้อย</div>
+        </div>
+
+        <!-- Notes / Remarks -->
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">📝 รายละเอียดผลงาน / หมายเหตุ</span>
+          <div id="completedModalNote" class="text-slate-800 font-medium whitespace-pre-wrap leading-relaxed text-xs sm:text-[13px]">
+            -
+          </div>
+        </div>
+
+        <!-- Photos Gallery -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+            <span>📸 รูปถ่ายผลงาน</span>
+            <span id="completedModalPhotosBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-mono">0 รูป</span>
+          </div>
+          <div id="completedModalPhotosContainer" class="flex items-center space-x-2 overflow-x-auto py-1 scroll-smooth" style="scrollbar-width: thin;">
+            <!-- Rendered dynamically -->
+          </div>
+          <p class="text-[10px] text-slate-400">💡 แตะที่รูปภาพเพื่อเปิดดูภาพขนาดใหญ่</p>
+        </div>
+
+      </div>
+
+      <!-- Detail Modal Footer -->
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between flex-shrink-0">
+        <button type="button" onclick="window.shareSelectedCompletedLogToLine()" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-3.5 py-2 rounded-xl border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1.5 transition-all active:scale-95 shadow-2xs cursor-pointer">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
+          <span>แชร์สรุปเข้า LINE</span>
+        </button>
+        <button type="button" onclick="window.closeCompletedTaskDetailModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer">
+          ปิดหน้าต่าง
+        </button>
+      </div>
+
     </div>
   </div>
 

@@ -10,6 +10,7 @@ import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
 import { deleteCheckinApi, clearAllCheckinsApi } from '../api/supabase.js';
 import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState } from './checkout.js';
 import { matchesOperator } from './tasks.js';
+import { updateWorkHistoryBadge, renderWorkHistoryList } from './historyModal.js';
 
 export function matchTechName(techs, targetName) {
   if (!targetName || !techs) return false;
@@ -740,73 +741,8 @@ export function setCheckoutOutcome(outcome) {
 }
 
 export function renderTodayLogs() {
-  const container = document.getElementById("todayLogsContainer");
-  const badge = document.getElementById("todayLogsBadge");
-  if (!container) return;
-
-  const isSimTech = (state.simulatedRole === "technician") || (sessionStorage.getItem("fs_simulated_role") === "technician");
-  const isAdmin = !isSimTech && (state.currentUserRole === "admin" || (typeof window.isCurrentUserAdmin === "function" && window.isCurrentUserAdmin()));
-  const opName = getEffectiveOperatorName();
-
-  let displayLogs = state.dailyLogs;
-  if (!isAdmin) {
-    if (opName) {
-      displayLogs = state.dailyLogs.filter(log => {
-        if (matchTechName(log.techs, opName)) return true;
-        if (matchesOperator(log.checkedInBy, opName) || matchesOperator(log.closerName, opName) || matchesOperator(log.closer_name, opName) || matchesOperator(log.closedBy, opName) || matchesOperator(log.creator, opName)) return true;
-        const linkedTask = state.tasksList.find(t => (log.taskId && t.id === log.taskId) || t.id === log.id || t.title === log.task);
-        if (linkedTask) {
-          if (matchTechName(linkedTask.techs, opName) || matchTechName(linkedTask.assignee, opName)) return true;
-          const isCreatedByMe = matchesOperator(linkedTask.assignedBy, opName) ||
-            matchesOperator(linkedTask.creator, opName) ||
-            matchesOperator(linkedTask.customer?.assigned_by, opName) ||
-            matchesOperator(linkedTask.customer?.creator, opName) ||
-            matchesOperator(linkedTask.updateBy, opName) ||
-            matchesOperator(linkedTask.updated_by, opName);
-          if (isCreatedByMe) return true;
-        }
-        return false;
-      });
-    } else {
-      displayLogs = [];
-    }
-  }
-
-  if (badge) badge.innerText = `${displayLogs.length} งาน`;
-
-  if (displayLogs.length === 0) {
-    container.innerHTML = `
-      <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4 text-center">
-        ${!isAdmin && opName ? `ยังไม่มีประวัติการปฏิบัติงานของ "${opName}" ในวันนี้` : `ยังไม่มีประวัติการปฏิบัติงานในวันนี้`}
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = displayLogs.map(log => {
-    const isDone = log.status === "เสร็จสิ้น" || log.status === "ปิดงานแล้ว";
-    const techs = Array.isArray(log.techs) ? log.techs.join(", ") : (log.techs || "-");
-    return `
-      <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50/80 text-xs space-y-1">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] font-bold px-1.5 py-0.2 rounded ${isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} font-mono">${log.id}</span>
-          <div class="flex items-center space-x-1.5">
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'}">${log.status}</span>
-            ${isAdmin ? `
-              <button type="button" onclick="event.stopPropagation(); window.deleteTodayLog('${log.id}')" class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1 rounded transition-colors active:scale-95" title="ลบประวัตินี้">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
-            ` : ''}
-          </div>
-        </div>
-        <div class="font-bold text-slate-900 truncate">${log.task}</div>
-        <div class="text-[11px] text-slate-500 flex items-center justify-between pt-1 border-t border-slate-200/60">
-          <span>ผู้ปฏิบัติงาน: ${techs}</span>
-          <span>${formatDisplayTime(log.checkinTime)} น.${log.checkoutTime ? ` - ${formatDisplayTime(log.checkoutTime)} น.` : ''}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
+  if (typeof updateWorkHistoryBadge === "function") updateWorkHistoryBadge();
+  if (typeof renderWorkHistoryList === "function") renderWorkHistoryList();
 }
 
 export function deleteTodayLog(id) {
