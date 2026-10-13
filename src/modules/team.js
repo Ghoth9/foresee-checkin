@@ -557,28 +557,37 @@ function renderMemberCard(tech, currentLineId) {
   const isLinkedToMe = isLineLinked && currentLineId && tech.line_user_id === currentLineId;
 
   return `
-    <div class="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
-      <div class="min-w-0">
-        <div class="flex items-center space-x-1.5 flex-wrap">
-          <span class="font-bold text-xs text-slate-900 truncate">${tech.name}</span>
-          ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">👤 ผู้ปฏิบัติงาน</span>`}
-          ${isLinkedToMe ? `<span class="px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">บัญชีของคุณ</span>` : ''}
+    <div class="p-3 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-2.5 transition-all">
+      <!-- Row 1: Member Name, Badges & Delete -->
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
+            <span class="font-bold text-xs sm:text-sm text-slate-900 break-words">${tech.name}</span>
+            ${isAdmin ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap flex-shrink-0">👑 แอดมิน</span>` : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap flex-shrink-0">👤 ผู้ปฏิบัติงาน</span>`}
+            ${isLinkedToMe ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap flex-shrink-0">บัญชีของคุณ</span>` : ''}
+          </div>
+          <div class="text-[11px] text-slate-500 mt-1 flex items-center space-x-2 flex-wrap gap-y-1">
+            <span>📞 ${tech.phone || '-'}</span>
+            <span>•</span>
+            ${isLineLinked ? `
+              <span class="text-emerald-700 font-semibold inline-flex items-center space-x-1">
+                <span>🟢 เชื่อม LINE แล้ว</span>
+                <button type="button" onclick="window.unbindTechLineUser('${tech.id}')" class="text-slate-400 hover:text-rose-600 text-[10px] ml-1 px-1.5 py-0.5 rounded-md hover:bg-rose-50 border border-slate-200/60 cursor-pointer" title="ยกเลิกการผูก LINE">✕ ยกเลิกผูก</button>
+              </span>
+            ` : `
+              <span class="text-slate-400">⚪ ยังไม่ผูก LINE</span>
+            `}
+          </div>
         </div>
-        <div class="text-[11px] text-slate-400 mt-1 flex items-center space-x-2 flex-wrap gap-y-1">
-          <span>📞 ${tech.phone || '-'}</span>
-          <span>•</span>
-          ${isLineLinked ? `
-            <span class="text-emerald-600 font-semibold flex items-center space-x-1">
-              <span>🟢 เชื่อม LINE แล้ว</span>
-              <button type="button" onclick="window.unbindTechLineUser('${tech.id}')" class="text-slate-400 hover:text-rose-600 text-[10px] ml-1 p-0.5 rounded hover:bg-rose-50 cursor-pointer" title="ยกเลิกการผูก LINE">✕ ยกเลิกผูก</button>
-            </span>
-          ` : `
-            <span class="text-slate-400">⚪ ยังไม่ผูก LINE</span>
-          `}
-        </div>
+
+        <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer flex-shrink-0" title="ลบสมาชิก">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
       </div>
 
-      <div class="flex items-center space-x-1.5 flex-shrink-0">
+      <!-- Row 2: Role Switcher Segmented Control -->
+      <div class="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-2">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">สิทธิ์การใช้งาน:</span>
         <div class="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200 text-xs font-semibold shadow-2xs">
           <button type="button" onclick="window.handleChangeMemberRole('${tech.id}', 'technician')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${!isAdmin ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'}" title="กำหนดสิทธิ์เป็นผู้ปฏิบัติงาน">
             👤 ผู้ปฏิบัติงาน
@@ -587,9 +596,6 @@ function renderMemberCard(tech, currentLineId) {
             👑 แอดมิน
           </button>
         </div>
-        <button type="button" onclick="window.handleDeleteMember('${tech.name}', '${tech.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="ลบสมาชิก">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        </button>
       </div>
     </div>
   `;
