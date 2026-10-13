@@ -46,13 +46,23 @@ Last Updated: 12 ตุลาคม 2569
 
 ---
 
-## 4. Incident Log: ปัญหา LINE Login วนลูปไม่ยอมเข้าสู่ระบบ (13 ต.ค. 2569)
+## 4. Incident Log: ปัญหา LINE Login และหน้าเว็บรีโหลดวนลูปแม้ปล่อยเครื่องนิ่งๆ (13 ต.ค. 2569)
 ### อาการ (Symptom):
-- เมื่อผู้ใช้เปิดลิงก์ผ่านแชท LINE (เช่น เปิดลิงก์ `foresee-checkin.vercel.app` โดยตรง) หรือกดปุ่ม "เข้าสู่ระบบ LINE ทันที" หน้าจอจะโหลดวนซ้ำไปมา (Redirect Loop) ไม่ยอมเข้าสู่ระบบ
-### สาเหตุ (Root Cause):
-- ใน `src/liff/line.js` มีคำสั่งดัก auto-login บน `initLiff()` ด้วย `liff.login()` เมื่อตรวจพบว่าอยู่ใน LINE In-App Browser (`liff.isInClient()`)
-- ตามข้อกำหนดของ LINE LIFF: ฟังก์ชัน `liff.login()` ไม่สามารถทำงานอย่างถูกต้องภายใน LINE In-App Browser แบบลิงก์ตรงได้ ส่งผลให้เมื่อ Redirect กลับมา เซสชันจะไม่ถูกบันทึก และ `initLiff()` ก็สั่ง `liff.login()` วนซ้ำไปมาไม่รู้จบ
-### การแก้ไข (Solution):
-1. นำคำสั่ง auto-login ใน `initLiff()` ออกอย่างถาวร
-2. เมื่อผู้ใช้กดปุ่ม "เข้าสู่ระบบ LINE ทันที" ภายในแอป LINE ให้ระบบสลับไปเปิดผ่าน Gateway ทางการของ LIFF ทันที (`https://liff.line.me/${MY_LIFF_ID}`) ซึ่ง LINE จะล็อกอินให้อัตโนมัติในระดับ Native โดยไม่ต้องเข้าหน้า Redirect
-3. เพิ่มตัวนับจำกัดจำนวนครั้งการ Redirect (`fs_liff_redirect_attempts`) ใน `sessionStorage` เพื่อป้องกันกรณี External Browser เกิดการวนลูปซ้ำเกิน 2 ครั้ง
+- เมื่อผู้ใช้เปิดหน้าเว็บบนมือถือ (โดยเฉพาะผ่านห้องแชท LINE) หน้าจอจะรีโหลดวนลูปซ้ำๆ ต่อเนื่อง แม้จะปล่อยเครื่องไว้นิ่งๆ ไม่ได้แตะต้องจอ
+- เมื่อกดปุ่ม "เข้าสู่ระบบ LINE ทันที" หน้าจอจะหมุนวนไม่ยอมเข้าสู่ระบบและกลับมาที่เดิม
+
+### สาเหตุที่แท้จริง (True Root Causes):
+1. **การใช้ `window.history.replaceState` ล้าง URL Query ก่อน `initLiff()` ทำงาน**:
+   - ใน `src/main.js` ฟังก์ชัน `switchTab()` และ `handleDeepLink()` มีการสั่งล้าง query parameters ทันทีเมื่อหน้าโหลด (`replaceState(..., pathname)`)
+   - เมื่อ LINE โหลดหน้า LIFF หรือเมื่อ Redirect กลับมาจาก LINE OAuth ตัว URL จะมีพารามิเตอร์สำคัญ (`?code=...`, `?state=...`, `?liff.state=...`) เพื่อให้ LINE SDK ยืนยันเซสชัน
+   - เมื่อแอปชิงตัดพารามิเตอร์ทิ้งก่อนที่ `await liff.init()` จะทำงานเสร็จ LINE SDK จึงตรวจพบว่าสถานะไม่สมบูรณ์ และสั่ง reload/re-authenticate ตัวเองซ้ำๆ เกิดเป็น Infinite Reload Loop แม้จะวางเครื่องไว้นิ่งๆ
+2. **การเรียก `updateLineStatusUI()` ก่อน `initLiff()` เสร็จสิ้น**:
+   - `bootstrapApp()` ไม่ได้รอ `await initLiff()` ก่อนแสดงผล ทำให้ขณะที่ SDK กำลังยืนยันตัวตนอยู่ เบื้องหลัง `isLineLoggedIn()` คืนค่า `false` ชั่วคราว ส่งผลให้แบนเนอร์แจ้งเตือน "ยังไม่ได้เข้าสู่ระบบ LINE" โชว์ขึ้นมาทันที
+3. **การสั่ง Redirect ซ้ำซ้อนไปยัง `liff.line.me` เมื่ออยู่ใน Client อยู่แล้ว**:
+   - ฟังก์ชัน `loginLine()` มีการสั่งเด้ง `window.location.href = liff.line.me/...` ซ้อนกันเอง ทำให้เกิดการโหลดวนซ้ำ
+
+### การแก้ไขถาวร (Permanent Solutions):
+1. **ห้ามแตะต้อง URL Search Params ด้วย `replaceState`**: ปล่อยให้ LINE LIFF SDK จัดการ Lifecycle และ Query Parameters ของตัวเองโดยสมบูรณ์
+2. **ปรับ `bootstrapApp()` ให้ `await initLiff()` ให้เสร็จก่อนเสมอ**: เพื่อให้สถานะการล็อกอินและโปรไฟล์ LINE ชัดเจนก่อนที่จะทำการอัปเดต UI แบนเนอร์ หรือเราท์ติ้ง Deep Link
+3. **ใช้ Standard Flow ของ LIFF**: ใช้ `liff.login({ redirectUri: window.location.href })` ตามมาตรฐาน LIFF v2 พร้อมระบบ Throttle ป้องกันการกดย้ำ เพื่อความเสถียรสูงสุดทั้งบน LINE App และ External Browser
+

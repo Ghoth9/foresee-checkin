@@ -58,7 +58,8 @@ import {
   renderActiveCheckoutList, deleteActiveCheckin, clearAllActiveCheckins, selectActiveTaskForCheckout,
   openCheckoutModal, closeCheckoutModal, setCheckoutSearchQuery, clearCheckoutSearch,
   setCheckoutStatusFilter, setCheckoutTechFilter, resetCheckoutFilters,
-  setCheckoutOutcome, renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse
+  setCheckoutOutcome, renderTodayLogs, deleteTodayLog, toggleTodayLogsCollapse,
+  toggleCheckoutModalActivityList
 } from './modules/checkoutList.js';
 
 import { openShareTaskLineModal, closeShareTaskLineModal, submitShareTaskChoice, shareActivityLogToLine } from './modules/shareModal.js';
@@ -110,9 +111,6 @@ export function switchTab(tab) {
   pendingDeepLinkTarget = null;
   try {
     sessionStorage.setItem("fs_active_tab", tab);
-    if (window.location.search) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
   } catch (e) {}
   const sections = ["checkin", "checkout", "tasks"];
   sections.forEach(s => {
@@ -451,17 +449,12 @@ export function handleDeepLink() {
   } else {
     switchTab(targetTab);
   }
-  try {
-    if (window.location.search) window.history.replaceState({}, document.title, window.location.pathname);
-  } catch (e) {}
 }
 
 // -------------------------------------------------------------
 // APP BOOTSTRAP
 // -------------------------------------------------------------
 async function bootstrapApp() {
-  handleDeepLink();
-
   // Clear search input
   const taskSearchInput = document.getElementById("taskSearchInput");
   if (taskSearchInput) taskSearchInput.value = "";
@@ -476,15 +469,16 @@ async function bootstrapApp() {
   renderTasksListScoped();
   renderTodayLogs();
 
-  updateLineStatusUI();
-  resolveUserRole();
-  initLiff().then(() => {
-    updateLineStatusUI();
-    resolveUserRole();
-  }).catch(e => {
+  // Wait for LIFF init FIRST so auth & profile are resolved before updating line status & routing
+  try {
+    await initLiff();
+  } catch (e) {
     console.warn("LIFF init error:", e);
-    updateLineStatusUI();
-  });
+  }
+
+  updateLineStatusUI();
+  await resolveUserRole();
+  handleDeepLink();
 
   requestLocation((coords) => {
     const title = document.getElementById("gpsLocationTitle");
@@ -647,6 +641,7 @@ window.clearCheckoutSearch = () => clearCheckoutSearch();
 window.setCheckoutStatusFilter = (st) => setCheckoutStatusFilter(st);
 window.setCheckoutTechFilter = (tech) => setCheckoutTechFilter(tech);
 window.resetCheckoutFilters = () => resetCheckoutFilters();
+window.toggleCheckoutModalActivityList = toggleCheckoutModalActivityList;
 window.goCheckinForTask = (taskId) => {
   closeCheckoutModal();
   switchTab("checkin");

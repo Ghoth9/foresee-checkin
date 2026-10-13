@@ -18,7 +18,7 @@ export async function initLiff() {
 
   initPromise = (async () => {
     try {
-      console.log("[LIFF] Initializing with ID:", MY_LIFF_ID, "URL:", window.location.href);
+      console.log("[LIFF] Initializing with ID:", MY_LIFF_ID);
       await liff.init({ liffId: MY_LIFF_ID });
       try {
         await liff.ready;
@@ -30,16 +30,7 @@ export async function initLiff() {
       console.log("[LIFF] Init complete. isLineLoggedIn =", loggedIn);
 
       if (loggedIn) {
-        sessionStorage.removeItem("fs_liff_redirect_attempts");
-        try {
-          const url = new URL(window.location.href);
-          if (url.searchParams.has("code") || url.searchParams.has("state")) {
-            url.searchParams.delete("code");
-            url.searchParams.delete("state");
-            window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
-          }
-        } catch (e) {}
-
+        sessionStorage.removeItem("fs_liff_login_time");
         try {
           liffProfile = await liff.getProfile();
           console.log("[LIFF] Profile fetched:", liffProfile);
@@ -64,27 +55,6 @@ export async function initLiff() {
       return true;
     } catch (err) {
       console.error("[LIFF] Init error:", err);
-      sessionStorage.removeItem("fs_liff_redirect_attempts");
-      const urlParams = new URLSearchParams(window.location.search);
-      const isRedirectBack = urlParams.has("code") || urlParams.has("state") || urlParams.has("error") || sessionStorage.getItem("fs_line_logging_in") === "true";
-      sessionStorage.removeItem("fs_line_logging_in");
-
-      try {
-        const url = new URL(window.location.href);
-        if (url.searchParams.has("code") || url.searchParams.has("state")) {
-          url.searchParams.delete("code");
-          url.searchParams.delete("state");
-          window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : ""));
-        }
-      } catch (e) {}
-
-      if (isRedirectBack) {
-        showAppAlert({
-          type: "danger",
-          title: "LINE Login เกิดข้อผิดพลาด",
-          message: `ไม่สามารถเชื่อมต่อ LINE LIFF ได้:\n${err?.message || JSON.stringify(err)}\n\n(LIFF ID: ${MY_LIFF_ID})\nคุณสามารถแตะปุ่มสิทธิ์มุมขวาบนเพื่อสลับเข้าสู่โหมดแอดมินได้ทันทีครับ`
-        });
-      }
       return false;
     }
   })();
@@ -120,54 +90,36 @@ export function getLineUserId() {
 }
 
 export async function loginLine() {
-  const inLineClient = typeof liff !== "undefined" && typeof liff.isInClient === "function" && liff.isInClient();
-  
-  // If inside LINE in-app browser or SDK not available, opening official LIFF gateway grants native auto-login
-  if (typeof liff === "undefined" || inLineClient) {
-    console.log("[LIFF] In LINE client or SDK offline, redirecting to official gateway:", `https://liff.line.me/${MY_LIFF_ID}`);
+  if (typeof liff === "undefined") {
     window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
     return;
   }
 
-  // Redirect loop protection for external browsers
-  const redirectAttempts = parseInt(sessionStorage.getItem("fs_liff_redirect_attempts") || "0", 10);
-  if (redirectAttempts >= 2) {
-    console.warn("[LIFF] Prevented infinite login loop! Attempts:", redirectAttempts);
-    sessionStorage.removeItem("fs_liff_redirect_attempts");
-    window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
+  if (isLineLoggedIn()) {
+    console.log("[LIFF] Already logged in");
     return;
   }
-  sessionStorage.setItem("fs_liff_redirect_attempts", String(redirectAttempts + 1));
+
+  // Throttle rapid repeated attempts
+  const lastAttempt = parseInt(sessionStorage.getItem("fs_liff_login_time") || "0", 10);
+  const now = Date.now();
+  if (now - lastAttempt < 3000) {
+    console.warn("[LIFF] Throttling rapid login calls");
+    return;
+  }
+  sessionStorage.setItem("fs_liff_login_time", String(now));
 
   try {
     sessionStorage.setItem("fs_line_logging_in", "true");
-    sessionStorage.removeItem("fs_simulated_role");
-    try {
-      const activeTab = sessionStorage.getItem("fs_active_tab") || "tasks";
-      sessionStorage.setItem("fs_active_tab", activeTab);
-    } catch (e) {}
-
-    if (!isLineLoggedIn()) {
-      await initLiff();
-      if (!isLineLoggedIn()) {
-        try {
-          const cleanUrl = window.location.origin + window.location.pathname;
-          console.log("[LIFF] Calling liff.login with clean redirectUri:", cleanUrl);
-          liff.login({ redirectUri: cleanUrl });
-        } catch (liffErr) {
-          console.warn("[LIFF] liff.login redirectUri failed, trying default liff.login:", liffErr);
-          try {
-            liff.login();
-          } catch (e2) {
-            console.warn("[LIFF] default login failed, redirecting to liff.line.me:", e2);
-            window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
-          }
-        }
-      }
-    }
+    liff.login({ redirectUri: window.location.href });
   } catch (err) {
-    console.error("loginLine error, falling back to gateway:", err);
-    window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
+    console.error("[LIFF] liff.login redirect error, attempting fallback:", err);
+    try {
+      liff.login();
+    } catch (e2) {
+      console.warn("[LIFF] fallback login error:", e2);
+      window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
+    }
   }
 }
 
