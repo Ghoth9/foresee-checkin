@@ -139,9 +139,9 @@ export function switchTab(tab) {
     const mobBtn = document.getElementById(`tabBtn${s.charAt(0).toUpperCase() + s.slice(1)}`);
     if (mobBtn) {
       if (s === tab) {
-        mobBtn.className = "py-2.5 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 whitespace-nowrap";
+        mobBtn.className = "py-2 px-1 rounded-lg transition-all bg-slate-950 text-white shadow-sm font-bold flex items-center justify-center space-x-1 text-[11px] sm:text-xs min-w-0";
       } else {
-        mobBtn.className = "py-2.5 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 text-slate-600 whitespace-nowrap";
+        mobBtn.className = "py-2 px-1 rounded-lg transition-all hover:text-slate-950 flex items-center justify-center space-x-1 text-slate-600 font-semibold text-[11px] sm:text-xs min-w-0";
       }
     }
   });
