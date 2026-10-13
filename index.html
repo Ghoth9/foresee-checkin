@@ -397,8 +397,12 @@
         <div class="flex flex-col gap-2.5 w-full sm:w-auto">
           <!-- Row 1 on mobile: Full-width search bar -->
           <div class="relative w-full sm:w-64">
-            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-            <input id="taskSearchInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน..." class="w-full bg-white border border-slate-300 rounded-xl pl-8.5 pr-8 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 shadow-2xs">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <input id="taskSearchInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน..." class="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 shadow-2xs transition-all">
             <button type="button" id="taskSearchClearBtn" onclick="window.clearTaskSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
           </div>
           <!-- Row 2 on mobile / Right side on sm: Action buttons balanced grid -->
