@@ -30,6 +30,7 @@ export async function initLiff() {
       console.log("[LIFF] Init complete. isLineLoggedIn =", loggedIn);
 
       if (loggedIn) {
+        sessionStorage.removeItem("fs_liff_redirect_attempts");
         try {
           const url = new URL(window.location.href);
           if (url.searchParams.has("code") || url.searchParams.has("state")) {
@@ -58,15 +59,12 @@ export async function initLiff() {
             title: "LINE Login ปฏิเสธการเข้าสู่ระบบ",
             message: `ข้อผิดพลาดจาก LINE: ${urlParams.get("error")}\nรายละเอียด: ${urlParams.get("error_description") || "-"}`
           });
-        } else if (typeof liff !== "undefined" && typeof liff.isInClient === "function" && liff.isInClient()) {
-          console.log("[LIFF] Inside LINE client and not logged in -> auto-login");
-          liff.login();
-          return false;
         }
       }
       return true;
     } catch (err) {
       console.error("[LIFF] Init error:", err);
+      sessionStorage.removeItem("fs_liff_redirect_attempts");
       const urlParams = new URLSearchParams(window.location.search);
       const isRedirectBack = urlParams.has("code") || urlParams.has("state") || urlParams.has("error") || sessionStorage.getItem("fs_line_logging_in") === "true";
       sessionStorage.removeItem("fs_line_logging_in");
@@ -122,10 +120,25 @@ export function getLineUserId() {
 }
 
 export async function loginLine() {
-  if (typeof liff === "undefined") {
+  const inLineClient = typeof liff !== "undefined" && typeof liff.isInClient === "function" && liff.isInClient();
+  
+  // If inside LINE in-app browser or SDK not available, opening official LIFF gateway grants native auto-login
+  if (typeof liff === "undefined" || inLineClient) {
+    console.log("[LIFF] In LINE client or SDK offline, redirecting to official gateway:", `https://liff.line.me/${MY_LIFF_ID}`);
     window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
     return;
   }
+
+  // Redirect loop protection for external browsers
+  const redirectAttempts = parseInt(sessionStorage.getItem("fs_liff_redirect_attempts") || "0", 10);
+  if (redirectAttempts >= 2) {
+    console.warn("[LIFF] Prevented infinite login loop! Attempts:", redirectAttempts);
+    sessionStorage.removeItem("fs_liff_redirect_attempts");
+    window.location.href = `https://liff.line.me/${MY_LIFF_ID}`;
+    return;
+  }
+  sessionStorage.setItem("fs_liff_redirect_attempts", String(redirectAttempts + 1));
+
   try {
     sessionStorage.setItem("fs_line_logging_in", "true");
     sessionStorage.removeItem("fs_simulated_role");
