@@ -466,32 +466,6 @@ export function submitAdminPinUnlock() {
   }
 }
 
-export function quickUnlockNonmarnAdmin() {
-  sessionStorage.setItem("fs_admin_override", "true");
-  sessionStorage.removeItem("fs_simulated_role");
-  state.simulatedRole = null;
-  state.currentUserRole = "admin";
-  const nonmarn = state.techniciansList.find(t => t.name && (t.name.toLowerCase().includes("nonmarn") || t.name.toLowerCase().includes("nonpawit"))) || {
-    id: "1ead037c-68fd-4514-963d-ef8c2f521dad",
-    name: "nonmarn (System Admin)",
-    role: "admin",
-    line_user_id: "Uf1a6593c5b88f31e162d86d250440509"
-  };
-  state.currentLinkedTech = nonmarn;
-  localStorage.setItem("fs_current_operator_id", nonmarn.id);
-  localStorage.setItem("fs_current_operator_name", nonmarn.name);
-  applyRolePermissionsUI("admin", nonmarn);
-  if (typeof window.renderTasksListScoped === "function") window.renderTasksListScoped();
-  if (typeof window.renderAssignedTasksBannerScoped === "function") window.renderAssignedTasksBannerScoped();
-  renderActiveCheckoutList();
-  renderTodayLogs();
-  showAppAlert({
-    type: "success",
-    title: "ปลดล็อกสิทธิ์แอดมินสำเร็จ 👑",
-    message: "เข้าใช้งานในฐานะ nonmarn (System Admin) เรียบร้อยแล้ว ระบบเปิดสิทธิ์จัดการงานทั้งหมดให้คุณทันทีครับ"
-  });
-}
-
 export function updateTeamRoleBanner() {
   const isSimulated = !!state.simulatedRole;
   const currentRole = state.currentUserRole;

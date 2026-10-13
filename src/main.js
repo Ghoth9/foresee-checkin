@@ -40,7 +40,7 @@ import {
 import {
   isUserAdminActual, isCurrentUserAdmin, resolveUserRole, switchSimulatedRole,
   toggleRoleDropdownMenu, closeRoleDropdownMenu, handleRoleBadgeClick, applyRolePermissionsUI,
-  openAdminPinModal, closeAdminPinModal, submitAdminPinUnlock, quickUnlockNonmarnAdmin,
+  openAdminPinModal, closeAdminPinModal, submitAdminPinUnlock,
   openTeamRoleModal, closeTeamRoleModal, setTeamRoleFilter, renderTeamRoleList,
   setNewMemberRole, handleChangeMemberRole, submitAddNewMember, handleDeleteMember,
   bindCurrentLineUserToTech, unbindTechLineUser, openManageTechModal, closeManageTechModal,
@@ -741,7 +741,6 @@ window.closeRoleDropdownMenu = closeRoleDropdownMenu;
 window.openAdminPinModal = openAdminPinModal;
 window.closeAdminPinModal = closeAdminPinModal;
 window.submitAdminPinUnlock = submitAdminPinUnlock;
-window.quickUnlockNonmarnAdmin = quickUnlockNonmarnAdmin;
 window.updateLineStatusUI = updateLineStatusUI;
 window.openTeamRoleModal = openTeamRoleModal;
 window.closeTeamRoleModal = closeTeamRoleModal;
