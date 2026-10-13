@@ -394,17 +394,19 @@
           <h1 id="tasksSectionTitle" class="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-slate-900">งานมอบหมายและติดตามงาน</h1>
           <p id="tasksSectionDesc" class="text-[11px] sm:text-xs md:text-sm text-slate-500 mt-0.5">จัดการภาระงานและมอบหมายผู้ปฏิบัติงานที่รับผิดชอบ</p>
         </div>
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-          <div class="relative w-full sm:w-60">
-            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-            <input id="taskSearchInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน..." class="w-full bg-white border border-slate-300 rounded-xl pl-8 pr-7 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 shadow-2xs">
+        <div class="flex flex-col gap-2.5 w-full sm:w-auto">
+          <!-- Row 1 on mobile: Full-width search bar -->
+          <div class="relative w-full sm:w-64">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
+            <input id="taskSearchInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="" oninput="window.handleTaskSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน..." class="w-full bg-white border border-slate-300 rounded-xl pl-8.5 pr-8 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 shadow-2xs">
             <button type="button" id="taskSearchClearBtn" onclick="window.clearTaskSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
           </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <button id="assignTaskSectionBtn" type="button" onclick="openAssignModal()" class="flex-1 sm:flex-initial w-full sm:w-auto bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 active:scale-95 cursor-pointer whitespace-nowrap">
+          <!-- Row 2 on mobile / Right side on sm: Action buttons balanced grid -->
+          <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+            <button id="assignTaskSectionBtn" type="button" onclick="openAssignModal()" class="w-full sm:w-auto bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center justify-center space-x-1.5 active:scale-95 cursor-pointer whitespace-nowrap">
               <span>+ มอบหมายงานใหม่</span>
             </button>
-            <button id="manageTechSectionBtn" type="button" onclick="openManageTechModal()" class="flex-1 sm:flex-initial w-full sm:w-auto px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap">
+            <button id="manageTechSectionBtn" type="button" onclick="openManageTechModal()" class="w-full sm:w-auto px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap">
               <span>👥 จัดการทีมงาน</span>
             </button>
           </div>
@@ -457,11 +459,11 @@
 
         <!-- Bottom Line: Tech Chips / Filter by Assignee (Dedicated Row with Label) -->
         <div id="taskTechFilterRow" class="flex items-center space-x-2 pt-2 border-t border-slate-100 overflow-x-auto no-scrollbar">
-          <span class="text-[11px] font-bold text-slate-500 flex items-center space-x-1 flex-shrink-0 pl-0.5">
+          <span class="text-[11px] font-bold text-slate-500 flex items-center space-x-1 flex-shrink-0 pl-0.5" title="กรองตามผู้ปฏิบัติงาน">
             <span>👤</span>
             <span class="hidden sm:inline">ผู้ปฏิบัติงาน:</span>
           </span>
-          <div id="techFilterChipsContainer" class="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5 flex-1 pr-4 touch-pan-x"></div>
+          <div id="techFilterChipsContainer" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1 pr-2 touch-pan-x"></div>
         </div>
 
       </div>
