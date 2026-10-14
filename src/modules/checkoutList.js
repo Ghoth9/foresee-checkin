@@ -658,6 +658,7 @@ export function openCheckoutModal(id) {
                 <div class="text-[10px] text-slate-500 flex items-center space-x-1.5 flex-wrap">
                   ${m.hasCheckedIn ? `<span class="text-blue-700 font-medium">เข้า: ${m.checkinTime}</span>` : `<span class="text-amber-700 font-medium font-semibold">⚠️ ยังไม่ได้เช็กอินเข้างาน</span>`}
                   ${m.hasCheckedOut ? `<span>•</span><span class="text-emerald-700 font-bold">จบหน้าที่: ${m.checkoutTime}</span>` : ''}
+                  ${m.durationLabel ? `<span>•</span><span class="text-emerald-800 font-bold bg-emerald-100/90 px-1.5 py-0.2 rounded font-mono">⏱️ ${m.durationLabel}</span>` : ''}
                 </div>
                 ${m.checkoutNote ? `<div class="text-[10px] text-slate-600 italic mt-0.5 font-sans">"${m.checkoutNote}"</div>` : ''}
               </div>

@@ -491,7 +491,7 @@ export function createProgressFlexCard({ id, taskId, taskTitle, techs, progress,
   };
 }
 
-export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, duration, outcome, note, photoCount = 0 }) {
+export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, duration, outcome, note, photoCount = 0, memberDurations = [] }) {
   const techList = Array.isArray(techs) ? techs.join(", ") : (techs || "ผู้ปฏิบัติงานทั่วไป");
   const isProblem = outcome === "ติดปัญหา";
 
@@ -500,6 +500,36 @@ export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, durat
   const headerIdColor = isProblem ? "#FCA5A5" : "#6EE7B7";
   const headerTitle = isProblem ? "⚠️ ปิดงานไม่สำเร็จ (ติดปัญหา)" : "🏁 ปิดงานและส่งมอบเรียบร้อย";
   const altText = isProblem ? `[ติดปัญหา] ${task} โดย ${techList}` : `[ปิดงานสำเร็จ] ${task} โดย ${techList}`;
+
+  // Build individual member duration box if available
+  const memberDurationRows = (Array.isArray(memberDurations) && memberDurations.length > 0) ? [
+    {
+      type: "box",
+      layout: "vertical",
+      margin: "md",
+      paddingAll: "10px",
+      backgroundColor: "#F8FAFC",
+      cornerRadius: "md",
+      contents: [
+        {
+          type: "text",
+          text: "👥 รายละเอียดเวลาปฏิบัติงานแยกรายคน:",
+          size: "xxs",
+          weight: "bold",
+          color: "#475569"
+        },
+        ...memberDurations.map(m => ({
+          type: "box",
+          layout: "horizontal",
+          margin: "xs",
+          contents: [
+            { type: "text", text: `• ${m.name}`, size: "xxs", color: "#0F172A", weight: "bold", flex: 5, wrap: true },
+            { type: "text", text: m.duration || "1 วัน", size: "xxs", color: "#059669", align: "end", weight: "bold", flex: 5, wrap: true }
+          ]
+        }))
+      ]
+    }
+  ] : [];
 
   return {
     type: "flex",
@@ -561,6 +591,7 @@ export function createCheckoutFlexCard({ id, task, techs, inTime, outTime, durat
               { type: "text", text: duration || "ตามเวลาปฏิบัติงาน", size: "xs", weight: "bold", color: isProblem ? "#DC2626" : "#059669", flex: 6 }
             ]
           },
+          ...memberDurationRows,
           {
             type: "box", layout: "horizontal", contents: [
               { type: "text", text: "ผลการทำงาน", size: "xs", color: "#64748B", flex: 4 },

@@ -70,6 +70,7 @@ import {
   updateWorkHistoryBadge, renderWorkHistoryList
 } from './modules/historyModal.js';
 import { applyTaskDetailModalPermissions } from './modules/taskDetailModal.js';
+import { exportWorkReportToExcel } from './modules/exportReports.js';
 
 // -------------------------------------------------------------
 // LOCAL STATE INITIALIZATION FROM CACHE
@@ -889,6 +890,7 @@ window.closeCompletedTaskDetailModal = closeCompletedTaskDetailModal;
 window.shareCompletedLogToLine = shareCompletedLogToLine;
 window.shareSelectedCompletedLogToLine = shareSelectedCompletedLogToLine;
 window.deleteWorkHistoryLog = deleteWorkHistoryLog;
+window.exportWorkReportToExcel = exportWorkReportToExcel;
 window.openEditTaskModal = (taskId) => openTaskDetailModal(taskId, state.tasksList, state.allTechnicians);
 window.closeEditTaskModal = closeTaskDetailModal;
 window.saveEditedTask = () => window.saveTaskDetailChanges();

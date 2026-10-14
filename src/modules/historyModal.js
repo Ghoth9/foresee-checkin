@@ -11,6 +11,7 @@ import { createCheckoutFlexCard, triggerLiffShare } from '../liff/line.js';
 import { matchesOperator } from './tasks.js';
 import { deleteCheckinApi } from '../api/supabase.js';
 import { calculateDuration } from './checkout.js';
+import { getTaskMemberStatuses } from '../utils/taskMembers.js';
 
 export function matchTechName(techs, targetName) {
   if (!targetName || !techs) return false;
@@ -228,6 +229,41 @@ export function openCompletedTaskDetailModal(logId) {
     noteEl.innerText = (log.note && log.note !== "-") ? log.note : "ไม่มีหมายเหตุเพิ่มเติม";
   }
 
+  // Render individual member working days / duration breakdown
+  const memberBreakdownContainer = document.getElementById("completedModalMemberBreakdownContainer");
+  const memberListEl = document.getElementById("completedModalMemberList");
+  const memberCountBadge = document.getElementById("completedModalMemberCountBadge");
+
+  if (memberBreakdownContainer && memberListEl) {
+    const linkedTask = state.tasksList.find(t => (log.taskId && t.id === log.taskId) || t.id === log.id || t.title === log.task);
+    const memberStatuses = getTaskMemberStatuses(linkedTask || log, log);
+
+    if (memberStatuses.length > 0) {
+      memberBreakdownContainer.classList.remove("hidden");
+      if (memberCountBadge) memberCountBadge.innerText = `${memberStatuses.length} คน`;
+      memberListEl.innerHTML = memberStatuses.map(m => {
+        const dLabel = m.durationLabel || (m.hasCheckedOut ? 'ทำเสร็จใน 1 วัน' : (m.hasCheckedIn ? 'กำลังทำ' : 'รอดำเนินการ'));
+        return `
+          <div class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-xs shadow-2xs">
+            <div class="flex items-center space-x-2 min-w-0">
+              <span class="w-5 h-5 rounded-full ${m.hasCheckedOut ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'} flex items-center justify-center text-[10px] font-bold">
+                ${m.hasCheckedOut ? '✓' : '👤'}
+              </span>
+              <span class="font-bold text-slate-800 truncate">${m.fullName}</span>
+            </div>
+            <div class="flex items-center space-x-1.5 flex-shrink-0">
+              <span class="font-mono text-[11px] font-bold ${m.hasCheckedOut ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-blue-700 bg-blue-50 border border-blue-200'} px-2 py-0.5 rounded-md">
+                ${dLabel}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      memberBreakdownContainer.classList.add("hidden");
+    }
+  }
+
   // Render photos
   const photos = Array.isArray(log.photos) ? log.photos : [];
   if (photosBadge) photosBadge.innerText = `${photos.length} รูป`;
@@ -264,7 +300,21 @@ export async function shareCompletedLogToLine(logId) {
 
   const techs = Array.isArray(log.techs) ? log.techs.join(", ") : (log.techs || "ผู้ปฏิบัติงาน");
   const durStr = calculateDuration(log.checkinTime || log.time, log.date, log.createdAt);
-  const photoCount = Array.isArray(log.photos) ? log.photos.length : 0;
+  let memberDurations = [];
+  try {
+    const linkedTask = state.tasksList.find(t => (log.taskId && t.id === log.taskId) || t.id === log.id || t.title === log.task);
+    const memberStatuses = getTaskMemberStatuses(linkedTask || log, log);
+    memberDurations = memberStatuses.map(m => {
+      const dLabel = m.durationLabel || (m.hasCheckedOut ? 'ทำเสร็จใน 1 วัน' : 'ร่วมปฏิบัติงาน');
+      return {
+        name: m.fullName,
+        duration: dLabel,
+        status: m.hasCheckedOut ? 'ปิดหน้าที่แล้ว' : (m.hasCheckedIn ? 'ปฏิบัติงาน' : 'รอดำเนินการ')
+      };
+    });
+  } catch (e) {
+    console.warn("Could not calculate memberDurations for history flex share:", e);
+  }
 
   const flexCard = createCheckoutFlexCard({
     id: log.id,
@@ -275,7 +325,8 @@ export async function shareCompletedLogToLine(logId) {
     duration: durStr,
     outcome: log.outcome || log.status || "เสร็จสิ้น",
     note: log.note && log.note !== "-" ? log.note : "บันทึกปิดงาน",
-    photoCount: photoCount
+    photoCount: photoCount,
+    memberDurations
   });
 
   await triggerLiffShare(flexCard, `แชร์ประวัติงาน "${log.task}" เข้า LINE สำเร็จ!`);

@@ -10,6 +10,8 @@ import { createCheckoutFlexCard, createProgressFlexCard, triggerLiffShare } from
 import { saveCheckoutApi, updateTaskProgressApi } from '../api/supabase.js';
 import { formatGasTime, parseDeadlineDate } from '../utils/date.js';
 import { showAppAlert, showSharePromptDialog } from '../utils/dialog.js';
+import { state } from './state.js';
+import { getTaskMemberStatuses } from '../utils/taskMembers.js';
 
 let checkoutPhotos = [];
 let currentActionTab = "update"; // "update" or "close"
@@ -448,7 +450,23 @@ export async function submitCheckoutForm({
       photos: photosToUpload.map(p => ({ name: p.name, base64: p.base64, sizeKb: p.sizeKb }))
     };
 
-    // 1. Flex Message
+    // 1. Flex Message with individual member durations
+    let memberDurations = [];
+    try {
+      const linkedTask = state.tasksList.find(t => (activeItem.taskId && t.id === activeItem.taskId) || t.id === activeItem.id || t.title === activeItem.task);
+      const memberStatuses = getTaskMemberStatuses(linkedTask || activeItem, activeItem);
+      memberDurations = memberStatuses.map(m => {
+        const dLabel = m.durationLabel || (m.hasCheckedOut ? 'ทำเสร็จใน 1 วัน' : 'ร่วมปฏิบัติงาน');
+        return {
+          name: m.fullName,
+          duration: dLabel,
+          status: m.hasCheckedOut ? 'ปิดหน้าที่แล้ว' : (m.hasCheckedIn ? 'ปฏิบัติงาน' : 'รอดำเนินการ')
+        };
+      });
+    } catch (e) {
+      console.warn("Could not calculate memberDurations for flex card:", e);
+    }
+
     const flexCard = createCheckoutFlexCard({
       id: activeItem.id,
       task: activeItem.task,
@@ -458,7 +476,8 @@ export async function submitCheckoutForm({
       duration: durationStr,
       outcome: selectedOutcome,
       note: noteText.trim() || "",
-      photoCount: photosToUpload.length
+      photoCount: photosToUpload.length,
+      memberDurations
     });
 
     // 2. Realtime sync to GAS / Supabase

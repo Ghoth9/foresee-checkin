@@ -422,52 +422,65 @@
         
         <!-- Top Line: Status Filters (Full width, no crushing) + View Switcher -->
         <div class="flex items-center justify-between gap-2">
-          <!-- Status Filters -->
-          <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1 min-w-0 pr-4 touch-pan-x">
-            <button type="button" onclick="setStatusFilter('ทั้งหมด')" id="statusFilterBtn-ทั้งหมด" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-white transition-all flex items-center space-x-1.5 flex-shrink-0">
-              <span>ทั้งหมด</span>
-              <span id="statTotalTasks" class="font-mono text-[11px] px-1.5 py-0.2 rounded-full bg-slate-800 text-white">0</span>
-            </button>
-            <button type="button" onclick="setStatusFilter('กำลังทำ')" id="statusFilterBtn-กำลังทำ" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-              <span>กำลังทำ</span>
-              <span id="statInProgress" class="font-mono text-[11px] text-slate-500">0</span>
-            </button>
-            <button type="button" onclick="setStatusFilter('เกินกำหนด')" id="statusFilterBtn-เกินกำหนด" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-              <span>เกินกำหนด</span>
-              <span id="statOverdue" class="font-mono text-[11px] text-rose-600 font-semibold">0</span>
-            </button>
-            <button type="button" onclick="setStatusFilter('เสร็จสิ้น')" id="statusFilterBtn-เสร็จสิ้น" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>เสร็จสิ้น</span>
-              <span id="statCompleted" class="font-mono text-[11px] text-emerald-600 font-semibold">0</span>
-            </button>
-            <button type="button" onclick="setStatusFilter('ติดปัญหา')" id="statusFilterBtn-ติดปัญหา" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-              <span>ติดปัญหา</span>
-              <span id="statProblem" class="font-mono text-[11px] text-rose-600 font-semibold">0</span>
-            </button>
+          <!-- Status Filters with subtle scroll shadow cue on mobile -->
+          <div class="relative flex-1 min-w-0">
+            <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 pr-6 touch-pan-x">
+              <button type="button" onclick="setStatusFilter('ทั้งหมด')" id="statusFilterBtn-ทั้งหมด" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-white transition-all flex items-center space-x-1.5 flex-shrink-0 cursor-pointer">
+                <span>ทั้งหมด</span>
+                <span id="statTotalTasks" class="font-mono text-[11px] px-1.5 py-0.2 rounded-full bg-slate-800 text-white">0</span>
+              </button>
+              <button type="button" onclick="setStatusFilter('กำลังทำ')" id="statusFilterBtn-กำลังทำ" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0 cursor-pointer">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span>กำลังทำ</span>
+                <span id="statInProgress" class="font-mono text-[11px] text-slate-500">0</span>
+              </button>
+              <button type="button" onclick="setStatusFilter('เกินกำหนด')" id="statusFilterBtn-เกินกำหนด" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0 cursor-pointer">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                <span>เกินกำหนด</span>
+                <span id="statOverdue" class="font-mono text-[11px] text-rose-600 font-semibold">0</span>
+              </button>
+              <button type="button" onclick="setStatusFilter('เสร็จสิ้น')" id="statusFilterBtn-เสร็จสิ้น" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0 cursor-pointer">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>เสร็จสิ้น</span>
+                <span id="statCompleted" class="font-mono text-[11px] text-emerald-600 font-semibold">0</span>
+              </button>
+              <button type="button" onclick="setStatusFilter('ติดปัญหา')" id="statusFilterBtn-ติดปัญหา" class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition-all flex items-center space-x-1.5 flex-shrink-0 cursor-pointer">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                <span>ติดปัญหา</span>
+                <span id="statProblem" class="font-mono text-[11px] text-rose-600 font-semibold">0</span>
+              </button>
+            </div>
+            <!-- Scroll fade indicator on right edge -->
+            <div class="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-white to-transparent sm:hidden"></div>
           </div>
 
-          <!-- View Switcher -->
-          <div class="hidden sm:flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 flex-shrink-0">
-            <button type="button" onclick="setTaskViewMode('list')" id="viewModeBtnList" class="p-1.5 rounded-md transition-all bg-white text-slate-900 shadow-2xs font-semibold" title="Table View">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <!-- View Switcher & Export -->
+          <div class="hidden sm:flex items-center space-x-1.5 flex-shrink-0">
+            <button type="button" onclick="window.exportWorkReportToExcel('tasks')" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center space-x-1 shadow-2xs active:scale-95 cursor-pointer" title="ดาวน์โหลดตารางงานทั้งหมดเป็นไฟล์ Excel (.csv)">
+              <span>📊</span>
+              <span>ส่งออก Excel</span>
             </button>
-            <button type="button" onclick="setTaskViewMode('grid')" id="viewModeBtnGrid" class="p-1.5 rounded-md transition-all text-slate-500 hover:text-slate-900" title="Grid View">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-            </button>
+            <div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button type="button" onclick="setTaskViewMode('list')" id="viewModeBtnList" class="p-1.5 rounded-md transition-all bg-white text-slate-900 shadow-2xs font-semibold cursor-pointer" title="Table View">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+              </button>
+              <button type="button" onclick="setTaskViewMode('grid')" id="viewModeBtnGrid" class="p-1.5 rounded-md transition-all text-slate-500 hover:text-slate-900 cursor-pointer" title="Grid View">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Bottom Line: Tech Chips / Filter by Assignee (Dedicated Row with Label) -->
-        <div id="taskTechFilterRow" class="flex items-center space-x-2 pt-2 border-t border-slate-100 overflow-x-auto no-scrollbar">
+        <div id="taskTechFilterRow" class="flex items-center space-x-2 pt-2 border-t border-slate-100">
           <span class="text-[11px] font-bold text-slate-500 flex items-center space-x-1 flex-shrink-0 pl-0.5" title="กรองตามผู้ปฏิบัติงาน">
             <span>👤</span>
             <span class="hidden sm:inline">ผู้ปฏิบัติงาน:</span>
           </span>
-          <div id="techFilterChipsContainer" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1 pr-2 touch-pan-x"></div>
+          <div class="relative flex-1 min-w-0">
+            <div id="techFilterChipsContainer" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 pr-6 touch-pan-x"></div>
+            <div class="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-white to-transparent sm:hidden"></div>
+          </div>
         </div>
 
       </div>
@@ -1312,9 +1325,12 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
-        <span class="text-[11px]">💡 แตะที่รายการเพื่อดูรายละเอียดแบบเต็ม</span>
-        <button type="button" onclick="window.closeWorkHistoryModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer">
+      <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 flex-shrink-0 flex-wrap gap-2">
+        <button type="button" onclick="window.exportWorkReportToExcel('history')" class="px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer" title="ดาวน์โหลดไฟล์ Excel (.csv) รองรับภาษาไทยสมบูรณ์">
+          <span>📊</span>
+          <span>ดาวน์โหลด Excel</span>
+        </button>
+        <button type="button" onclick="window.closeWorkHistoryModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer ml-auto">
           ปิดหน้าต่าง
         </button>
       </div>
@@ -1362,6 +1378,17 @@
         <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 text-xs">
           <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">👷 ผู้ปฏิบัติงาน</span>
           <div id="completedModalTechs" class="font-bold text-slate-900">-</div>
+        </div>
+
+        <!-- Individual Duration Breakdown -->
+        <div id="completedModalMemberBreakdownContainer" class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">👥 เวลาทำงานแยกรายบุคคล</span>
+            <span class="text-[10px] text-emerald-700 font-bold font-mono" id="completedModalMemberCountBadge">0 คน</span>
+          </div>
+          <div id="completedModalMemberList" class="space-y-1.5 pt-1">
+            <!-- Injected dynamically -->
+          </div>
         </div>
 
         <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 text-xs">

@@ -111,11 +111,41 @@ export function getTaskMemberStatuses(task, activeItem = null) {
         ? `${latestDuty.date && latestDuty.date !== 'วันนี้' ? latestDuty.date + ' ' : ''}${latestDuty.time || ''} น.`
         : null;
 
+      // Calculate working days / duration for this person
+      let durationLabel = null;
+      let daysWorked = 0;
+      if (latestCheckin && latestDuty) {
+        try {
+          const tIn = latestCheckin.createdAt ? new Date(latestCheckin.createdAt).getTime() : null;
+          const tOut = latestDuty.createdAt ? new Date(latestDuty.createdAt).getTime() : null;
+          if (tIn && tOut && tOut >= tIn) {
+            const diffDays = Math.floor((tOut - tIn) / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor(((tOut - tIn) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            if (diffDays > 0) {
+              daysWorked = diffDays + 1;
+              durationLabel = `ทำเสร็จใน ${diffDays + 1} วัน (${diffDays} วัน ${diffHours} ชม.)`;
+            } else {
+              daysWorked = 1;
+              durationLabel = diffHours > 0 ? `ทำเสร็จใน 1 วัน (${diffHours} ชม.)` : `ทำเสร็จใน 1 วัน`;
+            }
+          } else {
+            daysWorked = 1;
+            durationLabel = `ทำเสร็จใน 1 วัน`;
+          }
+        } catch (e) {
+          daysWorked = 1;
+          durationLabel = `ทำเสร็จใน 1 วัน`;
+        }
+      } else if (latestDuty) {
+        daysWorked = 1;
+        durationLabel = `ทำเสร็จใน 1 วัน`;
+      }
+
       let status = 'pending';
       let statusLabel = 'ยังไม่เช็กอิน';
       if (hasCheckedOut) {
         status = 'completed';
-        statusLabel = `เช็กเอาต์แล้ว (${checkoutTime})`;
+        statusLabel = `เช็กเอาต์แล้ว (${checkoutTime})${durationLabel ? ` • ${durationLabel}` : ''}`;
       } else if (hasCheckedIn) {
         status = 'in_progress';
         statusLabel = `เช็กอินแล้ว (${checkinTime})`;
@@ -129,6 +159,8 @@ export function getTaskMemberStatuses(task, activeItem = null) {
         hasCheckedOut,
         checkoutTime,
         checkoutNote: latestDuty ? latestDuty.note : '',
+        durationLabel,
+        daysWorked,
         status,
         statusLabel
       };
