@@ -72,13 +72,15 @@ export function updateQuickCardUI(task) {
           <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-md font-medium ${
             m.hasCheckedOut 
               ? 'bg-slate-100 text-slate-700 border border-slate-200' 
-              : (m.hasCheckedIn 
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold' 
-                  : 'bg-amber-50 text-amber-900 border border-amber-200')
+              : (m.hasPausedToday
+                  ? 'bg-amber-50 text-amber-900 border border-amber-300 font-semibold'
+                  : (m.hasCheckedIn 
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold' 
+                      : 'bg-amber-50 text-amber-900 border border-amber-200'))
           }">
-            <span class="mr-1">${m.hasCheckedOut ? '🏁' : (m.hasCheckedIn ? '🟢' : '⏳')}</span>
+            <span class="mr-1">${m.hasCheckedOut ? '🏁' : (m.hasPausedToday ? '🌇' : (m.hasCheckedIn ? '🟢' : '⏳'))}</span>
             <strong class="truncate max-w-[90px]">${m.shortName}:</strong>&nbsp;
-            <span>${m.hasCheckedOut ? `เสร็จ (${m.checkoutTime})` : (m.hasCheckedIn ? `เข้า ${m.checkinTime}` : 'ยังไม่เช็กอิน')}</span>
+            <span>${m.hasCheckedOut ? `เสร็จ (${m.checkoutTime})` : (m.hasPausedToday ? `พักงานรายวัน (${m.durationLabel || 'รอทำต่อ'})` : (m.hasCheckedIn ? `เข้า ${m.checkinTime}` : 'ยังไม่เช็กอิน'))}</span>
           </span>
         `).join('');
       } else {
@@ -228,6 +230,8 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
             const myMember = opName ? memberStatuses.find(m => matchesOperator(m.fullName, opName) || matchesOperator(m.shortName, opName)) : null;
             const iHaveCheckedIn = myMember ? myMember.hasCheckedIn : false;
             const iHaveCheckedOut = myMember ? myMember.hasCheckedOut : false;
+            const iHavePausedToday = myMember ? myMember.hasPausedToday : false;
+            const nextDayNum = (myMember?.daysWorked || 1) + 1;
 
             let actionFooterHtml = `
               <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-emerald-700 font-bold">
@@ -245,14 +249,23 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
                   <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold transition-colors cursor-pointer">ดูความคืบหน้า ➔</button>
                 </div>
               `;
+            } else if (iHavePausedToday) {
+              actionFooterHtml = `
+                <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2 text-xs text-amber-900 font-bold">
+                  <span class="flex items-center space-x-1.5 truncate">
+                    <span>▶️ เช็กอินทำต่อ (วันที่ ${nextDayNum} • คืบหน้าเดิม ${task.progress || 0}%)</span>
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-lg bg-amber-500 text-white text-[11px] shadow-2xs flex-shrink-0">ทำต่อ ➔</span>
+                </div>
+              `;
             } else if (iHaveCheckedIn) {
               actionFooterHtml = `
                 <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                   <span class="text-[11px] font-bold text-blue-700 flex items-center space-x-1 truncate">
-                    <span>🟢 เช็กอินแล้ว (${myMember.checkinTime} น.)</span>
+                    <span>🟢 เช็กอินแล้ว (${myMember.checkinTime})</span>
                   </span>
                   <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-2xs transition-all active:scale-95 flex-shrink-0 cursor-pointer">
-                    📝 อัปเดต / ปิดงาน ➔
+                    🌇 ส่งความคืบหน้า / เช็กเอาต์ ➔
                   </button>
                 </div>
               `;
@@ -285,13 +298,15 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
                         <span class="inline-flex items-center text-[10px] px-2 py-0.5 rounded-md font-medium ${
                           m.hasCheckedOut 
                             ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold' 
-                            : (m.hasCheckedIn 
-                                ? 'bg-blue-50 text-blue-800 border border-blue-200 font-semibold' 
-                                : 'bg-slate-50 text-slate-600 border border-slate-200')
+                            : (m.hasPausedToday
+                                ? 'bg-amber-50 text-amber-900 border border-amber-300 font-semibold'
+                                : (m.hasCheckedIn 
+                                    ? 'bg-blue-50 text-blue-800 border border-blue-200 font-semibold' 
+                                    : 'bg-slate-50 text-slate-600 border border-slate-200'))
                         }">
-                          <span class="mr-1">${m.hasCheckedOut ? '🏁' : (m.hasCheckedIn ? '🟢' : '⏳')}</span>
+                          <span class="mr-1">${m.hasCheckedOut ? '🏁' : (m.hasPausedToday ? '🌇' : (m.hasCheckedIn ? '🟢' : '⏳'))}</span>
                           <strong class="truncate max-w-[85px]">${m.shortName}:</strong>&nbsp;
-                          <span>${m.hasCheckedOut ? (m.durationLabel || `เสร็จ ${m.checkoutTime}`) : (m.hasCheckedIn ? `เข้า ${m.checkinTime}` : 'รอเช็กอิน')}</span>
+                          <span>${m.hasCheckedOut ? (m.durationLabel || `เสร็จ ${m.checkoutTime}`) : (m.hasPausedToday ? `เช็กเอาต์รายวัน (${m.durationLabel || 'รอทำต่อ'})` : (m.hasCheckedIn ? `เข้า ${m.checkinTime}` : 'รอเช็กอิน'))}</span>
                         </span>
                       `).join('')}
                     </div>

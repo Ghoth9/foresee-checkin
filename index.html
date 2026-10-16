@@ -1669,8 +1669,8 @@
         <!-- Segmented Mode Switcher: Full Width, Crisp & Modern -->
         <div class="bg-slate-100/90 p-1 rounded-2xl flex items-center gap-1 w-full shadow-inner border border-slate-200/60">
           <button type="button" id="actionTabBtnUpdate" onclick="window.setActionTab('update')" class="flex-1 py-2.5 px-2 sm:px-3 rounded-xl text-xs font-bold transition-all duration-200 bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1 cursor-pointer active:scale-[0.98]">
-            <span>📊 อัปเดตความคืบหน้า</span>
-            <span class="hidden sm:inline text-[11px] font-medium">(งานยังไม่เสร็จ)</span>
+            <span>🌇 ส่งความคืบหน้า / เช็กเอาต์รายวัน</span>
+            <span class="hidden sm:inline text-[11px] font-medium">(ยังไม่เสร็จ)</span>
           </button>
           <button type="button" id="actionTabBtnClose" onclick="window.setActionTab('close')" class="flex-1 py-2.5 px-2 sm:px-3 rounded-xl text-xs font-medium transition-all duration-200 text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1 cursor-pointer active:scale-[0.98]">
             <span>🏁 บันทึกปิดงาน</span>
@@ -1739,12 +1739,33 @@
           </div>
         </div>
 
-        <!-- PANEL 1: UPDATE PROGRESS (MODE 1: งานยังไม่เสร็จ) -->
+        <!-- PANEL 1: UPDATE PROGRESS & DAILY CHECKOUT (MODE 1: งานยังไม่เสร็จ) -->
         <div id="actionPanelUpdate" class="space-y-3.5">
+          <!-- รูปแบบการบันทึก: เช็กเอาต์จบวัน (พรุ่งนี้ทำต่อ) vs อัปเดตระหว่างวัน -->
+          <div class="bg-blue-50/60 border border-blue-200/80 rounded-2xl p-3 space-y-2 shadow-2xs">
+            <label class="block text-xs font-bold text-slate-800">1. เลือกรูปแบบการรายงาน (กรณีงานยังไม่เสร็จ 100%)</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button type="button" id="dailyCheckoutModeBtn-true" onclick="window.setDailyCheckoutMode(true)" class="py-2 px-3 rounded-xl border text-left transition-all bg-blue-600 text-white border-blue-600 shadow-xs cursor-pointer active:scale-95">
+                <div class="text-xs font-bold flex items-center space-x-1.5">
+                  <span>🌇</span>
+                  <span>เช็กเอาต์จบวันนี้ (พรุ่งนี้ทำต่อ)</span>
+                </div>
+                <div class="text-[10px] opacity-90 mt-0.5">บันทึกเวลาออกงานวันนี้ • วันถัดไปกดเช็กอินทำต่อได้ทันที</div>
+              </button>
+              <button type="button" id="dailyCheckoutModeBtn-false" onclick="window.setDailyCheckoutMode(false)" class="py-2 px-3 rounded-xl border text-left transition-all bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs cursor-pointer active:scale-95">
+                <div class="text-xs font-bold flex items-center space-x-1.5">
+                  <span>📊</span>
+                  <span>อัปเดตระหว่างวัน (ยังทำต่อวันนี้)</span>
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">ส่งรูปความคืบหน้าโดยยังไม่ต้องเช็กเอาต์ออกงาน</div>
+              </button>
+            </div>
+          </div>
+
           <!-- ระดับความคืบหน้าปัจจุบัน -->
           <div class="bg-slate-50/90 border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5 shadow-2xs">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-slate-700">1. เลือกระดับความคืบหน้า</label>
+              <label class="text-xs font-bold text-slate-700">2. เลือกระดับความคืบหน้าสะสม</label>
               <span id="checkoutUpdateProgressNum" class="font-bold font-mono text-blue-600 text-xs px-2.5 py-0.5 bg-blue-100/90 rounded-full border border-blue-200/60">50%</span>
             </div>
             <div class="w-full bg-slate-200/90 rounded-full h-2 overflow-hidden">
@@ -1766,14 +1787,14 @@
 
           <!-- รายละเอียดความคืบหน้าระหว่างวัน -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">2. รายละเอียดความคืบหน้าระหว่างวัน</label>
-            <textarea id="checkoutUpdateNoteInput" rows="2" placeholder="เช่น เดินท่อร้อยสายชั้น 2 เสร็จแล้ว / ประสานงานเอกสารแล้ว..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"></textarea>
+            <label class="block text-xs font-bold text-slate-700">3. สรุปงานที่ทำได้ในวันนี้ / หมายเหตุ</label>
+            <textarea id="checkoutUpdateNoteInput" rows="2" placeholder="เช่น วันนี้เดินท่อร้อยสายชั้น 2 เสร็จแล้ว พรุ่งนี้เข้าติดตั้งกล้องต่อ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"></textarea>
           </div>
 
           <!-- แนบรูปความคืบหน้า (สูงสุด 5 รูป) -->
           <div class="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-3.5 space-y-2">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-slate-700">3. 📸 แนบรูปความคืบหน้า (อย่างน้อย 1 รูป) <span class="text-rose-500">*</span></label>
+              <label class="text-xs font-bold text-slate-700">4. 📸 แนบรูปความคืบหน้าของวันนี้ (อย่างน้อย 1 รูป) <span class="text-rose-500">*</span></label>
               <span id="checkoutPhotoCountBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600">0/5 รูป</span>
             </div>
             <div class="flex items-center space-x-2.5 overflow-x-auto no-scrollbar py-1">

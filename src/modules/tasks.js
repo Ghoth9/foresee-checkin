@@ -62,14 +62,18 @@ export function getAssigneeSubmissionsStatus(task) {
     const memberSt = memberStatuses.find(m => match(m.fullName, rawTechName) || match(m.shortName, cleanTech));
     const hasCheckedIn = memberSt ? memberSt.hasCheckedIn : false;
     const hasCheckedOut = memberSt ? memberSt.hasCheckedOut : false;
+    const hasPausedToday = memberSt ? memberSt.hasPausedToday : false;
+    const daysWorked = memberSt ? (memberSt.daysWorked || 0) : 0;
 
-    if (userSubs.length === 0 && !hasCheckedIn && !hasCheckedOut) {
+    if (userSubs.length === 0 && !hasCheckedIn && !hasCheckedOut && !hasPausedToday) {
       return {
         techName: cleanTech,
         fullTechName: rawTechName,
         submitted: false,
         hasCheckedIn: false,
         hasCheckedOut: false,
+        hasPausedToday: false,
+        daysWorked: 0,
         status: "ยังไม่เช็กอิน",
         dotColor: "bg-slate-400",
         badgeClass: "bg-slate-50 text-slate-600 border-slate-200",
@@ -105,6 +109,11 @@ export function getAssigneeSubmissionsStatus(task) {
       displayStatus = "เช็กเอาต์แล้ว";
       dotColor = "bg-emerald-500";
       badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold";
+    } else if (hasPausedToday) {
+      displayLabel = `${cleanTech} (พักงาน • ${displayProg}%)`;
+      displayStatus = "เช็กเอาต์รายวัน";
+      dotColor = "bg-amber-500";
+      badgeClass = "bg-amber-50 text-amber-900 border-amber-300 font-semibold";
     } else if (userSubs.some(s => s.type !== 'checkin') && displayProg > 0) {
       displayLabel = `${cleanTech} (${displayProg}%)`;
       dotColor = "bg-blue-600";
@@ -124,8 +133,10 @@ export function getAssigneeSubmissionsStatus(task) {
       techName: cleanTech,
       fullTechName: rawTechName,
       submitted: true,
-      hasCheckedIn: hasCheckedIn || userSubs.length > 0,
+      hasCheckedIn: hasCheckedIn,
       hasCheckedOut: isClosed || isDutyDone,
+      hasPausedToday: hasPausedToday,
+      daysWorked: daysWorked,
       isClosed: isClosed,
       isDutyDone: isDutyDone,
       status: displayStatus,
@@ -140,9 +151,11 @@ export function getAssigneeSubmissionsStatus(task) {
         ? `${rawTechName}: ปิดงานแล้ว (${timeStr})${durTooltip}`
         : (isDutyDone
           ? `${rawTechName}: เช็กเอาต์จบหน้าที่แล้ว (${timeStr})${durTooltip}`
-          : (hasCheckedIn
-            ? `${rawTechName}: เช็กอินเข้างานแล้ว (${timeStr}) • คืบหน้า ${displayProg}%`
-            : `${rawTechName}: คืบหน้า ${displayProg}% (${timeStr})`))
+          : (hasPausedToday
+            ? `${rawTechName}: เช็กเอาต์รายวันแล้ว (${timeStr}) • คืบหน้า ${displayProg}%${durTooltip}`
+            : (hasCheckedIn
+              ? `${rawTechName}: เช็กอินเข้างานแล้ว (${timeStr}) • คืบหน้า ${displayProg}%`
+              : `${rawTechName}: คืบหน้า ${displayProg}% (${timeStr})`)))
     };
   });
 }
@@ -495,8 +508,10 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
       const myAssigneeStatus = opName ? assigneeStatuses.find(s => matchesOperator(s.fullTechName || s.techName, opName)) : null;
       const anyCheckedIn = assigneeStatuses.some(s => s.hasCheckedIn);
-      const canCheckIn = !isDone && ((myAssigneeStatus && !myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && !anyCheckedIn));
-      const canUpdateOrClose = !isDone && ((myAssigneeStatus && myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && anyCheckedIn));
+      const isResume = !isDone && !!(myAssigneeStatus && myAssigneeStatus.hasPausedToday);
+      const nextDayNum = (myAssigneeStatus?.daysWorked || 1) + 1;
+      const canCheckIn = !isDone && !isResume && ((myAssigneeStatus && !myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && !anyCheckedIn));
+      const canUpdateOrClose = !isDone && !isResume && ((myAssigneeStatus && myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && anyCheckedIn));
 
       const isProblem = task.status === "ติดปัญหา";
       let badgeBg = "bg-amber-50 text-amber-900 border-amber-200 font-semibold";
@@ -563,17 +578,22 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
           </td>
           <td class="py-2.5 px-3 text-right pr-4 whitespace-nowrap">
             <div class="flex items-center justify-end space-x-1.5">
-              ${canCheckIn ? `
+              ${isResume ? `
+                <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="เช็กอินเข้าทำต่อในวันที่ ${nextDayNum}">
+                  <span>▶️</span>
+                  <span>เช็กอินทำต่อ</span>
+                </button>
+              ` : (canCheckIn ? `
                 <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="เช็กอินเข้าเริ่มงานนี้">
                   <span>📍</span>
                   <span>เช็กอิน</span>
                 </button>
               ` : (canUpdateOrClose ? `
-                <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="อัปเดตความคืบหน้าหรือปิดงาน">
-                  <span>📝</span>
-                  <span>อัปเดต/ปิดงาน</span>
+                <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="ส่งความคืบหน้า / เช็กเอาต์รายวัน หรือปิดงาน">
+                  <span>🌇</span>
+                  <span>ส่งงาน/เช็กเอาต์</span>
                 </button>
-              ` : '')}
+              ` : ''))}
               ${photoCount > 0 ? `
                 <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs" title="ดูภาพถ่ายผลงาน">
                   <span>📸</span>
@@ -611,8 +631,10 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
       const myAssigneeStatus = opName ? assigneeStatuses.find(s => matchesOperator(s.fullTechName || s.techName, opName)) : null;
       const anyCheckedIn = assigneeStatuses.some(s => s.hasCheckedIn);
-      const canCheckIn = !isDone && ((myAssigneeStatus && !myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && !anyCheckedIn));
-      const canUpdateOrClose = !isDone && ((myAssigneeStatus && myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && anyCheckedIn));
+      const isResume = !isDone && !!(myAssigneeStatus && myAssigneeStatus.hasPausedToday);
+      const nextDayNum = (myAssigneeStatus?.daysWorked || 1) + 1;
+      const canCheckIn = !isDone && !isResume && ((myAssigneeStatus && !myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && !anyCheckedIn));
+      const canUpdateOrClose = !isDone && !isResume && ((myAssigneeStatus && myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && anyCheckedIn));
 
       const isProblem = task.status === "ติดปัญหา";
       let badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
@@ -678,17 +700,22 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
             </div>
             <span class="text-xs font-mono font-bold text-slate-700">${task.progress || 0}%</span>
           </div>
-          ${canCheckIn ? `
+          ${isResume ? `
+            <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="w-full py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-xs active:scale-95 cursor-pointer">
+              <span>▶️</span>
+              <span>เช็กอินทำต่อ (วันที่ ${nextDayNum} • คืบหน้าเดิม ${task.progress || 0}%)</span>
+            </button>
+          ` : (canCheckIn ? `
             <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-xs active:scale-95 cursor-pointer">
               <span>📍</span>
               <span>เช็กอินเข้าเริ่มงานนี้</span>
             </button>
           ` : (canUpdateOrClose ? `
             <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-xs active:scale-95 cursor-pointer">
-              <span>📝</span>
-              <span>อัปเดตความคืบหน้า / ปิดงาน</span>
+              <span>🌇</span>
+              <span>ส่งความคืบหน้า / เช็กเอาต์รายวัน</span>
             </button>
-          ` : '')}
+          ` : ''))}
           <div class="grid grid-cols-2 gap-2 pt-0.5">
             <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="py-2 px-2.5 min-h-[36px] text-center text-xs font-bold ${photoCount > 0 ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'} border rounded-xl transition-all flex items-center justify-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer">
               <span>📸</span>

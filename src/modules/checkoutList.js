@@ -345,18 +345,14 @@ function isTaskAssignedOrCreatedBy(item, targetOp) {
                   <div class="flex items-center space-x-1.5 min-w-0 flex-1 pr-1">
                     <span class="font-bold text-slate-900 truncate">${m.shortName}</span>
                     ${m.hasCheckedOut ? `
-                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">
-                        🏁 จบหน้าที่แล้ว (${m.checkoutTime})
-                      </span>
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">🏁 จบหน้าที่แล้ว (${m.checkoutTime})</span>
                     ` : (m.hasCheckedIn ? `
-                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-800 text-[10px] font-semibold border border-blue-300">
-                        🟢 เช็กอินแล้ว (${m.checkinTime})
-                      </span>
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-800 text-[10px] font-semibold border border-blue-300">🟢 เช็กอินแล้ว (${m.checkinTime})</span>
+                    ` : (m.hasPausedToday ? `
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-300">🌇 พักงานรายวัน (${m.checkoutTime})</span>
                     ` : `
-                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-800 text-[10px] font-medium border border-amber-300">
-                        ⏳ ยังไม่ได้เช็กอิน
-                      </span>
-                    `)}
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-800 text-[10px] font-medium border border-amber-300">⏳ ยังไม่ได้เช็กอิน</span>
+                    `))}
                   </div>
                   ${m.checkoutNote ? `<span class="text-[10px] text-slate-500 truncate max-w-[150px] font-sans" title="${m.checkoutNote}">"${m.checkoutNote}"</span>` : ''}
                 </div>
@@ -648,7 +644,7 @@ export function openCheckoutModal(id) {
           } text-xs flex-wrap gap-2">
             <div class="flex items-center space-x-2 min-w-0 flex-1">
               <span class="w-6 h-6 rounded-full ${m.hasCheckedOut ? 'bg-emerald-100 text-emerald-800' : (m.hasCheckedIn ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800')} flex items-center justify-center text-xs font-bold flex-shrink-0">
-                ${m.hasCheckedOut ? '🏁' : (m.hasCheckedIn ? '🟢' : '⏳')}
+                ${m.hasCheckedOut ? '🏁' : (m.hasCheckedIn ? '🟢' : (m.hasPausedToday ? '🌇' : '⏳'))}
               </span>
               <div class="min-w-0">
                 <div class="font-bold text-slate-900 truncate flex items-center space-x-1">
@@ -656,7 +652,7 @@ export function openCheckoutModal(id) {
                   ${isMe ? `<span class="text-[9px] bg-slate-900 text-white font-semibold px-1.5 py-0.2 rounded-full">คุณ</span>` : ''}
                 </div>
                 <div class="text-[10px] text-slate-500 flex items-center space-x-1.5 flex-wrap">
-                  ${m.hasCheckedIn ? `<span class="text-blue-700 font-medium">เข้า: ${m.checkinTime}</span>` : `<span class="text-amber-700 font-medium font-semibold">⚠️ ยังไม่ได้เช็กอินเข้างาน</span>`}
+                  ${m.hasCheckedIn ? `<span class="text-blue-700 font-medium">เข้า: ${m.checkinTime}</span>` : (m.hasPausedToday ? `<span class="text-amber-700 font-bold">🌇 พักงานรายวัน (${m.checkoutTime})</span>` : `<span class="text-amber-700 font-medium font-semibold">⚠️ ยังไม่ได้เช็กอินเข้างาน</span>`)}
                   ${m.hasCheckedOut ? `<span>•</span><span class="text-emerald-700 font-bold">จบหน้าที่: ${m.checkoutTime}</span>` : ''}
                   ${m.durationLabel ? `<span>•</span><span class="text-emerald-800 font-bold bg-emerald-100/90 px-1.5 py-0.2 rounded font-mono">⏱️ ${m.durationLabel}</span>` : ''}
                 </div>
@@ -665,9 +661,7 @@ export function openCheckoutModal(id) {
             </div>
             ${m.hasCheckedOut ? `
               <div class="flex items-center space-x-1.5 flex-shrink-0">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  ✓ เช็กเอาต์แล้ว
-                </span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">✓ เช็กเอาต์แล้ว</span>
                 ${isMe ? `
                   <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${item.taskId || item.id}')" class="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] border border-blue-300 shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer" title="แตะเพื่อเช็กอินรอบใหม่ในวันถัดไปหรือเริ่มกะใหม่">
                     <span>📍 เช็กอินรอบใหม่</span>
@@ -679,8 +673,8 @@ export function openCheckoutModal(id) {
                 <span>🏁 เช็กเอาต์จบหน้าที่</span>
               </button>
             ` : `
-              <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${item.taskId || item.id}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="คุณยังไม่ได้เช็กอินเข้างาน แตะเพื่อไปเช็กอิน">
-                <span>📍 ไปเช็กอินก่อน</span>
+              <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${item.taskId || item.id}')" class="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-2xs flex items-center space-x-1 active:scale-95 transition-all cursor-pointer flex-shrink-0" title="${m.hasPausedToday ? 'แตะเพื่อเช็กอินทำต่อในวันใหม่' : 'คุณยังไม่ได้เช็กอินเข้างาน แตะเพื่อไปเช็กอิน'}">
+                <span>${m.hasPausedToday ? '▶️ เช็กอินทำต่อ' : '📍 ไปเช็กอินก่อน'}</span>
               </button>
             `) : (m.hasCheckedIn ? `
               <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 flex items-center space-x-1">
@@ -689,7 +683,7 @@ export function openCheckoutModal(id) {
               </span>
             ` : `
               <span class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">
-                ⏳ รอเช็กอิน
+                ${m.hasPausedToday ? '🌇 พักงานรายวัน' : '⏳ รอเช็กอิน'}
               </span>
             `))}
           </div>

@@ -14,7 +14,7 @@ import {
 } from './modules/checkin.js';
 import {
   handleCheckoutPhotoUpload, removeCheckoutPhoto, submitCheckoutForm, submitProgressOnly,
-  setActionTab, setUpdatePercent, setUpdateStatus
+  setActionTab, setUpdatePercent, setUpdateStatus, setDailyCheckoutMode
 } from './modules/checkout.js';
 import {
   setTaskViewMode, setStatusFilter, setTechFilter, setTaskSearchQuery, setTaskSortOrder, renderTechFilterChips,
@@ -893,6 +893,7 @@ window.filterWorkHistoryList = filterWorkHistoryList;
 window.clearWorkHistorySearch = clearWorkHistorySearch;
 window.setWorkHistoryTechFilter = setWorkHistoryTechFilter;
 window.setTaskSortOrder = setTaskSortOrder;
+window.setDailyCheckoutMode = setDailyCheckoutMode;
 window.openCompletedTaskDetailModal = openCompletedTaskDetailModal;
 window.closeCompletedTaskDetailModal = closeCompletedTaskDetailModal;
 window.shareCompletedLogToLine = shareCompletedLogToLine;

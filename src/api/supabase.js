@@ -252,7 +252,7 @@ export async function deleteTaskApi(id) {
   }
 }
 
-export async function updateTaskProgressApi({ taskId, taskTitle, progress, status, note, updateBy, updateEntry, photos = [] }) {
+export async function updateTaskProgressApi({ taskId, taskTitle, progress, status, note, updateBy, updateEntry, photos = [], type = "progress" }) {
   try {
     const now = new Date();
     const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
@@ -284,12 +284,13 @@ export async function updateTaskProgressApi({ taskId, taskTitle, progress, statu
 
     const newHistoryItem = {
       id: `UPD-${Date.now().toString(36)}`,
+      type: type || "progress",
       time: timeStr,
       date: dateStr,
       progress: Number(progress) || 0,
       status: status || "กำลังทำ",
       note: note || "-",
-      tech: updateBy || "ผู้ปฏิบัติงานหน้างาน",
+      tech: updateBy || "ผู้ปฏิบัติงาน",
       photos: cleanPhotos,
       createdAt: now.toISOString()
     };

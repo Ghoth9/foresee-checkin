@@ -44,8 +44,9 @@ export function getTaskMemberStatuses(task, activeItem = null) {
       }
     });
 
-    // 2. Collect all checkout / duty completion records
+    // 2. Collect all checkout / duty completion / daily_checkout records
     const dutyCompleteRecords = [];
+    const dailyCheckoutRecords = [];
     const cust = (task && typeof task.customer === 'object') ? task.customer : {};
     const progressHist = Array.isArray(task.progressHistory)
       ? task.progressHistory
@@ -55,6 +56,16 @@ export function getTaskMemberStatuses(task, activeItem = null) {
       if (ph.type === 'checkin' && ph.time) {
         const pTechs = splitTechs(ph.tech || ph.by);
         checkinRecords.push({ techs: pTechs, checkedInBy: ph.by || (pTechs.length === 1 ? pTechs[0] : null), time: ph.time, date: ph.date, createdAt: ph.createdAt || ph.created_at || null });
+      }
+      if (ph.type === 'daily_checkout') {
+        dailyCheckoutRecords.push({
+          tech: ph.tech || ph.by || '',
+          time: ph.time,
+          date: ph.date,
+          progress: ph.progress,
+          note: ph.note || '',
+          createdAt: ph.createdAt || ph.created_at || null
+        });
       }
       if (ph.type === 'duty_complete' || ph.type === 'close' || (ph.status === 'เสร็จสิ้น' && ph.tech)) {
         dutyCompleteRecords.push({
@@ -76,31 +87,39 @@ export function getTaskMemberStatuses(task, activeItem = null) {
         (cr.techs && cr.techs.some(t => matchesOperator(t, techFullName) || matchesOperator(t, shortName)))
       );
       const latestCheckin = matchedCheckins.length > 0 ? matchedCheckins[matchedCheckins.length - 1] : null;
+      const firstCheckin = matchedCheckins.length > 0 ? matchedCheckins[0] : null;
+
+      const matchedDailyOuts = dailyCheckoutRecords.filter(dr =>
+        matchesOperator(dr.tech, techFullName) || matchesOperator(dr.tech, shortName)
+      );
+      const latestDailyOut = matchedDailyOuts.length > 0 ? matchedDailyOuts[matchedDailyOuts.length - 1] : null;
 
       const matchedDuties = dutyCompleteRecords.filter(dr =>
         matchesOperator(dr.tech, techFullName) || matchesOperator(dr.tech, shortName)
       );
       const latestDuty = matchedDuties.length > 0 ? matchedDuties[matchedDuties.length - 1] : null;
 
+      const tIn = latestCheckin?.createdAt ? new Date(latestCheckin.createdAt).getTime() : 0;
+      const tDailyOut = latestDailyOut?.createdAt ? new Date(latestDailyOut.createdAt).getTime() : 0;
+      const tDutyOut = latestDuty?.createdAt ? new Date(latestDuty.createdAt).getTime() : 0;
+
       let hasCheckedIn = false;
       let hasCheckedOut = false;
+      let hasPausedToday = false;
 
-      if (latestCheckin && latestDuty) {
-        const tIn = latestCheckin.createdAt ? new Date(latestCheckin.createdAt).getTime() : 0;
-        const tOut = latestDuty.createdAt ? new Date(latestDuty.createdAt).getTime() : 0;
-        if (tIn > tOut) {
-          hasCheckedIn = true;
-          hasCheckedOut = false;
-        } else {
-          hasCheckedIn = true;
-          hasCheckedOut = true;
-        }
+      if (latestDuty && tDutyOut >= tIn) {
+        hasCheckedIn = true;
+        hasCheckedOut = true;
+        hasPausedToday = false;
+      } else if (latestDailyOut && tDailyOut >= tIn && tDailyOut > 0) {
+        // Operator checked out for the day (work not finished yet, will resume next session/day)
+        hasCheckedIn = false;
+        hasCheckedOut = false;
+        hasPausedToday = true;
       } else if (latestCheckin) {
         hasCheckedIn = true;
         hasCheckedOut = false;
-      } else if (latestDuty) {
-        hasCheckedIn = true;
-        hasCheckedOut = true;
+        hasPausedToday = false;
       }
 
       const checkinTime = latestCheckin
@@ -109,46 +128,63 @@ export function getTaskMemberStatuses(task, activeItem = null) {
 
       const checkoutTime = latestDuty
         ? `${latestDuty.date && latestDuty.date !== 'วันนี้' ? latestDuty.date + ' ' : ''}${latestDuty.time || ''} น.`
-        : null;
+        : (latestDailyOut ? `${latestDailyOut.date && latestDailyOut.date !== 'วันนี้' ? latestDailyOut.date + ' ' : ''}${latestDailyOut.time || ''} น.` : null);
+
+      // Count distinct working days from checkins + daily checkouts + final duty checkout
+      const distinctDates = new Set();
+      matchedCheckins.forEach(c => { if (c.date) distinctDates.add(c.date); });
+      matchedDailyOuts.forEach(d => { if (d.date) distinctDates.add(d.date); });
+      matchedDuties.forEach(d => { if (d.date) distinctDates.add(d.date); });
+      const sessionDaysCount = Math.max(distinctDates.size, matchedDailyOuts.length + (latestDuty ? 1 : 0));
 
       // Calculate working days / duration for this person
       let durationLabel = null;
-      let daysWorked = 0;
-      if (latestCheckin && latestDuty) {
+      let daysWorked = sessionDaysCount || 0;
+      const refStart = firstCheckin || latestCheckin;
+      const refEnd = latestDuty || latestDailyOut;
+
+      if (refStart && refEnd) {
         try {
-          const tIn = latestCheckin.createdAt ? new Date(latestCheckin.createdAt).getTime() : null;
-          const tOut = latestDuty.createdAt ? new Date(latestDuty.createdAt).getTime() : null;
-          if (tIn && tOut && tOut >= tIn) {
-            const diffDays = Math.floor((tOut - tIn) / (1000 * 60 * 60 * 24));
-            const diffHours = Math.floor(((tOut - tIn) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            if (diffDays > 0) {
-              daysWorked = diffDays + 1;
-              durationLabel = `ทำเสร็จใน ${diffDays + 1} วัน (${diffDays} วัน ${diffHours} ชม.)`;
+          const startMs = refStart.createdAt ? new Date(refStart.createdAt).getTime() : null;
+          const endMs = refEnd.createdAt ? new Date(refEnd.createdAt).getTime() : null;
+          if (startMs && endMs && endMs >= startMs) {
+            const diffDays = Math.floor((endMs - startMs) / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor(((endMs - startMs) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            daysWorked = Math.max(daysWorked, diffDays + 1, 1);
+            if (hasCheckedOut) {
+              durationLabel = daysWorked > 1
+                ? `ทำเสร็จใน ${daysWorked} วัน${diffHours > 0 ? ` (${diffDays} วัน ${diffHours} ชม.)` : ''}`
+                : (diffHours > 0 ? `ทำเสร็จใน 1 วัน (${diffHours} ชม.)` : `ทำเสร็จใน 1 วัน`);
             } else {
-              daysWorked = 1;
-              durationLabel = diffHours > 0 ? `ทำเสร็จใน 1 วัน (${diffHours} ชม.)` : `ทำเสร็จใน 1 วัน`;
+              durationLabel = `เข้าทำแล้ว ${daysWorked} วัน`;
             }
           } else {
-            daysWorked = 1;
-            durationLabel = `ทำเสร็จใน 1 วัน`;
+            daysWorked = Math.max(daysWorked, 1);
+            durationLabel = hasCheckedOut ? `ทำเสร็จใน ${daysWorked} วัน` : `เข้าทำแล้ว ${daysWorked} วัน`;
           }
         } catch (e) {
-          daysWorked = 1;
-          durationLabel = `ทำเสร็จใน 1 วัน`;
+          daysWorked = Math.max(daysWorked, 1);
+          durationLabel = hasCheckedOut ? `ทำเสร็จใน ${daysWorked} วัน` : `เข้าทำแล้ว ${daysWorked} วัน`;
         }
       } else if (latestDuty) {
-        daysWorked = 1;
-        durationLabel = `ทำเสร็จใน 1 วัน`;
+        daysWorked = Math.max(daysWorked, 1);
+        durationLabel = `ทำเสร็จใน ${daysWorked} วัน`;
+      } else if (hasCheckedIn) {
+        daysWorked = Math.max(daysWorked, 1);
+        durationLabel = `วันที่ ${daysWorked}`;
       }
 
       let status = 'pending';
       let statusLabel = 'ยังไม่เช็กอิน';
       if (hasCheckedOut) {
         status = 'completed';
-        statusLabel = `เช็กเอาต์แล้ว (${checkoutTime})${durationLabel ? ` • ${durationLabel}` : ''}`;
+        statusLabel = `เช็กเอาต์จบงานแล้ว (${checkoutTime})${durationLabel ? ` • ${durationLabel}` : ''}`;
+      } else if (hasPausedToday) {
+        status = 'paused_daily';
+        statusLabel = `เช็กเอาต์รายวันแล้ว (${checkoutTime}) • เข้าทำแล้ว ${daysWorked} วัน (รอเช็กอินทำต่อ)`;
       } else if (hasCheckedIn) {
         status = 'in_progress';
-        statusLabel = `เช็กอินแล้ว (${checkinTime})`;
+        statusLabel = `เช็กอินแล้ว (${checkinTime})${daysWorked > 1 ? ` • วันที่ ${daysWorked}` : ''}`;
       }
 
       return {
@@ -157,8 +193,9 @@ export function getTaskMemberStatuses(task, activeItem = null) {
         hasCheckedIn,
         checkinTime,
         hasCheckedOut,
+        hasPausedToday,
         checkoutTime,
-        checkoutNote: latestDuty ? latestDuty.note : '',
+        checkoutNote: latestDuty ? latestDuty.note : (latestDailyOut ? latestDailyOut.note : ''),
         durationLabel,
         daysWorked,
         status,
@@ -248,6 +285,8 @@ export function collectTaskActivityLogs(item, linkedTask) {
         let label = "อัปเดตความคืบหน้า";
         if (type === "duty_complete") {
           label = `🏁 เช็กเอาต์หน้าที่ (${ph.tech || 'ผู้ปฏิบัติงาน'})`;
+        } else if (type === "daily_checkout") {
+          label = `🌇 เช็กเอาต์รายวัน (คืบหน้า ${ph.progress || 0}%)`;
         } else if (type === "close" || ph.status === "เสร็จสิ้น" || Number(ph.progress) === 100) {
           type = "close";
           label = "ปิดงาน 100%";

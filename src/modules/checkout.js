@@ -17,6 +17,26 @@ let checkoutPhotos = [];
 let currentActionTab = "update"; // "update" or "close"
 let updatePercent = 50;
 let updateStatus = "กำลังทำ";
+let isDailyCheckoutMode = true;
+
+export function setDailyCheckoutMode(val) {
+  isDailyCheckoutMode = !!val;
+  const btnTrue = document.getElementById("dailyCheckoutModeBtn-true");
+  const btnFalse = document.getElementById("dailyCheckoutModeBtn-false");
+  if (btnTrue && btnFalse) {
+    if (isDailyCheckoutMode) {
+      btnTrue.className = "py-2 px-3 rounded-xl border text-left transition-all bg-blue-600 text-white border-blue-600 shadow-xs cursor-pointer active:scale-95";
+      btnFalse.className = "py-2 px-3 rounded-xl border text-left transition-all bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs cursor-pointer active:scale-95";
+    } else {
+      btnTrue.className = "py-2 px-3 rounded-xl border text-left transition-all bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs cursor-pointer active:scale-95";
+      btnFalse.className = "py-2 px-3 rounded-xl border text-left transition-all bg-blue-600 text-white border-blue-600 shadow-xs cursor-pointer active:scale-95";
+    }
+  }
+  updateCheckoutSubmitButtonsState();
+}
+if (typeof window !== "undefined") {
+  window.setDailyCheckoutMode = setDailyCheckoutMode;
+}
 
 export function getCheckoutPhotos() {
   return checkoutPhotos;
@@ -72,6 +92,7 @@ export function setUpdatePercent(val) {
       }
     }
   });
+  updateCheckoutSubmitButtonsState();
 }
 
 export function setUpdateStatus(st) {
@@ -179,7 +200,9 @@ export function updateCheckoutSubmitButtonsState() {
     } else {
       updateBtn.disabled = false;
       updateBtn.className = "w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
-      updateBtn.innerHTML = `<span>📊 อัปเดตความคืบหน้า & ส่งรายงานเข้ากลุ่ม LINE (แนบรูป ${checkoutPhotos.length} รูป)</span>`;
+      updateBtn.innerHTML = isDailyCheckoutMode
+        ? `<span>🌇 บันทึกเช็กเอาต์จบวันนี้ (${updatePercent}%) & ส่งเข้า LINE (${checkoutPhotos.length} รูป)</span>`
+        : `<span>📊 อัปเดตความคืบหน้าระหว่างวัน (${updatePercent}%) & ส่งเข้า LINE (${checkoutPhotos.length} รูป)</span>`;
     }
   }
 
@@ -302,7 +325,10 @@ export async function submitProgressOnly({
     const now = new Date();
     const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
     const dateStr = now.toLocaleDateString("th-TH");
-    const updateEntry = `[คืบหน้า ${updatePercent}%: ${updateStatus}] ${noteText.trim() || 'อัปเดตงานตามขั้นตอน'} (โดย ${closerName || 'ผู้ปฏิบัติงาน'} เมื่อ ${dateStr} ${timeStr})`;
+    const entryType = isDailyCheckoutMode ? "daily_checkout" : "progress";
+    const modePrefix = isDailyCheckoutMode ? `เช็กเอาต์รายวัน • คืบหน้า ${updatePercent}%` : `คืบหน้า ${updatePercent}%: ${updateStatus}`;
+    const defaultNote = isDailyCheckoutMode ? 'เช็กเอาต์จบงานวันนี้ (พรุ่งนี้ทำต่อ)' : 'อัปเดตงานตามขั้นตอน';
+    const updateEntry = `[${modePrefix}] ${noteText.trim() || defaultNote} (โดย ${closerName || 'ผู้ปฏิบัติงาน'} เมื่อ ${dateStr} ${timeStr})`;
 
     const newTotalPhotos = totalPhotosCount + photosToUpload.length;
 
@@ -313,8 +339,8 @@ export async function submitProgressOnly({
       taskTitle: activeItem.task,
       techs: activeItem.techs,
       progress: updatePercent,
-      status: updateStatus,
-      note: noteText.trim() || "อัปเดตความคืบหน้าระหว่างปฏิบัติงาน",
+      status: isDailyCheckoutMode ? "เช็กเอาต์รายวัน (พรุ่งนี้ทำต่อ)" : updateStatus,
+      note: noteText.trim() || defaultNote,
       updateBy: closerName || "ผู้ปฏิบัติงาน",
       updateTime: timeStr,
       photoCount: photosToUpload.length,
@@ -327,10 +353,11 @@ export async function submitProgressOnly({
       taskTitle: activeItem.task,
       progress: updatePercent,
       status: updateStatus,
-      note: noteText.trim() || "-",
+      note: noteText.trim() || defaultNote,
       updateBy: closerName || "ผู้ปฏิบัติงาน",
       updateEntry: updateEntry,
-      photos: photosToUpload
+      photos: photosToUpload,
+      type: entryType
     });
 
     if (onComplete) onComplete({
@@ -341,13 +368,18 @@ export async function submitProgressOnly({
       latestUpdate: updateEntry,
       photos: photosToUpload,
       historyItem: apiRes?.historyItem,
+      isDailyCheckout: isDailyCheckoutMode,
       lineShared: false
     });
 
     // 4. Prompt to Share to LINE (Direct User Gesture - Prevents Chrome Popup Block on PC)
     showSharePromptDialog({
-      title: `บันทึกความคืบหน้าสำเร็จ! (${updatePercent}%)`,
-      message: `ระบบบันทึกความคืบหน้าและอัปโหลดรูปภาพ (${photosToUpload.length} รูป) เรียบร้อยแล้ว\n\nต้องการส่งการ์ดสรุปเข้ากลุ่ม LINE ตอนนี้หรือไม่?`,
+      title: isDailyCheckoutMode
+        ? `เช็กเอาต์จบงานวันนี้สำเร็จ! (คืบหน้า ${updatePercent}%)`
+        : `บันทึกความคืบหน้าสำเร็จ! (${updatePercent}%)`,
+      message: isDailyCheckoutMode
+        ? `ระบบบันทึกเวลาออกงานของวันนี้ พร้อมรูปภาพ (${photosToUpload.length} รูป) เรียบร้อยแล้ว พรุ่งนี้สามารถกด "▶️ เช็กอินทำต่อ" ได้ทันที!\n\nต้องการส่งการ์ดสรุปวันนี้เข้ากลุ่ม LINE หรือไม่?`
+        : `ระบบบันทึกความคืบหน้าและอัปโหลดรูปภาพ (${photosToUpload.length} รูป) เรียบร้อยแล้ว\n\nต้องการส่งการ์ดสรุปเข้ากลุ่ม LINE ตอนนี้หรือไม่?`,
       shareBtnText: "💬 เลือกกลุ่ม LINE และส่งการ์ดสรุป",
       skipBtnText: "เสร็จสิ้น / ไว้แชร์ทีหลัง",
       onShare: () => {
