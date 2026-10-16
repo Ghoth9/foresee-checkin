@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&family=Kanit:wght@500;600;700&display=swap');
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    width: 2500px;
+    height: 1686px;
+    overflow: hidden;
+    font-family: 'Prompt', 'Kanit', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    background: #0f172a;
+  }
+
+  .col {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  /* 3 columns matching LINE OA Template exactly: 833px, 834px, 833px */
+  .col-1 {
+    width: 833px;
+    background: linear-gradient(180deg, #0c2340 0%, #0f172a 100%);
+    border-right: 2px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .col-2 {
+    width: 834px;
+    background: linear-gradient(180deg, #064e3b 0%, #062f26 50%, #091e19 100%);
+    border-right: 2px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .col-3 {
+    width: 833px;
+    background: linear-gradient(180deg, #1e1b4b 0%, #17153b 50%, #0f172a 100%);
+  }
+
+  /* Ambient light blob */
+  .col-1::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .col-2::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .col-3::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.28) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Card content container */
+  .card-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 680px;
+  }
+
+  /* Badge indicator */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 32px;
+    border-radius: 9999px;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 50px;
+  }
+
+  .badge-1 {
+    background: rgba(14, 165, 233, 0.15);
+    color: #38bdf8;
+    border: 2px solid rgba(56, 189, 248, 0.3);
+  }
+
+  .badge-2 {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 2px solid rgba(52, 211, 153, 0.3);
+  }
+
+  .badge-3 {
+    background: rgba(129, 140, 248, 0.15);
+    color: #a5b4fc;
+    border: 2px solid rgba(165, 180, 252, 0.3);
+  }
+
+  /* Big Icon Container */
+  .icon-wrapper {
+    width: 280px;
+    height: 280px;
+    border-radius: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 50px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6);
+    position: relative;
+  }
+
+  .icon-wrapper-1 {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    box-shadow: 0 20px 50px rgba(2, 132, 199, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .icon-wrapper-2 {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 20px 50px rgba(5, 150, 105, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .icon-wrapper-3 {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    box-shadow: 0 20px 50px rgba(79, 70, 229, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .icon-wrapper svg {
+    width: 140px;
+    height: 140px;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Title & Subtitle */
+  .title {
+    font-size: 58px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.25;
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .subtitle {
+    font-size: 32px;
+    font-weight: 400;
+    color: #cbd5e1;
+    line-height: 1.4;
+    margin-bottom: 50px;
+  }
+
+  /* CTA Button inside rich menu */
+  .btn-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 520px;
+    padding: 24px 36px;
+    border-radius: 28px;
+    font-size: 34px;
+    font-weight: 700;
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  .btn-1 {
+    background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
+  }
+
+  .btn-2 {
+    background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+  }
+
+  .btn-3 {
+    background: linear-gradient(90deg, #4f46e5 0%, #818cf8 100%);
+  }
+
+  .btn-cta svg {
+    width: 32px;
+    height: 32px;
+    stroke: currentColor;
+    stroke-width: 3;
+    fill: none;
+  }
+
+  /* Top branding bar */
+  .top-brand {
+    position: absolute;
+    top: 36px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .brand-pill {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    padding: 10px 32px;
+    border-radius: 9999px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #94a3b8;
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Top branding -->
+  <div class="top-brand">
+    <div class="brand-pill">⚡ FORESEE TECH • FIELD SERVICE MANAGEMENT</div>
+  </div>
+
+  <!-- Column 1: Check-in -->
+  <div class="col col-1">
+    <div class="card-inner">
+      <div class="badge badge-1">● STEP 01</div>
+      <div class="icon-wrapper icon-wrapper-1">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <div class="title">เช็กอินหน้างาน</div>
+      <div class="subtitle">บันทึกเวลาเข้างาน • พิกัด GPS • ถ่ายรูป</div>
+      <div class="btn-cta btn-1">
+        <span>กดเพื่อเช็กอิน</span>
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column 2: Progress & Checkout -->
+  <div class="col col-2">
+    <div class="card-inner">
+      <div class="badge badge-2">● STEP 02</div>
+      <div class="icon-wrapper icon-wrapper-2">
+        <svg viewBox="0 0 24 24">
+          <path d="M18 20V10M12 20V4M6 20v-6"/>
+          <path d="m9 11 3 3L22 4" stroke-width="2.5"/>
+        </svg>
+      </div>
+      <div class="title">อัปเดต & ปิดงาน</div>
+      <div class="subtitle">ส่งความคืบหน้า % • แนบรูป • เช็กเอาต์</div>
+      <div class="btn-cta btn-2">
+        <span>อัปเดตสถานะงาน</span>
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column 3: Assign & Monitor Tasks -->
+  <div class="col col-3">
+    <div class="card-inner">
+      <div class="badge badge-3">● STEP 03 / ADMIN</div>
+      <div class="icon-wrapper icon-wrapper-3">
+        <svg viewBox="0 0 24 24">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="2"/>
+          <path d="m9 14 2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="title">มอบหมายงาน</div>
+      <div class="subtitle">สั่งงานช่าง • ติดตามสด • จัดการทีม</div>
+      <div class="btn-cta btn-3">
+        <span>ดูรายการงาน</span>
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

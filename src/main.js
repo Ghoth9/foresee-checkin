@@ -42,6 +42,7 @@ import {
   toggleRoleDropdownMenu, closeRoleDropdownMenu, handleRoleBadgeClick, applyRolePermissionsUI,
   openAdminPinModal, closeAdminPinModal, submitAdminPinUnlock,
   openTeamRoleModal, closeTeamRoleModal, setTeamRoleFilter, renderTeamRoleList,
+  filterTeamRoleList, clearTeamRoleSearch,
   setNewMemberRole, handleChangeMemberRole, submitAddNewMember, handleDeleteMember,
   bindCurrentLineUserToTech, unbindTechLineUser, openManageTechModal, closeManageTechModal,
   renderManageTechList, confirmAddTech, deleteTech, renderCheckinTechChips, setCheckinTechs,
@@ -752,6 +753,8 @@ window.setNewMemberRole = setNewMemberRole;
 window.handleDeleteMember = handleDeleteMember;
 window.bindCurrentLineUserToTech = bindCurrentLineUserToTech;
 window.unbindTechLineUser = unbindTechLineUser;
+window.filterTeamRoleList = filterTeamRoleList;
+window.clearTeamRoleSearch = clearTeamRoleSearch;
 
 // Select Operator Modal Bindings
 window.openSelectOperatorModal = openSelectOperatorModal;

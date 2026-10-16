@@ -45,11 +45,11 @@ export function setCheckoutStatusFilter(status) {
     const btn = document.getElementById(`checkoutStatusFilter-${st}`);
     if (btn) {
       if (st === status) {
-        btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-2xs transition-all flex items-center space-x-1 cursor-pointer";
+        btn.className = "px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-2xs transition-all flex items-center justify-center space-x-1 cursor-pointer";
         const badge = btn.querySelector("span:last-child");
         if (badge) badge.className = "text-[10px] px-1.5 py-0.2 rounded-full bg-slate-700 font-mono";
       } else {
-        btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all flex items-center space-x-1 cursor-pointer";
+        btn.className = "px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all flex items-center justify-center space-x-1 cursor-pointer";
         const badge = btn.querySelector("span:last-child");
         if (badge) badge.className = "text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 font-mono";
       }
@@ -231,7 +231,7 @@ function isTaskAssignedOrCreatedBy(item, targetOp) {
         <div class="text-center py-8 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6">
           <div class="text-2xl mb-1">🔍</div>
           <div class="text-xs font-bold text-slate-700">ไม่พบงานที่ตรงกับตัวกรอง</div>
-          <p class="text-[11px] text-slate-400 mt-0.5">${checkoutSearchQuery ? `ไม่พบงานที่มีคำว่า "${checkoutSearchQuery}"` : 'ลองเปลี่ยนช่างหรือสถานะที่เลือก'}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">${checkoutSearchQuery ? `ไม่พบงานที่มีคำว่า "${checkoutSearchQuery}"` : 'ลองเปลี่ยนผู้ปฏิบัติงานหรือสถานะที่เลือก'}</p>
           <button type="button" onclick="window.resetCheckoutFilters()" class="mt-2.5 px-3 py-1 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold shadow-2xs transition-all active:scale-95 cursor-pointer">
             ✕ ล้างตัวกรองทั้งหมด
           </button>

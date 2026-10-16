@@ -329,37 +329,45 @@
             <!-- Search Bar & Status Pills -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div class="relative flex-1">
-                <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-                <input id="checkoutSearchInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="" oninput="window.handleCheckoutSearch(this.value)" placeholder="ค้นหางาน, ช่าง, ไซต์งาน, รหัสงาน..." class="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl pl-8 pr-7 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 transition-all shadow-2xs">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3"></path>
+                  </svg>
+                </span>
+                <input id="checkoutSearchInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="" oninput="window.handleCheckoutSearch(this.value)" placeholder="ค้นหางาน, ผู้ปฏิบัติงาน, ไซต์งาน, รหัสงาน..." class="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl pl-9 pr-7 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 transition-all shadow-2xs">
                 <button type="button" id="checkoutSearchClearBtn" onclick="window.clearCheckoutSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
               </div>
-              <div class="flex items-center space-x-1.5 flex-shrink-0">
+              <div class="grid grid-cols-3 sm:flex items-center gap-1.5 flex-shrink-0 w-full sm:w-auto">
                 <!-- Status Filter Pills -->
-                <button type="button" id="checkoutStatusFilter-all" onclick="window.setCheckoutStatusFilter('all')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-2xs transition-all flex items-center space-x-1 cursor-pointer">
+                <button type="button" id="checkoutStatusFilter-all" onclick="window.setCheckoutStatusFilter('all')" class="px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-2xs transition-all flex items-center justify-center space-x-1 cursor-pointer">
                   <span>ทั้งหมด</span>
                   <span id="checkoutCountAll" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-700 font-mono">0</span>
                 </button>
-                <button type="button" id="checkoutStatusFilter-checkin" onclick="window.setCheckoutStatusFilter('checkin')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all flex items-center space-x-1 cursor-pointer">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-                  <span>เช็กอินแล้ว</span>
+                <button type="button" id="checkoutStatusFilter-checkin" onclick="window.setCheckoutStatusFilter('checkin')" class="px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all flex items-center justify-center space-x-1 cursor-pointer">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block flex-shrink-0"></span>
+                  <span class="truncate">เช็กอินแล้ว</span>
                   <span id="checkoutCountCheckin" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 font-mono">0</span>
                 </button>
-                <button type="button" id="checkoutStatusFilter-assigned" onclick="window.setCheckoutStatusFilter('assigned')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all flex items-center space-x-1 cursor-pointer">
-                  <span>📋</span>
-                  <span>งานมอบหมาย</span>
+                <button type="button" id="checkoutStatusFilter-assigned" onclick="window.setCheckoutStatusFilter('assigned')" class="px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 transition-all flex items-center justify-center space-x-1 cursor-pointer">
+                  <span class="hidden sm:inline">📋</span>
+                  <span class="truncate">งานมอบหมาย</span>
                   <span id="checkoutCountAssigned" class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-100 font-mono">0</span>
                 </button>
               </div>
             </div>
 
-            <!-- Technician Filter Chips (Horizontal Scrollable) -->
+            <!-- Assignee Filter Chips (Horizontal Scrollable) -->
             <div class="flex items-center space-x-2 pt-0.5">
-              <span class="text-[11px] font-bold text-slate-500 whitespace-nowrap flex items-center space-x-1">
+              <span class="text-[11px] font-bold text-slate-500 whitespace-nowrap flex items-center space-x-1" title="กรองตามผู้ปฏิบัติงาน">
                 <span>👤</span>
-                <span class="hidden sm:inline">ช่าง:</span>
+                <span class="hidden sm:inline">ผู้ปฏิบัติงาน:</span>
               </span>
-              <div id="checkoutTechFilterContainer" class="flex items-center space-x-1.5 overflow-x-auto py-1 scrollbar-none flex-1" style="scrollbar-width: thin;">
-                <!-- Dynamically populated chips -->
+              <div class="relative flex-1 min-w-0">
+                <div id="checkoutTechFilterContainer" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1 pr-6 touch-pan-x">
+                  <!-- Dynamically populated chips -->
+                </div>
+                <div class="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-white to-transparent sm:hidden"></div>
               </div>
             </div>
           </div>
@@ -455,12 +463,13 @@
           </div>
 
           <!-- View Switcher & Export -->
-          <div class="hidden sm:flex items-center space-x-1.5 flex-shrink-0">
-            <button type="button" onclick="window.exportWorkReportToExcel('tasks')" class="px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center space-x-1 shadow-2xs active:scale-95 cursor-pointer" title="ดาวน์โหลดตารางงานทั้งหมดเป็นไฟล์ Excel (.csv)">
+          <div class="flex items-center space-x-1.5 flex-shrink-0">
+            <button type="button" onclick="window.exportWorkReportToExcel('tasks')" class="px-2 sm:px-2.5 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-[11px] sm:text-xs font-bold transition-all flex items-center space-x-1 shadow-2xs active:scale-95 cursor-pointer" title="ดาวน์โหลดตารางงานทั้งหมดเป็นไฟล์ Excel (.csv)">
               <span>📊</span>
-              <span>ส่งออก Excel</span>
+              <span class="hidden sm:inline">ส่งออก Excel</span>
+              <span class="sm:hidden">Excel</span>
             </button>
-            <div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+            <div class="hidden sm:flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
               <button type="button" onclick="setTaskViewMode('list')" id="viewModeBtnList" class="p-1.5 rounded-md transition-all bg-white text-slate-900 shadow-2xs font-semibold cursor-pointer" title="Table View">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
               </button>
@@ -612,8 +621,13 @@
 
         <!-- Search Input for Assignees -->
         <div class="relative">
-          <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-          <input type="text" id="assignTechSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" oninput="window.filterAssignTechChips(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น เปิ้ล, พี่อาร์ม, ใบปอ)..." class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3"></path>
+            </svg>
+          </span>
+          <input type="text" id="assignTechSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" oninput="window.filterAssignTechChips(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น เปิ้ล, พี่อาร์ม, ใบปอ)..." class="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
           <button type="button" id="assignTechSearchClearBtn" onclick="window.clearAssignTechSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs cursor-pointer font-bold">✕</button>
         </div>
 
@@ -785,8 +799,13 @@
 
           <!-- Search Input for Detail Assignees -->
           <div class="relative">
-            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-            <input type="text" id="detailTechSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" oninput="window.filterDetailTechChips(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น เปิ้ล, พี่อาร์ม, ใบปอ)..." class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3"></path>
+              </svg>
+            </span>
+            <input type="text" id="detailTechSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" oninput="window.filterDetailTechChips(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น เปิ้ล, พี่อาร์ม, ใบปอ)..." class="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
             <button type="button" id="detailTechSearchClearBtn" onclick="window.clearDetailTechSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs cursor-pointer font-bold">✕</button>
           </div>
 
@@ -1122,6 +1141,18 @@
           </button>
         </div>
 
+        <!-- Search Input for Team Members -->
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3"></path>
+            </svg>
+          </span>
+          <input type="text" id="teamRoleSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="" oninput="window.filterTeamRoleList(this.value)" placeholder="ค้นหาชื่อพนักงานในบริษัท (เช่น ใบปอ, พี่อาร์ม, เปิ้ล)..." class="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
+          <button type="button" id="teamRoleSearchClearBtn" onclick="window.clearTeamRoleSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
+        </div>
+
         <div id="teamRoleListContainer" class="space-y-2 max-h-[38vh] overflow-y-auto pr-1">
           <!-- Rendered dynamically -->
         </div>
@@ -1178,8 +1209,13 @@
 
       <!-- Search Input for Operators -->
       <div class="relative">
-        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 text-xs">🔍</span>
-        <input type="text" id="selectOperatorSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="" oninput="window.filterSelectOperatorList(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น พี่อาร์ม, เอก)..." class="w-full pl-8 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3"></path>
+          </svg>
+        </span>
+        <input type="text" id="selectOperatorSearchInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" value="" oninput="window.filterSelectOperatorList(this.value)" placeholder="พิมพ์ค้นหาชื่อผู้ปฏิบัติงาน (เช่น พี่อาร์ม, เอก)..." class="w-full pl-9 pr-7 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 shadow-2xs">
         <button type="button" id="selectOperatorSearchClearBtn" onclick="window.clearSelectOperatorSearch()" class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
       </div>
 
@@ -1557,7 +1593,7 @@
             <div class="flex-1 min-w-0">
               <div class="font-bold text-amber-950 text-xs">งานนี้ยังไม่ได้บันทึกเช็กอินเข้าหน้างาน</div>
               <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                ตามขั้นตอน ช่างควรบันทึก <strong>"เช็กอินเข้าเริ่มงาน"</strong> เพื่อจับพิกัด GPS และเวลาเริ่มงานจริงก่อนรายงานความคืบหน้าครับ
+                ตามขั้นตอน ผู้ปฏิบัติงานควรบันทึก <strong>"เช็กอินเข้าเริ่มงาน"</strong> เพื่อจับพิกัด GPS และเวลาเริ่มงานจริงก่อนรายงานความคืบหน้าครับ
               </p>
             </div>
           </div>
@@ -1571,11 +1607,13 @@
 
         <!-- Segmented Mode Switcher: Full Width, Crisp & Modern -->
         <div class="bg-slate-100/90 p-1 rounded-2xl flex items-center gap-1 w-full shadow-inner border border-slate-200/60">
-          <button type="button" id="actionTabBtnUpdate" onclick="window.setActionTab('update')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5 cursor-pointer active:scale-[0.98]">
-            <span>📊 อัปเดตความคืบหน้า (งานยังไม่เสร็จ)</span>
+          <button type="button" id="actionTabBtnUpdate" onclick="window.setActionTab('update')" class="flex-1 py-2.5 px-2 sm:px-3 rounded-xl text-xs font-bold transition-all duration-200 bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1 cursor-pointer active:scale-[0.98]">
+            <span>📊 อัปเดตความคืบหน้า</span>
+            <span class="hidden sm:inline text-[11px] font-medium">(งานยังไม่เสร็จ)</span>
           </button>
-          <button type="button" id="actionTabBtnClose" onclick="window.setActionTab('close')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-medium transition-all duration-200 text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5 cursor-pointer active:scale-[0.98]">
-            <span>🏁 บันทึกปิดงาน (งานเสร็จ 100%)</span>
+          <button type="button" id="actionTabBtnClose" onclick="window.setActionTab('close')" class="flex-1 py-2.5 px-2 sm:px-3 rounded-xl text-xs font-medium transition-all duration-200 text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1 cursor-pointer active:scale-[0.98]">
+            <span>🏁 บันทึกปิดงาน</span>
+            <span class="hidden sm:inline text-[11px] font-medium">(งานเสร็จ 100%)</span>
           </button>
         </div>
 

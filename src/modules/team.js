@@ -25,6 +25,7 @@ import { openSelectOperatorModal } from './operator.js';
 
 export const MASTER_ADMIN_PIN = "8888";
 let currentTeamRoleFilter = "all";
+let currentTeamRoleSearchQuery = "";
 
 export function isCurrentUserAdmin() {
   if (state.simulatedRole === "technician" || sessionStorage.getItem("fs_simulated_role") === "technician") return false;
@@ -490,7 +491,7 @@ export function updateTeamRoleBanner() {
       icon.innerText = "👤";
       title.innerText = isSimulated ? "มุมมองจำลอง: ผู้ปฏิบัติงาน (Staff/Field)" : "สิทธิ์ของคุณ: ผู้ปฏิบัติงาน (Staff/Field)";
       title.className = "font-bold text-slate-900";
-      desc.innerText = "มุมมองสำหรับช่างหน้างาน: เช็กอิน อัปเดตงาน และปิดงาน (ซ่อนปุ่มลบงานและจัดการสิทธิ์)";
+      desc.innerText = "มุมมองสำหรับผู้ปฏิบัติงาน: เช็กอิน อัปเดตงาน และปิดงาน (ซ่อนปุ่มลบงานและจัดการสิทธิ์)";
       desc.className = "text-[11px] text-slate-600 mt-0.5";
       if (banner) banner.className = "bg-slate-100 border border-slate-300 rounded-xl p-3 text-xs space-y-2 transition-all";
     }
@@ -506,6 +507,22 @@ export function updateTeamRoleBanner() {
   }
 }
 
+export function filterTeamRoleList(query) {
+  currentTeamRoleSearchQuery = (query || "").trim().toLowerCase();
+  const clearBtn = document.getElementById("teamRoleSearchClearBtn");
+  if (clearBtn) clearBtn.classList.toggle("hidden", !currentTeamRoleSearchQuery);
+  renderTeamRoleList();
+}
+
+export function clearTeamRoleSearch() {
+  currentTeamRoleSearchQuery = "";
+  const input = document.getElementById("teamRoleSearchInput");
+  if (input) input.value = "";
+  const clearBtn = document.getElementById("teamRoleSearchClearBtn");
+  if (clearBtn) clearBtn.classList.add("hidden");
+  renderTeamRoleList();
+}
+
 export function openTeamRoleModal() {
   if (state.currentUserRole !== "admin" && !isUserAdminActual()) {
     showAppAlert({
@@ -515,6 +532,7 @@ export function openTeamRoleModal() {
     });
     return;
   }
+  clearTeamRoleSearch();
   updateTeamRoleBanner();
   renderTeamRoleList();
   const el = document.getElementById("teamRoleModal");
@@ -606,8 +624,12 @@ export function renderTeamRoleList() {
   const countEl = document.getElementById("teamRoleCount");
   if (!container) return;
 
-  const adminList = state.techniciansList.filter(t => t.role === "admin");
-  const techList = state.techniciansList.filter(t => t.role !== "admin");
+  const baseList = currentTeamRoleSearchQuery
+    ? state.techniciansList.filter(t => (t.name || "").toLowerCase().includes(currentTeamRoleSearchQuery) || (t.phone || "").toLowerCase().includes(currentTeamRoleSearchQuery))
+    : state.techniciansList;
+
+  const adminList = baseList.filter(t => t.role === "admin");
+  const techList = baseList.filter(t => t.role !== "admin");
 
   const adminCountEl = document.getElementById("teamFilterAdminCount");
   const techCountEl = document.getElementById("teamFilterTechCount");
@@ -615,11 +637,11 @@ export function renderTeamRoleList() {
 
   if (adminCountEl) adminCountEl.innerText = adminList.length;
   if (techCountEl) techCountEl.innerText = techList.length;
-  if (allCountEl) allCountEl.innerText = state.techniciansList.length;
+  if (allCountEl) allCountEl.innerText = baseList.length;
   if (countEl) countEl.innerText = state.techniciansList.length;
 
-  if (state.techniciansList.length === 0) {
-    container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4">ยังไม่มีรายชื่อสมาชิกในระบบ</div>`;
+  if (baseList.length === 0) {
+    container.innerHTML = `<div class="text-xs text-slate-400 text-center py-4 bg-slate-50 rounded-xl">${currentTeamRoleSearchQuery ? `ไม่พบชื่อพนักงานที่ตรงกับ "${currentTeamRoleSearchQuery}"` : "ยังไม่มีรายชื่อสมาชิกในระบบ"}</div>`;
     return;
   }
 

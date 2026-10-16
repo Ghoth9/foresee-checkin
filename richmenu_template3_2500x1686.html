@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&family=Kanit:wght@500;600;700;800&display=swap');
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    width: 2500px;
+    height: 1686px;
+    overflow: hidden;
+    font-family: 'Prompt', 'Kanit', sans-serif;
+    background: #090d16;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* TOP SECTION: A (2500 x 843) */
+  .top-section {
+    width: 2500px;
+    height: 843px;
+    position: relative;
+    background: linear-gradient(135deg, #02203e 0%, #034475 45%, #0284c7 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 120px;
+    border-bottom: 4px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+  }
+
+  /* Decorative glow & circles in top */
+  .top-section::before {
+    content: '';
+    position: absolute;
+    right: -100px;
+    top: -150px;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .top-section::after {
+    content: '';
+    position: absolute;
+    left: 20%;
+    bottom: -150px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .top-left-content {
+    position: relative;
+    z-index: 2;
+    max-width: 1400px;
+  }
+
+  .top-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 32px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(10px);
+    border-radius: 9999px;
+    color: #e0f2fe;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+  }
+
+  .top-title {
+    font-size: 78px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.15;
+    margin-bottom: 18px;
+    letter-spacing: -1px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .top-desc {
+    font-size: 36px;
+    font-weight: 400;
+    color: #bae6fd;
+    line-height: 1.4;
+    margin-bottom: 36px;
+  }
+
+  .top-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 50px;
+    background: #ffffff;
+    color: #0369a1;
+    border-radius: 24px;
+    font-size: 34px;
+    font-weight: 800;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  }
+
+  .top-right-art {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .top-icon-circle {
+    width: 380px;
+    height: 380px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 100%);
+    border: 4px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  .top-icon-circle svg {
+    width: 200px;
+    height: 200px;
+    stroke: #ffffff;
+    stroke-width: 2.2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3));
+  }
+
+  /* BOTTOM ROW: B (1250 x 843) & C (1250 x 843) */
+  .bottom-row {
+    width: 2500px;
+    height: 843px;
+    display: flex;
+  }
+
+  /* BOTTOM LEFT: B */
+  .bot-left {
+    width: 1250px;
+    height: 843px;
+    position: relative;
+    background: linear-gradient(145deg, #06392b 0%, #064e3b 50%, #047857 100%);
+    border-right: 3px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 80px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .bot-left::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  /* BOTTOM RIGHT: C */
+  .bot-right {
+    width: 1250px;
+    height: 843px;
+    position: relative;
+    background: linear-gradient(145deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 80px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .bot-right::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.3) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .bot-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .bot-badge-2 {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 28px;
+    background: rgba(16, 185, 129, 0.2);
+    border: 2px solid rgba(52, 211, 153, 0.4);
+    border-radius: 9999px;
+    color: #6ee7b7;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 24px;
+  }
+
+  .bot-badge-3 {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 28px;
+    background: rgba(99, 102, 241, 0.2);
+    border: 2px solid rgba(165, 180, 252, 0.4);
+    border-radius: 9999px;
+    color: #c7d2fe;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 24px;
+  }
+
+  .bot-icon-circle {
+    width: 220px;
+    height: 220px;
+    border-radius: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+    border: 3px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
+  }
+
+  .bot-icon-2 {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .bot-icon-3 {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  }
+
+  .bot-icon-circle svg {
+    width: 110px;
+    height: 110px;
+    stroke: #ffffff;
+    stroke-width: 2.2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .bot-title {
+    font-size: 56px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+    margin-bottom: 14px;
+    letter-spacing: -0.5px;
+  }
+
+  .bot-desc {
+    font-size: 28px;
+    font-weight: 400;
+    color: #e2e8f0;
+    line-height: 1.4;
+    margin-bottom: 32px;
+    max-width: 850px;
+  }
+
+  .bot-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 20px 44px;
+    border-radius: 20px;
+    font-size: 30px;
+    font-weight: 700;
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .bot-cta-2 {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    color: #064e3b;
+    font-weight: 800;
+  }
+
+  .bot-cta-3 {
+    background: linear-gradient(90deg, #818cf8 0%, #a5b4fc 100%);
+    color: #1e1b4b;
+    font-weight: 800;
+  }
+
+  /* Template divider indicators */
+  .divider-tag {
+    position: absolute;
+    padding: 6px 16px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: monospace;
+    letter-spacing: 1px;
+    z-index: 10;
+  }
+  .tag-a { top: 20px; left: 24px; }
+  .tag-b { bottom: 20px; left: 24px; }
+  .tag-c { bottom: 20px; right: 24px; }
+
+</style>
+</head>
+<body>
+
+  <!-- TOP SECTION: AREA A (2500 x 843 px) -->
+  <div class="top-section">
+    <div class="top-left-content">
+      <div class="top-badge">📍 FORESEE FIELD SERVICE • CHECK-IN</div>
+      <div class="top-title">เช็กอินเข้าหน้างาน</div>
+      <div class="top-desc">บันทึกเวลาเข้างานอัตโนมัติ • ระบุพิกัด GPS แม่นยำ • ถ่ายรูปยืนยัน</div>
+      <div class="top-cta">
+        <span>แตะเพื่อเริ่มเช็กอิน</span>
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </div>
+    </div>
+    <div class="top-right-art">
+      <div class="top-icon-circle">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+          <circle cx="12" cy="10" r="3.2"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM SECTION: AREA B & C (Each 1250 x 843 px) -->
+  <div class="bottom-row">
+
+    <!-- AREA B: Bottom-Left (1250 x 843 px) -->
+    <div class="bot-left">
+      <div class="bot-inner">
+        <div class="bot-badge-2">📊 PROGRESS & CHECKOUT</div>
+        <div class="bot-icon-circle bot-icon-2">
+          <svg viewBox="0 0 24 24">
+            <path d="M18 20V10M12 20V4M6 20v-6"/>
+            <path d="m9 11 3 3L22 4" stroke-width="2.6"/>
+          </svg>
+        </div>
+        <div class="bot-title">อัปเดต & ปิดงาน</div>
+        <div class="bot-desc">รายงาน % ความคืบหน้า • แนบรูปถ่ายส่งงาน • บันทึกเวลาเช็กเอาต์</div>
+        <div class="bot-cta bot-cta-2">
+          <span>อัปเดตสถานะงาน</span>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- AREA C: Bottom-Right (1250 x 843 px) -->
+    <div class="bot-right">
+      <div class="bot-inner">
+        <div class="bot-badge-3">📋 TASK DISPATCH</div>
+        <div class="bot-icon-circle bot-icon-3">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="2"/>
+            <path d="m9 14 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="bot-title">มอบหมายงาน</div>
+        <div class="bot-desc">เปิดดูรายการงานทั้งหมด • สั่งงานช่าง • ติดตามสถานะ Realtime</div>
+        <div class="bot-cta bot-cta-3">
+          <span>ดูรายการงาน</span>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
