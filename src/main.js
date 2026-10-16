@@ -17,7 +17,7 @@ import {
   setActionTab, setUpdatePercent, setUpdateStatus
 } from './modules/checkout.js';
 import {
-  setTaskViewMode, setStatusFilter, setTechFilter, setTaskSearchQuery, renderTechFilterChips,
+  setTaskViewMode, setStatusFilter, setTechFilter, setTaskSearchQuery, setTaskSortOrder, renderTechFilterChips,
   renderTasksList, openAssignModal, closeAssignModal, selectAssignPriority, selectAssignCategory,
   toggleAssignTech, renderAssignTechChips, submitAssignForm, openEditTaskModal, closeEditTaskModal,
   setEditModalStatus, saveEditedTask, openTaskDetailModal, closeTaskDetailModal, switchTaskDetailTab,
@@ -66,6 +66,7 @@ import {
 import { openShareTaskLineModal, closeShareTaskLineModal, submitShareTaskChoice, shareActivityLogToLine } from './modules/shareModal.js';
 import { 
   openWorkHistoryModal, closeWorkHistoryModal, setWorkHistoryFilter,
+  filterWorkHistoryList, clearWorkHistorySearch, setWorkHistoryTechFilter,
   openCompletedTaskDetailModal, closeCompletedTaskDetailModal,
   shareCompletedLogToLine, shareSelectedCompletedLogToLine, deleteWorkHistoryLog,
   updateWorkHistoryBadge, renderWorkHistoryList
@@ -888,6 +889,10 @@ window.shareActivityLogToLine = shareActivityLogToLine;
 window.openWorkHistoryModal = openWorkHistoryModal;
 window.closeWorkHistoryModal = closeWorkHistoryModal;
 window.setWorkHistoryFilter = setWorkHistoryFilter;
+window.filterWorkHistoryList = filterWorkHistoryList;
+window.clearWorkHistorySearch = clearWorkHistorySearch;
+window.setWorkHistoryTechFilter = setWorkHistoryTechFilter;
+window.setTaskSortOrder = setTaskSortOrder;
 window.openCompletedTaskDetailModal = openCompletedTaskDetailModal;
 window.closeCompletedTaskDetailModal = closeCompletedTaskDetailModal;
 window.shareCompletedLogToLine = shareCompletedLogToLine;

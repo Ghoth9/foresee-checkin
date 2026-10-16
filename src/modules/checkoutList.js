@@ -228,7 +228,7 @@ function isTaskAssignedOrCreatedBy(item, targetOp) {
   if (filteredList.length === 0) {
     if (displayActiveTasks.length > 0) {
       container.innerHTML = `
-        <div class="text-center py-8 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6">
+        <div class="col-span-full text-center py-8 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6">
           <div class="text-2xl mb-1">🔍</div>
           <div class="text-xs font-bold text-slate-700">ไม่พบงานที่ตรงกับตัวกรอง</div>
           <p class="text-[11px] text-slate-400 mt-0.5">${checkoutSearchQuery ? `ไม่พบงานที่มีคำว่า "${checkoutSearchQuery}"` : 'ลองเปลี่ยนผู้ปฏิบัติงานหรือสถานะที่เลือก'}</p>
@@ -239,7 +239,7 @@ function isTaskAssignedOrCreatedBy(item, targetOp) {
       `;
     } else {
       container.innerHTML = `
-        <div class="text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
+        <div class="col-span-full text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 rounded-xl p-6 text-center">
           ${!isAdmin && opName ? `ยังไม่มีงานที่คุณ (${opName}) เช็กอินค้างอยู่` : `ยังไม่มีงานที่เช็กอินค้างอยู่`}
         </div>
       `;

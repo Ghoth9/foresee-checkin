@@ -20,6 +20,8 @@ export function matchTechName(techs, targetName) {
 }
 
 let activeHistoryFilter = "today"; // "today" | "all"
+let historySearchQuery = "";
+let historyTechFilter = "ทั้งหมด";
 let selectedDetailLog = null;
 
 export function getFilteredHistoryLogs() {
@@ -52,7 +54,6 @@ export function getFilteredHistoryLogs() {
 
   // Filter: today vs all
   if (activeHistoryFilter === "today") {
-    // Show logs from today or status Completed today
     logs = logs.filter(log => {
       if (log.date === "วันนี้" || !log.date || log.date === "-") return true;
       const todayThai = new Date().toLocaleDateString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -60,7 +61,93 @@ export function getFilteredHistoryLogs() {
     });
   }
 
+  // Filter: operator chip
+  if (historyTechFilter && historyTechFilter !== "ทั้งหมด") {
+    logs = logs.filter(log => {
+      if (matchTechName(log.techs, historyTechFilter)) return true;
+      if (matchesOperator(log.checkedInBy, historyTechFilter) || matchesOperator(log.closerName, historyTechFilter)) return true;
+      return false;
+    });
+  }
+
+  // Filter: search query
+  if (historySearchQuery) {
+    const q = historySearchQuery.toLowerCase().trim();
+    logs = logs.filter(log => {
+      const idStr = String(log.id || log.taskId || "").toLowerCase();
+      const titleStr = String(log.task || "").toLowerCase();
+      const noteStr = String(log.note || "").toLowerCase();
+      const techStr = (Array.isArray(log.techs) ? log.techs.join(" ") : String(log.techs || "")).toLowerCase();
+      return idStr.includes(q) || titleStr.includes(q) || noteStr.includes(q) || techStr.includes(q);
+    });
+  }
+
   return logs;
+}
+
+export function renderWorkHistoryTechChips() {
+  const container = document.getElementById("workHistoryTechFilterContainer");
+  if (!container) return;
+
+  const techSet = new Set(["ทั้งหมด"]);
+  (state.dailyLogs || []).forEach(log => {
+    const tArr = Array.isArray(log.techs) ? log.techs : (typeof log.techs === "string" ? log.techs.split(",") : []);
+    tArr.forEach(t => {
+      const clean = String(t || "").trim();
+      if (clean && clean !== "-") techSet.add(clean);
+    });
+  });
+
+  if (techSet.size <= 1) {
+    container.classList.add("hidden");
+    return;
+  }
+  container.classList.remove("hidden");
+
+  container.innerHTML = Array.from(techSet).map(tName => {
+    const isSel = historyTechFilter === tName;
+    const safeName = tName.replace(/'/g, "\\'");
+    return `
+      <button type="button" onclick="window.setWorkHistoryTechFilter('${safeName}')" class="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all flex-shrink-0 cursor-pointer ${
+        isSel
+          ? 'bg-slate-900 text-white font-bold shadow-2xs'
+          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+      }">
+        ${tName === "ทั้งหมด" ? "👥 ทั้งหมด" : `👷 ${tName}`}
+      </button>
+    `;
+  }).join('');
+}
+
+export function setWorkHistoryTechFilter(techName) {
+  historyTechFilter = techName || "ทั้งหมด";
+  renderWorkHistoryTechChips();
+  renderWorkHistoryList();
+}
+
+export function filterWorkHistoryList(query) {
+  historySearchQuery = query || "";
+  const clearBtn = document.getElementById("workHistorySearchClearBtn");
+  if (clearBtn) {
+    if (historySearchQuery.trim()) clearBtn.classList.remove("hidden");
+    else clearBtn.classList.add("hidden");
+  }
+  renderWorkHistoryList();
+}
+
+export function clearWorkHistorySearch() {
+  historySearchQuery = "";
+  const input = document.getElementById("workHistorySearchInput");
+  if (input) input.value = "";
+  const clearBtn = document.getElementById("workHistorySearchClearBtn");
+  if (clearBtn) clearBtn.classList.add("hidden");
+  renderWorkHistoryList();
+}
+
+if (typeof window !== "undefined") {
+  window.filterWorkHistoryList = filterWorkHistoryList;
+  window.clearWorkHistorySearch = clearWorkHistorySearch;
+  window.setWorkHistoryTechFilter = setWorkHistoryTechFilter;
 }
 
 export function updateWorkHistoryBadge() {
@@ -92,7 +179,9 @@ export function renderWorkHistoryList() {
           📋
         </div>
         <div class="text-xs font-bold text-slate-700">
-          ${activeHistoryFilter === "today" ? "ยังไม่มีงานที่บันทึกปิดงานเสร็จสิ้นในวันนี้" : "ยังไม่มีงานที่บันทึกปิดงานเสร็จสิ้น"}
+          ${historySearchQuery || historyTechFilter !== "ทั้งหมด"
+            ? "ไม่พบประวัติงานที่ตรงกับการค้นหา"
+            : (activeHistoryFilter === "today" ? "ยังไม่มีงานที่บันทึกปิดงานเสร็จสิ้นในวันนี้" : "ยังไม่มีงานที่บันทึกปิดงานเสร็จสิ้น")}
         </div>
         <p class="text-[11px] text-slate-500 max-w-xs mx-auto">
           หน้านี้แสดงเฉพาะงานที่บันทึกปิดงานเสร็จสิ้นแล้ว (100% / เสร็จสิ้น)<br>
@@ -171,6 +260,13 @@ export function openWorkHistoryModal() {
   const modal = document.getElementById("workHistoryModal");
   if (!modal) return;
   activeHistoryFilter = "today";
+  historySearchQuery = "";
+  historyTechFilter = "ทั้งหมด";
+  const input = document.getElementById("workHistorySearchInput");
+  if (input) input.value = "";
+  const clearBtn = document.getElementById("workHistorySearchClearBtn");
+  if (clearBtn) clearBtn.classList.add("hidden");
+  renderWorkHistoryTechChips();
   setWorkHistoryFilter("today");
   renderWorkHistoryList();
   modal.classList.remove("hidden");

@@ -7,6 +7,7 @@
 import { formatThaiDateDisplay, getDeadlineCountdownBadge, isTaskOverdue } from '../utils/date.js';
 import { getRecentNewTaskIds } from './taskAssignModal.js';
 import { state, getEffectiveOperatorName } from './state.js';
+import { getTaskMemberStatuses } from '../utils/taskMembers.js';
 
 // Re-export submodules for full backward compatibility
 export * from './taskLightbox.js';
@@ -17,6 +18,7 @@ let taskViewMode = window.innerWidth >= 768 ? "list" : "grid";
 let currentStatusFilter = "ทั้งหมด";
 let currentTechFilter = "ทั้งหมด";
 let taskSearchQuery = "";
+let taskSortOrder = "newest";
 let cachedTechnicians = [];
 
 export function matchesOperator(str, opName) {
@@ -51,31 +53,38 @@ export function getAssigneeSubmissionsStatus(task) {
     timelineItems = [...task.customer.progress_history];
   }
 
+  const memberStatuses = getTaskMemberStatuses(task);
   const match = (itemTech, targetTech) => matchesOperator(itemTech, targetTech);
 
   return techs.map(rawTechName => {
     const cleanTech = rawTechName ? rawTechName.split('(')[0].replace(/k\./gi, '').trim() : "ผู้ปฏิบัติงาน";
-    const userSubs = timelineItems.filter(it => match(it.tech, rawTechName));
-    if (userSubs.length === 0) {
+    const userSubs = timelineItems.filter(it => match(it.tech || it.by, rawTechName));
+    const memberSt = memberStatuses.find(m => match(m.fullName, rawTechName) || match(m.shortName, cleanTech));
+    const hasCheckedIn = memberSt ? memberSt.hasCheckedIn : false;
+    const hasCheckedOut = memberSt ? memberSt.hasCheckedOut : false;
+
+    if (userSubs.length === 0 && !hasCheckedIn && !hasCheckedOut) {
       return {
         techName: cleanTech,
         fullTechName: rawTechName,
         submitted: false,
-        status: "ยังไม่ส่งงาน",
+        hasCheckedIn: false,
+        hasCheckedOut: false,
+        status: "ยังไม่เช็กอิน",
         dotColor: "bg-slate-400",
         badgeClass: "bg-slate-50 text-slate-600 border-slate-200",
-        label: cleanTech,
-        tooltip: `${rawTechName}: ยังไม่ส่งงาน (รอดำเนินการ)`
+        label: `${cleanTech} (รอเช็กอิน)`,
+        tooltip: `${rawTechName}: ยังไม่เช็กอินเข้างาน`
       };
     }
 
     const closeSub = userSubs.find(s => s.status === "เสร็จสิ้น" || s.status === "ปิดงานแล้ว" || Number(s.progress) === 100);
     const dutySub = userSubs.find(s => s.type === "duty_complete");
     const latestSub = userSubs[userSubs.length - 1];
-    const targetSub = closeSub || dutySub || latestSub;
-    const isClosed = !!closeSub;
-    const isDutyDone = !!dutySub;
-    const timeStr = targetSub.time ? `${targetSub.time} น.` : '';
+    const targetSub = closeSub || dutySub || latestSub || {};
+    const isClosed = !!closeSub || task.status === "เสร็จสิ้น";
+    const isDutyDone = !!dutySub || hasCheckedOut;
+    const timeStr = targetSub.time ? `${targetSub.time} น.` : (memberSt?.checkinTime || '');
 
     const displayProg = (targetSub && targetSub.progress !== undefined && targetSub.progress !== null)
       ? targetSub.progress
@@ -92,22 +101,35 @@ export function getAssigneeSubmissionsStatus(task) {
       dotColor = "bg-emerald-500";
       badgeClass = "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold";
     } else if (isDutyDone) {
-      displayLabel = `${cleanTech} ✓`;
+      displayLabel = `${cleanTech} ✓ (จบหน้าที่)`;
       displayStatus = "เช็กเอาต์แล้ว";
       dotColor = "bg-emerald-500";
       badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold";
+    } else if (userSubs.some(s => s.type !== 'checkin') && displayProg > 0) {
+      displayLabel = `${cleanTech} (${displayProg}%)`;
+      dotColor = "bg-blue-600";
+      badgeClass = "bg-blue-50 text-blue-800 border-blue-200 font-semibold";
+    } else if (hasCheckedIn) {
+      displayLabel = `${cleanTech} (เช็กอินแล้ว)`;
+      displayStatus = "เช็กอินแล้ว";
+      dotColor = "bg-emerald-500 animate-pulse";
+      badgeClass = "bg-emerald-50/80 text-emerald-800 border-emerald-300 font-semibold";
     } else {
       displayLabel = `${cleanTech} (${displayProg}%)`;
     }
+
+    const durTooltip = memberSt?.durationLabel ? ` • ${memberSt.durationLabel}` : '';
 
     return {
       techName: cleanTech,
       fullTechName: rawTechName,
       submitted: true,
+      hasCheckedIn: hasCheckedIn || userSubs.length > 0,
+      hasCheckedOut: isClosed || isDutyDone,
       isClosed: isClosed,
       isDutyDone: isDutyDone,
       status: displayStatus,
-      time: targetSub.time,
+      time: targetSub.time || memberSt?.checkinTime,
       date: targetSub.date,
       note: targetSub.note,
       photoCount: Array.isArray(targetSub.photos) ? targetSub.photos.length : 0,
@@ -115,10 +137,12 @@ export function getAssigneeSubmissionsStatus(task) {
       badgeClass,
       label: displayLabel,
       tooltip: isClosed
-        ? `${rawTechName}: ปิดงานแล้ว (${timeStr})`
+        ? `${rawTechName}: ปิดงานแล้ว (${timeStr})${durTooltip}`
         : (isDutyDone
-          ? `${rawTechName}: เช็กเอาต์จบหน้าที่แล้ว (${timeStr})`
-          : `${rawTechName}: คืบหน้า ${displayProg}% (${timeStr})`)
+          ? `${rawTechName}: เช็กเอาต์จบหน้าที่แล้ว (${timeStr})${durTooltip}`
+          : (hasCheckedIn
+            ? `${rawTechName}: เช็กอินเข้างานแล้ว (${timeStr}) • คืบหน้า ${displayProg}%`
+            : `${rawTechName}: คืบหน้า ${displayProg}% (${timeStr})`))
     };
   });
 }
@@ -223,6 +247,29 @@ export function setTaskSearchQuery(q) {
   taskSearchQuery = q || "";
 }
 
+export function setTaskSortOrder(order, tasksList) {
+  taskSortOrder = order || "newest";
+  const sel = document.getElementById("taskSortSelect");
+  if (sel && sel.value !== taskSortOrder) sel.value = taskSortOrder;
+  rerenderTasksListCurrent(tasksList);
+}
+if (typeof window !== "undefined") {
+  window.setTaskSortOrder = setTaskSortOrder;
+}
+
+function updateTaskKpiNumbers(total, inProg, overdue, prob, comp) {
+  const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+  setTxt("statTotalTasks", total);
+  setTxt("statOverdue", overdue);
+  setTxt("statInProgress", inProg);
+  setTxt("statCompleted", comp);
+  setTxt("statProblem", prob);
+  setTxt("kpiCardTotalTasks", total);
+  setTxt("kpiCardInProgress", inProg);
+  setTxt("kpiCardUrgent", overdue + prob);
+  setTxt("kpiCardCompleted", comp);
+}
+
 export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg = null) {
   const container = document.getElementById("tasksListContainer");
   if (!container) return;
@@ -277,16 +324,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
         ` : ''}
       </div>
     `;
-    const elTotal = document.getElementById("statTotalTasks");
-    if (elTotal) elTotal.innerText = 0;
-    const elOver = document.getElementById("statOverdue");
-    if (elOver) elOver.innerText = 0;
-    const elProg = document.getElementById("statInProgress");
-    if (elProg) elProg.innerText = 0;
-    const elComp = document.getElementById("statCompleted");
-    if (elComp) elComp.innerText = 0;
-    const elProb = document.getElementById("statProblem");
-    if (elProb) elProb.innerText = 0;
+    updateTaskKpiNumbers(0, 0, 0, 0, 0);
     return;
   }
 
@@ -318,16 +356,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
     else inprogCount++;
   });
 
-  const elTotal = document.getElementById("statTotalTasks");
-  if (elTotal) elTotal.innerText = techFiltered.length;
-  const elOver = document.getElementById("statOverdue");
-  if (elOver) elOver.innerText = overdueCount;
-  const elProg = document.getElementById("statInProgress");
-  if (elProg) elProg.innerText = inprogCount;
-  const elComp = document.getElementById("statCompleted");
-  if (elComp) elComp.innerText = completedCount;
-  const elProb = document.getElementById("statProblem");
-  if (elProb) elProb.innerText = problemCount;
+  updateTaskKpiNumbers(techFiltered.length, inprogCount, overdueCount, problemCount, completedCount);
 
   // 2. Filter by Status & Search
   const filteredTasks = techFiltered.filter(t => {
@@ -366,12 +395,26 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
     return true;
   });
 
-  // Sort: Newly created tasks always appear at the top!
+  // Sort: Newly created tasks always appear at the top, followed by selected sort order!
   filteredTasks.sort((a, b) => {
     const isNewA = recentNewTaskIds.has(a.id) || a.isNew;
     const isNewB = recentNewTaskIds.has(b.id) || b.isNew;
     if (isNewA && !isNewB) return -1;
     if (!isNewA && isNewB) return 1;
+
+    if (taskSortOrder === "urgent") {
+      const prioRank = p => (p === "ด่วนที่สุด" ? 3 : p === "ด่วน" ? 2 : 1);
+      const diff = prioRank(b.priority) - prioRank(a.priority);
+      if (diff !== 0) return diff;
+    } else if (taskSortOrder === "deadline") {
+      const da = a.deadline ? new Date(a.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+      const db = b.deadline ? new Date(b.deadline).getTime() : Number.MAX_SAFE_INTEGER;
+      if (da !== db) return da - db;
+    } else if (taskSortOrder === "progress") {
+      const pa = Number(a.progress || 0);
+      const pb = Number(b.progress || 0);
+      if (pb !== pa) return pb - pa;
+    }
     return 0;
   });
 
@@ -433,10 +476,10 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
               <th class="py-2.5 px-3 w-10 text-center font-mono">#</th>
               <th class="py-2.5 px-3 w-28 whitespace-nowrap">สถานะ</th>
               <th class="py-2.5 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
-              <th class="py-2.5 px-3 w-44">ผู้ปฏิบัติงาน</th>
+              <th class="py-2.5 px-3 w-48">ผู้ปฏิบัติงาน (สถานะรายคน)</th>
               <th class="py-2.5 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
               <th class="py-2.5 px-3 w-28 whitespace-nowrap">ความคืบหน้า</th>
-              <th class="py-2.5 px-3 w-32 text-right pr-4 whitespace-nowrap">จัดการ</th>
+              <th class="py-2.5 px-3 w-40 text-right pr-4 whitespace-nowrap">จัดการ</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -449,6 +492,11 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
       const techs = getTaskTechs(task);
       const assigneeStatuses = getAssigneeSubmissionsStatus(task);
       const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
+
+      const myAssigneeStatus = opName ? assigneeStatuses.find(s => matchesOperator(s.fullTechName || s.techName, opName)) : null;
+      const anyCheckedIn = assigneeStatuses.some(s => s.hasCheckedIn);
+      const canCheckIn = !isDone && ((myAssigneeStatus && !myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && !anyCheckedIn));
+      const canUpdateOrClose = !isDone && ((myAssigneeStatus && myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && anyCheckedIn));
 
       const isProblem = task.status === "ติดปัญหา";
       let badgeBg = "bg-amber-50 text-amber-900 border-amber-200 font-semibold";
@@ -515,6 +563,17 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
           </td>
           <td class="py-2.5 px-3 text-right pr-4 whitespace-nowrap">
             <div class="flex items-center justify-end space-x-1.5">
+              ${canCheckIn ? `
+                <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="เช็กอินเข้าเริ่มงานนี้">
+                  <span>📍</span>
+                  <span>เช็กอิน</span>
+                </button>
+              ` : (canUpdateOrClose ? `
+                <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="อัปเดตความคืบหน้าหรือปิดงาน">
+                  <span>📝</span>
+                  <span>อัปเดต/ปิดงาน</span>
+                </button>
+              ` : '')}
               ${photoCount > 0 ? `
                 <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs" title="ดูภาพถ่ายผลงาน">
                   <span>📸</span>
@@ -549,6 +608,11 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
       const techs = getTaskTechs(task);
       const assigneeStatuses = getAssigneeSubmissionsStatus(task);
       const photoCount = (task.progressHistory || task.customer?.progress_history || []).reduce((acc, it) => acc + (Array.isArray(it.photos) ? it.photos.length : 0), 0);
+
+      const myAssigneeStatus = opName ? assigneeStatuses.find(s => matchesOperator(s.fullTechName || s.techName, opName)) : null;
+      const anyCheckedIn = assigneeStatuses.some(s => s.hasCheckedIn);
+      const canCheckIn = !isDone && ((myAssigneeStatus && !myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && !anyCheckedIn));
+      const canUpdateOrClose = !isDone && ((myAssigneeStatus && myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && anyCheckedIn));
 
       const isProblem = task.status === "ติดปัญหา";
       let badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
@@ -590,7 +654,7 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
           <div class="mt-2.5 pt-2 border-t border-slate-100 text-xs">
             <div class="text-[11px] font-bold text-slate-600 mb-1 flex items-center justify-between">
               <span>👷 ผู้ปฏิบัติงาน (${techs.length} คน):</span>
-              <span class="text-[10px] text-slate-400 font-normal">สถานะส่งงาน</span>
+              <span class="text-[10px] text-slate-400 font-normal">สถานะรายคน</span>
             </div>
             <div class="flex flex-wrap gap-1">
               ${assigneeStatuses.map(s => `
@@ -614,12 +678,23 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
             </div>
             <span class="text-xs font-mono font-bold text-slate-700">${task.progress || 0}%</span>
           </div>
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="py-2.5 px-2.5 min-h-[38px] text-center text-xs font-bold ${photoCount > 0 ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'} border rounded-xl transition-all flex items-center justify-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer">
+          ${canCheckIn ? `
+            <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-xs active:scale-95 cursor-pointer">
+              <span>📍</span>
+              <span>เช็กอินเข้าเริ่มงานนี้</span>
+            </button>
+          ` : (canUpdateOrClose ? `
+            <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shadow-xs active:scale-95 cursor-pointer">
+              <span>📝</span>
+              <span>อัปเดตความคืบหน้า / ปิดงาน</span>
+            </button>
+          ` : '')}
+          <div class="grid grid-cols-2 gap-2 pt-0.5">
+            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="py-2 px-2.5 min-h-[36px] text-center text-xs font-bold ${photoCount > 0 ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'} border rounded-xl transition-all flex items-center justify-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer">
               <span>📸</span>
               <span>ภาพผลงาน (${photoCount})</span>
             </button>
-            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="py-2.5 px-2.5 min-h-[38px] text-center text-xs font-semibold bg-slate-50 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-700 border border-slate-200 group-hover:border-blue-200 rounded-xl transition-all flex items-center justify-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer">
+            <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="py-2 px-2.5 min-h-[36px] text-center text-xs font-semibold bg-slate-50 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-700 border border-slate-200 group-hover:border-blue-200 rounded-xl transition-all flex items-center justify-center space-x-1.5 shadow-2xs active:scale-95 cursor-pointer">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
               <span>${isAdmin ? 'ดู/แก้ไข' : 'ดูรายละเอียด'}</span>
             </button>
