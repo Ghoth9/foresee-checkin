@@ -122,12 +122,50 @@ button:active:not(:disabled) {
 
 .modal-scroll-container {
   scrollbar-width: thin;
-  scrollbar-color: #94A3B8 transparent;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  overscroll-behavior: contain;
 }
 .modal-scroll-container::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
+}
+.modal-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
 }
 .modal-scroll-container::-webkit-scrollbar-thumb {
-  background-color: #94A3B8;
+  background-color: rgba(148, 163, 184, 0.35);
   border-radius: 9999px;
+  border: 1px solid transparent;
+}
+.modal-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.65);
+}
+
+/* Modal Clean Single Scroll Area */
+.modal-clean-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.modal-clean-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.modal-clean-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-clean-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+.modal-clean-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(71, 85, 105, 0.7);
+}
+
+/* Modern Segmented Control & Glass effects */
+.segmented-control-active {
+  background-color: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
 }

@@ -8,7 +8,7 @@ import { state, getEffectiveOperatorName } from './state.js';
 import { formatGasTime, formatDisplayTime } from '../utils/date.js';
 import { showAppAlert, showAppConfirm, showAppPrompt } from '../utils/dialog.js';
 import { deleteCheckinApi, clearAllCheckinsApi, deleteTaskActivityLogApi, submitDutyCheckoutApi } from '../api/supabase.js';
-import { setUpdatePercent, calculateDuration, updateCheckoutSubmitButtonsState, setCheckoutOutcome } from './checkout.js';
+import { setUpdatePercent, setActionTab, calculateDuration, updateCheckoutSubmitButtonsState, setCheckoutOutcome } from './checkout.js';
 export { setCheckoutOutcome };
 import { matchesOperator } from './tasks.js';
 import { showDutyCheckoutShareDialog } from './shareModal.js';
@@ -747,6 +747,7 @@ export function openCheckoutModal(id) {
   }
 
   // Pre-fill / sync current progress in checkout module
+  setActionTab("update");
   setUpdatePercent(itemProg);
 
   // Render existing photos of this task

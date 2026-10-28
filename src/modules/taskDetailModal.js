@@ -9,7 +9,7 @@ import { createExtendDeadlineFlexCard, triggerLiffShare } from '../liff/line.js'
 import { showAppAlert, showAppConfirm } from '../utils/dialog.js';
 import { openCustomCalendar } from '../utils/calendar.js';
 import { openImageLightbox } from './taskLightbox.js';
-import { getTaskTechs, getAssigneeSubmissionsStatus } from './tasks.js';
+import { getTaskTechs, getAssigneeSubmissionsStatus, matchesOperator } from './tasks.js';
 import { state, getEffectiveOperatorName } from './state.js';
 
 let currentDetailTaskId = null;
@@ -335,6 +335,49 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
           </div>
         `;
       }).join('');
+    }
+  }
+
+  // Render contextual operator action button in modal footer
+  const slot = document.getElementById("detailModalOperatorActionSlot");
+  if (slot) {
+    const isDone = task.status === "เสร็จสิ้น";
+    const assigneeStatuses = getAssigneeSubmissionsStatus(task);
+    const myAssigneeStatus = opName ? assigneeStatuses.find(s => matchesOperator(s.fullTechName || s.techName, opName)) : null;
+    const isResume = !isDone && !!(myAssigneeStatus && myAssigneeStatus.hasPausedToday);
+    const canCheckIn = !isDone && !isResume && ((myAssigneeStatus && !myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && !assigneeStatuses.some(s => s.hasCheckedIn)));
+    const canUpdateOrClose = !isDone && !isResume && ((myAssigneeStatus && myAssigneeStatus.hasCheckedIn && !myAssigneeStatus.hasCheckedOut) || (!myAssigneeStatus && assigneeStatuses.some(s => s.hasCheckedIn)));
+
+    if (isResume) {
+      slot.innerHTML = `
+        <button type="button" onclick="window.closeTaskDetailModal(); window.goCheckinForTask('${task.id}')" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center space-x-1.5 active:scale-95 shadow-xs cursor-pointer">
+          <span>▶️</span>
+          <span>เช็กอินทำต่อ (วันถัดไป)</span>
+        </button>
+      `;
+    } else if (canCheckIn) {
+      slot.innerHTML = `
+        <button type="button" onclick="window.closeTaskDetailModal(); window.goCheckinForTask('${task.id}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center space-x-1.5 active:scale-95 shadow-xs cursor-pointer">
+          <span>📍</span>
+          <span>เช็กอินเริ่มงานนี้</span>
+        </button>
+      `;
+    } else if (canUpdateOrClose) {
+      slot.innerHTML = `
+        <button type="button" onclick="window.closeTaskDetailModal(); window.openProgressModalForTask('${task.id}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center space-x-1.5 active:scale-95 shadow-xs cursor-pointer">
+          <span>🌇</span>
+          <span>ส่งงาน / เช็กเอาต์รายวัน</span>
+        </button>
+      `;
+    } else if (myAssigneeStatus && myAssigneeStatus.hasCheckedOut) {
+      slot.innerHTML = `
+        <span class="inline-flex items-center space-x-1 px-3 py-1 rounded-xl text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+          <span>✓</span>
+          <span>คุณจบหน้าที่ในงานนี้แล้ว</span>
+        </span>
+      `;
+    } else {
+      slot.innerHTML = '';
     }
   }
 

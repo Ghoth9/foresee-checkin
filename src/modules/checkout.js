@@ -53,6 +53,8 @@ export function setActionTab(tab) {
   const closePanel = document.getElementById("actionPanelClose");
   const tabBtnUpdate = document.getElementById("actionTabBtnUpdate");
   const tabBtnClose = document.getElementById("actionTabBtnClose");
+  const updateBtn = document.getElementById("submitUpdateBtn");
+  const checkoutBtn = document.getElementById("submitCheckoutBtn");
 
   if (tab === "update") {
     if (updatePanel) {
@@ -60,6 +62,8 @@ export function setActionTab(tab) {
       updatePanel.classList.add("animate-fade-in");
     }
     if (closePanel) closePanel.classList.add("hidden");
+    if (updateBtn) updateBtn.classList.remove("hidden");
+    if (checkoutBtn) checkoutBtn.classList.add("hidden");
     if (tabBtnUpdate) tabBtnUpdate.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all duration-200 bg-white text-blue-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5 active:scale-[0.98]";
     if (tabBtnClose) tabBtnClose.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5 active:scale-[0.98]";
   } else {
@@ -68,6 +72,8 @@ export function setActionTab(tab) {
       closePanel.classList.add("animate-fade-in");
     }
     if (updatePanel) updatePanel.classList.add("hidden");
+    if (checkoutBtn) checkoutBtn.classList.remove("hidden");
+    if (updateBtn) updateBtn.classList.add("hidden");
     if (tabBtnClose) tabBtnClose.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-bold transition-all duration-200 bg-white text-emerald-700 shadow-sm border border-slate-200/80 flex items-center justify-center space-x-1.5 active:scale-[0.98]";
     if (tabBtnUpdate) tabBtnUpdate.className = "flex-1 py-2.5 px-3 rounded-lg text-xs font-medium transition-all duration-200 text-slate-500 hover:text-slate-800 flex items-center justify-center space-x-1.5 active:scale-[0.98]";
   }
