@@ -197,31 +197,43 @@ export function updateCheckoutSubmitButtonsState() {
   const updateBtn = document.getElementById("submitUpdateBtn");
   const checkoutBtn = document.getElementById("submitCheckoutBtn");
 
+  const isUpdateTab = currentActionTab === "update";
+
   // 1. Progress Update Button (Requires at least 1 photo)
   if (updateBtn) {
-    if (checkoutPhotos.length === 0) {
-      updateBtn.disabled = true;
-      updateBtn.className = "w-full bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-300 transition-all duration-200 flex items-center justify-center space-x-2 select-none shadow-none";
-      updateBtn.innerHTML = `<span>🔒 กรุณาแนบรูปความคืบหน้าอย่างน้อย 1 รูปก่อนส่ง (0/5 รูป)</span>`;
+    if (!isUpdateTab) {
+      updateBtn.classList.add("hidden");
     } else {
-      updateBtn.disabled = false;
-      updateBtn.className = "w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-blue-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
-      updateBtn.innerHTML = isDailyCheckoutMode
-        ? `<span>🌇 บันทึกเช็กเอาต์จบวันนี้ (${updatePercent}%) & ส่งเข้า LINE (${checkoutPhotos.length} รูป)</span>`
-        : `<span>📊 อัปเดตความคืบหน้าระหว่างวัน (${updatePercent}%) & ส่งเข้า LINE (${checkoutPhotos.length} รูป)</span>`;
+      updateBtn.classList.remove("hidden");
+      if (checkoutPhotos.length === 0) {
+        updateBtn.disabled = true;
+        updateBtn.className = "w-full bg-slate-100 text-slate-400 font-semibold py-2.5 px-4 rounded-xl text-xs border border-slate-200 cursor-not-allowed transition-all flex items-center justify-center space-x-1.5 select-none";
+        updateBtn.innerHTML = `<span>แนบรูปอย่างน้อย 1 รูปเพื่อส่งงาน (0/5)</span>`;
+      } else {
+        updateBtn.disabled = false;
+        updateBtn.className = "w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer";
+        updateBtn.innerHTML = isDailyCheckoutMode
+          ? `<span>บันทึกเช็กเอาต์จบวันนี้ (${updatePercent}%) • ${checkoutPhotos.length} รูป</span>`
+          : `<span>ส่งความคืบหน้า (${updatePercent}%) • ${checkoutPhotos.length} รูป</span>`;
+      }
     }
   }
 
   // 2. Final Checkout Button (Must have at least 5 photos)
   if (checkoutBtn) {
-    if (checkoutPhotos.length < 5) {
-      checkoutBtn.disabled = true;
-      checkoutBtn.className = "w-full bg-slate-200 text-slate-400 font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm cursor-not-allowed border border-slate-300 transition-all duration-200 flex items-center justify-center space-x-2 select-none shadow-none";
-      checkoutBtn.innerHTML = `<span>🔒 แนบรูปให้ครบอย่างน้อย 5 รูปเพื่อปิดงาน (${checkoutPhotos.length}/5 รูป)</span>`;
+    if (isUpdateTab) {
+      checkoutBtn.classList.add("hidden");
     } else {
-      checkoutBtn.disabled = false;
-      checkoutBtn.className = "w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl text-xs md:text-sm shadow-md shadow-emerald-500/20 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer";
-      checkoutBtn.innerHTML = `<span>🏁 บันทึกปิดงาน & ส่งสรุปเข้ากลุ่ม LINE (แนบแล้ว ${checkoutPhotos.length} รูป)</span>`;
+      checkoutBtn.classList.remove("hidden");
+      if (checkoutPhotos.length < 5) {
+        checkoutBtn.disabled = true;
+        checkoutBtn.className = "w-full bg-slate-100 text-slate-400 font-semibold py-2.5 px-4 rounded-xl text-xs border border-slate-200 cursor-not-allowed transition-all flex items-center justify-center space-x-1.5 select-none";
+        checkoutBtn.innerHTML = `<span>แนบรูปอย่างน้อย 5 รูปเพื่อปิดงาน (${checkoutPhotos.length}/5)</span>`;
+      } else {
+        checkoutBtn.disabled = false;
+        checkoutBtn.className = "w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer";
+        checkoutBtn.innerHTML = `<span>บันทึกปิดงาน 100% • ${checkoutPhotos.length} รูป</span>`;
+      }
     }
   }
 }

@@ -350,29 +350,25 @@ export function openTaskDetailModal(taskId, tasksList, allTechnicians, initialTa
 
     if (isResume) {
       slot.innerHTML = `
-        <button type="button" onclick="window.closeTaskDetailModal(); window.goCheckinForTask('${task.id}')" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center space-x-1.5 active:scale-95 shadow-xs cursor-pointer">
-          <span>▶️</span>
+        <button type="button" onclick="window.closeTaskDetailModal(); window.goCheckinForTask('${task.id}')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-xs cursor-pointer">
           <span>เช็กอินทำต่อ (วันถัดไป)</span>
         </button>
       `;
     } else if (canCheckIn) {
       slot.innerHTML = `
-        <button type="button" onclick="window.closeTaskDetailModal(); window.goCheckinForTask('${task.id}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center space-x-1.5 active:scale-95 shadow-xs cursor-pointer">
-          <span>📍</span>
+        <button type="button" onclick="window.closeTaskDetailModal(); window.goCheckinForTask('${task.id}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-xs cursor-pointer">
           <span>เช็กอินเริ่มงานนี้</span>
         </button>
       `;
     } else if (canUpdateOrClose) {
       slot.innerHTML = `
-        <button type="button" onclick="window.closeTaskDetailModal(); window.openProgressModalForTask('${task.id}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center space-x-1.5 active:scale-95 shadow-xs cursor-pointer">
-          <span>🌇</span>
-          <span>ส่งงาน / เช็กเอาต์รายวัน</span>
+        <button type="button" onclick="window.closeTaskDetailModal(); window.openProgressModalForTask('${task.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-xs cursor-pointer">
+          <span>ส่งงาน / เช็กเอาต์</span>
         </button>
       `;
     } else if (myAssigneeStatus && myAssigneeStatus.hasCheckedOut) {
       slot.innerHTML = `
-        <span class="inline-flex items-center space-x-1 px-3 py-1 rounded-xl text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-          <span>✓</span>
+        <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
           <span>คุณจบหน้าที่ในงานนี้แล้ว</span>
         </span>
       `;

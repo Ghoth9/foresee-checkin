@@ -283,82 +283,6 @@ function updateTaskKpiNumbers(total, inProg, overdue, prob, comp) {
   setTxt("kpiCardCompleted", comp);
 }
 
-function updateOperatorWorkflowBanner(tasks, opName, isAdmin, overdueCount = 0) {
-  const banner = document.getElementById("operatorWorkflowGuideBanner");
-  const greetingEl = document.getElementById("operatorGreetingText");
-  const subtitleEl = document.getElementById("operatorGuideSubtitle");
-  const ctaContainer = document.getElementById("operatorPrimaryActionBtnContainer");
-  if (!banner || !greetingEl || !subtitleEl || !ctaContainer) return;
-
-  if (isAdmin) {
-    greetingEl.innerHTML = `👑 ผู้ดูแลระบบ • ติดตามภาพรวม (${tasks.length} งาน)`;
-    subtitleEl.innerHTML = overdueCount > 0
-      ? `⚠️ มีงานเกินกำหนด <strong class="text-rose-300 font-bold">${overdueCount} งาน</strong> • มอบหมายงานใหม่หรือแตะงานเพื่อดูไทม์ไลน์แบบเรียลไทม์`
-      : `1. มอบหมายงาน 👉 2. ติดตามการเช็กอินรายคน 👉 3. ตรวจสอบไทม์ไลน์และภาพผลงานแบบเรียลไทม์`;
-    ctaContainer.innerHTML = `
-      <button type="button" onclick="openAssignModal()" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs inline-flex items-center space-x-1.5 active:scale-95 cursor-pointer">
-        <span>+ มอบหมายงาน</span>
-      </button>
-    `;
-    return;
-  }
-
-  const effectiveName = opName || "ผู้ปฏิบัติงาน";
-  let activeTask = null;
-  let resumeTask = null;
-  let pendingTask = null;
-
-  for (const t of tasks) {
-    if (t.status === "เสร็จสิ้น") continue;
-    const statuses = getAssigneeSubmissionsStatus(t);
-    const mySt = statuses.find(s => matchesOperator(s.fullTechName || s.techName, effectiveName));
-    if (mySt) {
-      if (mySt.hasCheckedIn && !mySt.hasCheckedOut) {
-        if (!activeTask) activeTask = t;
-      } else if (mySt.hasPausedToday) {
-        if (!resumeTask) resumeTask = { task: t, status: mySt };
-      } else if (!mySt.hasCheckedIn && !mySt.hasCheckedOut) {
-        if (!pendingTask) pendingTask = t;
-      }
-    }
-  }
-
-  if (activeTask) {
-    greetingEl.innerHTML = `👋 สวัสดีคุณ ${effectiveName} • กำลังปฏิบัติงานอยู่`;
-    subtitleEl.innerHTML = `📍 ไซต์งาน: <strong class="text-white">${activeTask.title}</strong> • เสร็จงานวันนี้อย่าลืมแตะเช็กเอาต์ส่งรูปผลงานนะครับ`;
-    ctaContainer.innerHTML = `
-      <button type="button" onclick="window.openProgressModalForTask('${activeTask.id}')" class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-xs font-bold transition-all shadow-xs inline-flex items-center space-x-1.5 active:scale-95 cursor-pointer">
-        <span>🏁 ส่งงาน / เช็กเอาต์</span>
-      </button>
-    `;
-  } else if (resumeTask) {
-    const nextDay = (resumeTask.status?.daysWorked || 1) + 1;
-    greetingEl.innerHTML = `👋 สวัสดีคุณ ${effectiveName} • มีงานค้างที่ต้องทำต่อ`;
-    subtitleEl.innerHTML = `📍 ไซต์งาน: <strong class="text-white">${resumeTask.task.title}</strong> • แตะปุ่มเพื่อเช็กอินทำต่อวันที่ ${nextDay}`;
-    ctaContainer.innerHTML = `
-      <button type="button" onclick="window.goCheckinForTask('${resumeTask.task.id}')" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-white rounded-xl text-xs font-bold transition-all shadow-xs inline-flex items-center space-x-1.5 active:scale-95 cursor-pointer">
-        <span>▶️ เช็กอินทำต่อ (วันที่ ${nextDay})</span>
-      </button>
-    `;
-  } else if (pendingTask) {
-    greetingEl.innerHTML = `👋 สวัสดีคุณ ${effectiveName} • มีงานใหม่รอปฏิบัติงาน`;
-    subtitleEl.innerHTML = `📍 ไซต์งาน: <strong class="text-white">${pendingTask.title}</strong> • แตะเช็กอินเพื่อเริ่มงานได้ทันทีจากที่นี่`;
-    ctaContainer.innerHTML = `
-      <button type="button" onclick="window.goCheckinForTask('${pendingTask.id}')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs inline-flex items-center space-x-1.5 active:scale-95 cursor-pointer">
-        <span>📍 เช็กอินเริ่มงานนี้</span>
-      </button>
-    `;
-  } else {
-    greetingEl.innerHTML = `👋 สวัสดีคุณ ${effectiveName} • ไม่มีงานค้างในขณะนี้`;
-    subtitleEl.innerHTML = `🎉 ยอดเยี่ยมมากครับ ปฏิบัติงานครบถ้วนเรียบร้อยแล้ว`;
-    ctaContainer.innerHTML = `
-      <button type="button" onclick="window.openTaskAssignModal ? window.openTaskAssignModal() : openAssignModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all shadow-2xs inline-flex items-center space-x-1 active:scale-95 cursor-pointer">
-        <span>+ แจ้งงานใหม่</span>
-      </button>
-    `;
-  }
-}
-
 export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg = null) {
   const container = document.getElementById("tasksListContainer");
   if (!container) return;
@@ -414,7 +338,6 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
       </div>
     `;
     updateTaskKpiNumbers(0, 0, 0, 0, 0);
-    updateOperatorWorkflowBanner([], opName, isAdmin, 0);
     return;
   }
 
@@ -447,7 +370,6 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
   });
 
   updateTaskKpiNumbers(techFiltered.length, inprogCount, overdueCount, problemCount, completedCount);
-  updateOperatorWorkflowBanner(baseTasks, opName, isAdmin, overdueCount);
 
   // 2. Filter by Status & Search
   const filteredTasks = techFiltered.filter(t => {
