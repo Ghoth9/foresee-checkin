@@ -17,7 +17,7 @@ import {
   setActionTab, setUpdatePercent, setUpdateStatus, setDailyCheckoutMode
 } from './modules/checkout.js';
 import {
-  setTaskViewMode, setStatusFilter, setTechFilter, setTaskSearchQuery, setTaskSortOrder, renderTechFilterChips,
+  setTaskViewMode, setStatusFilter, setTechFilter, setTaskSearchQuery, setTaskSortOrder, renderTechFilterChips, toggleTechChipsWrap,
   renderTasksList, openAssignModal, closeAssignModal, selectAssignPriority, selectAssignCategory,
   toggleAssignTech, renderAssignTechChips, submitAssignForm, openEditTaskModal, closeEditTaskModal,
   setEditModalStatus, saveEditedTask, openTaskDetailModal, closeTaskDetailModal, switchTaskDetailTab,
@@ -85,9 +85,13 @@ try {
   const cachedTechRecords = localStorage.getItem("fs_technicians_list");
   if (cachedTechRecords) state.techniciansList = JSON.parse(cachedTechRecords);
 
+  const LEGACY_FAKE_TECHS = new Set(["ช่างกนก", "ช่างมณเฑียร", "ช่างสายฟ้า", "ช่างอาร์ม", "ช่างเอก"]);
   const cachedTechs = localStorage.getItem("fs_technicians");
-  if (cachedTechs) state.allTechnicians = JSON.parse(cachedTechs);
-  else state.allTechnicians = ["ช่างกนก", "ช่างมณเฑียร", "ช่างสายฟ้า", "ช่างอาร์ม", "ช่างเอก"];
+  if (cachedTechs) {
+    state.allTechnicians = JSON.parse(cachedTechs).filter(t => !LEGACY_FAKE_TECHS.has(t));
+  } else {
+    state.allTechnicians = [];
+  }
 
   const cachedTasks = localStorage.getItem("fs_tasks");
   if (cachedTasks) state.tasksList = JSON.parse(cachedTasks);
@@ -206,11 +210,13 @@ export async function refreshFromSupabase(force = false) {
     if (!fresh) return;
 
     if (fresh.technicians && Array.isArray(fresh.technicians) && fresh.technicians.length > 0) {
-      state.allTechnicians = Array.from(new Set([...state.allTechnicians, ...fresh.technicians]));
+      const legacySet = new Set(["ช่างกนก", "ช่างมณเฑียร", "ช่างสายฟ้า", "ช่างอาร์ม", "ช่างเอก"]);
+      state.allTechnicians = Array.from(new Set(fresh.technicians.filter(t => !legacySet.has(t))));
       localStorage.setItem("fs_technicians", JSON.stringify(state.allTechnicians));
       renderManageTechList();
       renderCheckinTechChips();
       renderAssignTechChips(state.allTechnicians);
+      renderTechFilterChips(state.tasksList, state.allTechnicians);
     }
 
     if (fresh.techniciansList && Array.isArray(fresh.techniciansList)) {
@@ -817,6 +823,7 @@ window.openTaskDetailModal = (taskId, initialTab = "info") => {
 };
 window.closeTaskDetailModal = closeTaskDetailModal;
 window.switchTaskDetailTab = switchTaskDetailTab;
+window.toggleTechChipsWrap = toggleTechChipsWrap;
 window.clearDetailTechSearch = clearDetailTechSearch;
 window.openImageLightbox = openImageLightbox;
 window.closeImageLightbox = closeImageLightbox;

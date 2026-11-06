@@ -363,10 +363,10 @@
                 <span class="hidden sm:inline">ผู้ปฏิบัติงาน:</span>
               </span>
               <div class="relative flex-1 min-w-0">
-                <div id="checkoutTechFilterContainer" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1 pr-6 touch-pan-x">
+                <div id="checkoutTechFilterContainer" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1 pr-8 touch-pan-x">
                   <!-- Dynamically populated chips -->
                 </div>
-                <div class="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-white to-transparent sm:hidden"></div>
+                <div class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/90 to-transparent"></div>
               </div>
             </div>
           </div>
@@ -380,7 +380,7 @@
                 <span>ล้างทั้งหมด</span>
               </button>
             </div>
-            <div id="activeListContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-[650px] overflow-y-auto pr-0.5 items-start">
+            <div id="activeListContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
               <!-- Rendered dynamically -->
             </div>
           </div>
@@ -393,7 +393,7 @@
     <!-- ========================================================================= -->
     <!-- TAB 3: มอบหมายงาน (OFFICE TASK MANAGEMENT) -->
     <!-- ========================================================================= -->
-    <section id="tasksSection" class="hidden space-y-3.5 max-w-5xl mx-auto">
+    <section id="tasksSection" class="hidden space-y-3.5 max-w-6xl mx-auto">
       
       <!-- Operations Header -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/90">
@@ -518,15 +518,18 @@
         </div>
 
         <!-- Bottom Line: Tech Chips / Filter by Assignee (Dedicated Row with Label) -->
-        <div id="taskTechFilterRow" class="flex items-center space-x-2 pt-2 border-t border-slate-100">
-          <span class="text-[11px] font-bold text-slate-500 flex items-center space-x-1 flex-shrink-0 pl-0.5" title="กรองตามผู้ปฏิบัติงาน">
+        <div id="taskTechFilterRow" class="flex items-start sm:items-center space-x-2 pt-2 border-t border-slate-100">
+          <span class="text-[11px] font-bold text-slate-500 flex items-center space-x-1 flex-shrink-0 pl-0.5 py-1" title="กรองตามผู้ปฏิบัติงาน">
             <span>👤</span>
             <span class="hidden sm:inline">ผู้ปฏิบัติงาน:</span>
           </span>
           <div class="relative flex-1 min-w-0">
-            <div id="techFilterChipsContainer" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 pr-6 touch-pan-x"></div>
-            <div class="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-white to-transparent sm:hidden"></div>
+            <div id="techFilterChipsContainer" class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 pr-8 touch-pan-x"></div>
+            <div id="techFilterChipsFade" class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/90 to-transparent"></div>
           </div>
+          <button type="button" id="toggleTechChipsWrapBtn" onclick="window.toggleTechChipsWrap()" class="px-2 py-1 rounded-lg text-[11px] font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-colors flex-shrink-0 whitespace-nowrap cursor-pointer" title="แสดงรายชื่อผู้ปฏิบัติงานทั้งหมด">
+            ดูทั้งหมด ▾
+          </button>
         </div>
 
       </div>
@@ -1589,16 +1592,16 @@
         </div>
 
         <!-- Summary Pills (ผู้รับผิดชอบ & กำหนดส่ง) -->
-        <div class="grid grid-cols-2 gap-2 text-xs bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+          <div class="sm:col-span-2 min-w-0">
             <span class="text-slate-400 block text-[11px] font-medium">ผู้รับผิดชอบ:</span>
-            <strong id="quickCardTechs" class="text-slate-900 font-bold block truncate mt-0.5 text-xs sm:text-sm">-</strong>
+            <strong id="quickCardTechs" class="text-slate-900 font-bold block leading-snug break-words mt-0.5 text-xs sm:text-sm">-</strong>
           </div>
-          <div>
+          <div class="min-w-0">
             <span class="text-slate-400 block text-[11px] font-medium">กำหนดส่งงาน:</span>
             <strong id="quickCardDeadline" class="text-blue-700 font-bold block truncate mt-0.5 text-xs sm:text-sm">-</strong>
           </div>
-          <div id="quickCardLoopMembersBlock" class="col-span-2 hidden pt-2 border-t border-slate-100 flex flex-wrap gap-1.5"></div>
+          <div id="quickCardLoopMembersBlock" class="sm:col-span-3 hidden pt-2 border-t border-slate-100 flex flex-wrap gap-1.5"></div>
         </div>
 
         <!-- GPS Location Status Indicator in Modal -->
@@ -1632,9 +1635,6 @@
           <span>เช็กอินเข้าหน้างาน & แชร์เข้า LINE</span>
         </button>
       </div>
-
-    </div>
-  </div>
 
     </div>
   </div>

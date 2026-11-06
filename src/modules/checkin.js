@@ -60,7 +60,7 @@ export function updateQuickCardUI(task) {
       techsEl.title = techList;
     }
     if (deadlineEl) deadlineEl.innerText = formatThaiDateDisplay(task.deadline);
-    if (toggleTextEl) toggleTextEl.innerText = "📋 ขยายดูรายละเอียดงาน";
+    if (toggleTextEl) toggleTextEl.innerText = "ดูรายละเอียดงานเพิ่มเติม";
     if (toggleChevronEl) toggleChevronEl.style.transform = "rotate(0deg)";
 
     const loopContainer = document.getElementById("quickCardLoopMembersBlock");
@@ -220,7 +220,7 @@ export function renderAssignedTasksBanner(tasksList, allTechnicians, onSelectTas
         </span>
         <span class="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full font-bold font-mono">${pendingTasks.length} งาน</span>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[38rem] sm:max-h-[44rem] overflow-y-auto pr-0.5" style="scrollbar-width: thin;">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         ${pendingTasks.map(task => {
           try {
             const isSelected = selectedAssignedTaskId === task.id;

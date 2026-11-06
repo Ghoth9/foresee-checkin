@@ -287,24 +287,24 @@ function isTaskAssignedOrCreatedBy(item, targetOp) {
           ? 'bg-blue-50/40 border-2 border-blue-600 shadow-sm ring-2 ring-blue-200'
           : 'bg-white hover:bg-slate-50 border border-slate-300 shadow-2xs'
       }">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center space-x-2 flex-wrap gap-y-1">
-            <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white">${displayTaskId}</span>
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
+            <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-white whitespace-nowrap">${displayTaskId}</span>
             ${isRealCheckin 
-              ? `<span class="text-xs text-emerald-800 font-bold font-mono">⏰ เช็กอิน: ${checkinDateLabel}${formatGasTime(item.time)} น.</span>` 
-              : `<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300 flex items-center space-x-1"><span class="animate-pulse">⚠️</span><span>ยังไม่ได้เช็กอินเข้างาน</span></span>`}
-            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs">คืบหน้า ${itemProg}%</span>
-            ${totalPhotos > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">📸 ${totalPhotos} รูป</span>` : ''}
+              ? `<span class="text-xs text-emerald-800 font-bold font-mono whitespace-nowrap">⏰ เช็กอิน: ${checkinDateLabel}${formatGasTime(item.time)} น.</span>` 
+              : `<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-300 flex items-center space-x-1 whitespace-nowrap"><span class="animate-pulse">⚠️</span><span>ยังไม่ได้เช็กอินเข้างาน</span></span>`}
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-mono shadow-2xs whitespace-nowrap">คืบหน้า ${itemProg}%</span>
+            ${totalPhotos > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">📸 ${totalPhotos} รูป</span>` : ''}
           </div>
-          <div class="flex items-center space-x-1.5">
-            <button type="button" onclick="event.stopPropagation(); window.shareActiveTaskToLine('${item.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2.5 py-1 rounded-lg border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer" title="แชร์ข้อมูลงานนี้เข้ากลุ่ม LINE">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
-              <span>แชร์เข้า LINE</span>
+          <div class="flex items-center space-x-1.5 flex-shrink-0">
+            <button type="button" onclick="event.stopPropagation(); window.shareActiveTaskToLine('${item.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 px-2.5 py-1 rounded-lg border border-emerald-300 hover:border-emerald-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap" title="แชร์ข้อมูลงานนี้เข้ากลุ่ม LINE">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 5.92 2 10.76c0 2.92 1.63 5.51 4.16 7.05-.18.66-.66 2.4-0.75 2.76-.12.44.16.44.34.32.24-.16 2.84-1.92 3.99-2.7 0.73.13 1.48.21 2.26.21 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/></svg>
+              <span>แชร์ LINE</span>
             </button>
             ${state.currentUserRole === "admin" ? `
-              <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer" title="ลบรายการเช็กอินนี้">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                <span>ลบรายการ</span>
+              <button type="button" onclick="event.stopPropagation(); window.deleteActiveCheckin('${item.id}')" class="text-rose-600 hover:text-white hover:bg-rose-600 px-2 py-1 rounded-lg border border-rose-200 hover:border-rose-600 text-xs font-bold flex items-center space-x-1 transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap" title="ลบรายการเช็กอินนี้">
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <span>ลบ</span>
               </button>
             ` : ''}
           </div>

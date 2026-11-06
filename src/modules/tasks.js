@@ -224,9 +224,37 @@ export function setTechFilter(techName, tasksList, allTechnicians) {
   rerenderTasksListCurrent(tasksList);
 }
 
+let isTechChipsWrapped = false;
+
+export function toggleTechChipsWrap() {
+  isTechChipsWrapped = !isTechChipsWrapped;
+  const container = document.getElementById("techFilterChipsContainer");
+  const fadeEl = document.getElementById("techFilterChipsFade");
+  const btn = document.getElementById("toggleTechChipsWrapBtn");
+  if (container) {
+    if (isTechChipsWrapped) {
+      container.className = "flex flex-wrap items-center gap-1.5 py-0.5";
+    } else {
+      container.className = "flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-0.5 pr-8 touch-pan-x";
+    }
+  }
+  if (fadeEl) {
+    fadeEl.classList.toggle("hidden", isTechChipsWrapped);
+  }
+  if (btn) {
+    btn.innerText = isTechChipsWrapped ? "ย่อเก็บ ▴" : "ดูทั้งหมด ▾";
+  }
+}
+if (typeof window !== "undefined") {
+  window.toggleTechChipsWrap = toggleTechChipsWrap;
+}
+
 export function renderTechFilterChips(tasksList, allTechnicians = []) {
+  const legacyFake = new Set(["ช่างกนก", "ช่างมณเฑียร", "ช่างสายฟ้า", "ช่างอาร์ม", "ช่างเอก"]);
   if (Array.isArray(allTechnicians) && allTechnicians.length > 0) {
-    cachedTechnicians = allTechnicians;
+    cachedTechnicians = allTechnicians.filter(t => !legacyFake.has(t));
+  } else {
+    cachedTechnicians = cachedTechnicians.filter(t => !legacyFake.has(t));
   }
   const container = document.getElementById("techFilterChipsContainer");
   if (!container) return;
@@ -235,7 +263,7 @@ export function renderTechFilterChips(tasksList, allTechnicians = []) {
   container.innerHTML = techs.map(tName => {
     const isSelected = currentTechFilter === tName;
     return `
-      <button type="button" onclick="window.setTaskTechFilter('${tName}')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex-shrink-0 ${
+      <button type="button" onclick="window.setTaskTechFilter('${tName}')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex-shrink-0 whitespace-nowrap cursor-pointer ${
         isSelected
           ? 'bg-slate-900 text-white font-semibold shadow-xs'
           : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -248,7 +276,7 @@ export function renderTechFilterChips(tasksList, allTechnicians = []) {
   if (!container._hasHWheel) {
     container._hasHWheel = true;
     container.addEventListener("wheel", (e) => {
-      if (e.deltaY !== 0 && container.scrollWidth > container.clientWidth) {
+      if (!isTechChipsWrapped && e.deltaY !== 0 && container.scrollWidth > container.clientWidth) {
         e.preventDefault();
         container.scrollBy({ left: e.deltaY * 1.5, behavior: "auto" });
       }
@@ -479,20 +507,20 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
   ` : '';
 
   // 3. Render View Mode
-  if (taskViewMode === "list" && window.innerWidth >= 768) {
-    // List Table View - High Contrast & 100% Fluid
+  if (taskViewMode === "list" && window.innerWidth >= 1024) {
+    // List Table View - 100% Fixed Fluid Layout (Zero Horizontal Overflow)
     let tableHtml = `
       <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <table class="w-full text-left text-sm border-collapse">
+        <table class="w-full table-fixed text-left text-sm border-collapse">
           <thead class="bg-slate-50 text-[11px] font-bold text-slate-600 border-b border-slate-200 uppercase tracking-wider">
             <tr>
-              <th class="py-2.5 px-3 w-10 text-center font-mono">#</th>
-              <th class="py-2.5 px-3 w-28 whitespace-nowrap">สถานะ</th>
+              <th class="py-2.5 px-2 w-9 text-center font-mono">#</th>
+              <th class="py-2.5 px-2.5 w-24 whitespace-nowrap">สถานะ</th>
               <th class="py-2.5 px-3">ชื่องานปฏิบัติการ & ไซต์งาน</th>
-              <th class="py-2.5 px-3 w-48">ผู้ปฏิบัติงาน (สถานะรายคน)</th>
-              <th class="py-2.5 px-3 w-32 whitespace-nowrap">กำหนดส่ง</th>
-              <th class="py-2.5 px-3 w-28 whitespace-nowrap">ความคืบหน้า</th>
-              <th class="py-2.5 px-3 w-40 text-right pr-4 whitespace-nowrap">จัดการ</th>
+              <th class="py-2.5 px-2.5 w-48 whitespace-nowrap">ผู้ปฏิบัติงาน</th>
+              <th class="py-2.5 px-2.5 w-28 whitespace-nowrap">กำหนดส่ง</th>
+              <th class="py-2.5 px-2 w-24 whitespace-nowrap">ความคืบหน้า</th>
+              <th class="py-2.5 pl-2 pr-3 w-48 text-right whitespace-nowrap">จัดการ</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -535,74 +563,74 @@ export function renderTasksList(tasksList, activeOperatorName = null, isAdminArg
 
       tableHtml += `
         <tr class="${rowClass}" onclick="window.openTaskDetailModal('${task.id}')">
-          <td class="py-2.5 px-3 text-center font-mono text-xs text-slate-400 font-medium">${index + 1}</td>
-          <td class="py-2.5 px-3 whitespace-nowrap">
-            <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
-              <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md border ${badgeBg}">
+          <td class="py-2.5 px-2 text-center font-mono text-xs text-slate-400 font-medium">${index + 1}</td>
+          <td class="py-2.5 px-2.5 whitespace-nowrap">
+            <div class="flex flex-col items-start gap-1">
+              <span class="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md border whitespace-nowrap ${badgeBg}">
                 ${task.status}
               </span>
               ${isNew ? `<span class="inline-flex items-center space-x-0.5 px-1.5 py-0.2 text-[10px] font-black bg-amber-400 text-slate-950 rounded shadow-xs animate-pulse flex-shrink-0"><span>✨</span><span>ใหม่</span></span>` : ''}
               ${isCreatedByMe ? `<span class="inline-flex items-center space-x-0.5 px-1.5 py-0.2 text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 rounded shadow-2xs flex-shrink-0"><span>📌</span><span>คุณมอบหมาย</span></span>` : ''}
             </div>
           </td>
-          <td class="py-2.5 px-3">
-            <div class="max-w-md">
-              <div class="font-bold text-xs md:text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+          <td class="py-2.5 px-3 min-w-0">
+            <div class="min-w-0">
+              <div class="font-bold text-xs md:text-sm text-slate-900 group-hover:text-blue-600 transition-colors truncate" title="${task.title}">
                 ${task.title}
               </div>
-              ${task.desc && task.desc !== '-' ? `<div class="text-[11px] text-slate-500 line-clamp-1 mt-0.5">${task.desc}</div>` : ''}
-              ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 line-clamp-1 mt-0.5 font-medium">💬 ${cleanLatestText(task.latestUpdate)}</div>` : ''}
+              ${task.desc && task.desc !== '-' ? `<div class="text-[11px] text-slate-500 truncate mt-0.5">${task.desc}</div>` : ''}
+              ${task.latestUpdate && task.latestUpdate !== 'ยังไม่มีอัปเดต' ? `<div class="text-[11px] text-blue-600 truncate mt-0.5 font-medium">💬 ${cleanLatestText(task.latestUpdate)}</div>` : ''}
             </div>
           </td>
-          <td class="py-2.5 px-3">
-            <div class="flex flex-wrap items-center gap-1">
+          <td class="py-2.5 px-2.5">
+            <div class="flex flex-col items-start gap-1 min-w-0">
               ${assigneeStatuses.map(s => `
-                <span class="inline-flex items-center space-x-1 text-[11px] px-2 py-0.5 rounded-md border ${s.badgeClass}" title="${s.tooltip || s.fullTechName || s.techName}">
+                <span class="inline-flex items-center space-x-1 text-[11px] px-2 py-0.5 rounded-md border whitespace-nowrap max-w-full ${s.badgeClass}" title="${s.tooltip || s.fullTechName || s.techName}">
                   <span class="w-1.5 h-1.5 rounded-full ${s.dotColor || 'bg-slate-400'} flex-shrink-0"></span>
-                  <span class="font-medium">${s.label}</span>
+                  <span class="font-medium truncate">${s.label}</span>
                 </span>
               `).join('')}
             </div>
           </td>
-          <td class="py-2.5 px-3 whitespace-nowrap">
+          <td class="py-2.5 px-2.5 whitespace-nowrap">
             <div class="font-mono text-xs text-slate-700 font-medium">${formatThaiDateDisplay(task.deadline)}</div>
             <div class="mt-0.5">${isProblem ? `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>⚠️ ติดปัญหา</span></span>` : getDeadlineCountdownBadge(task.deadline, isDone)}</div>
           </td>
-          <td class="py-2.5 px-3 whitespace-nowrap">
-            <div class="flex items-center space-x-2">
-              <div class="w-14 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+          <td class="py-2.5 px-2 whitespace-nowrap">
+            <div class="flex items-center space-x-1.5">
+              <div class="w-11 bg-slate-100 rounded-full h-1.5 overflow-hidden flex-shrink-0">
                 <div class="h-1.5 ${isDone ? 'bg-emerald-500' : (isProblem ? 'bg-rose-500' : 'bg-slate-900')} rounded-full transition-all" style="width: ${task.progress || 0}%"></div>
               </div>
               <span class="font-mono text-xs font-semibold text-slate-700">${task.progress || 0}%</span>
             </div>
           </td>
-          <td class="py-2.5 px-3 text-right pr-4 whitespace-nowrap">
-            <div class="flex items-center justify-end space-x-1.5">
+          <td class="py-2.5 pl-2 pr-3 text-right whitespace-nowrap">
+            <div class="flex items-center justify-end space-x-1">
               ${isResume ? `
-                <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="เช็กอินเข้าทำต่อในวันที่ ${nextDayNum}">
+                <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[11px] font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap" title="เช็กอินเข้าทำต่อในวันที่ ${nextDayNum}">
                   <span>▶️</span>
-                  <span>เช็กอินทำต่อ</span>
+                  <span>ทำต่อ</span>
                 </button>
               ` : (canCheckIn ? `
-                <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="เช็กอินเข้าเริ่มงานนี้">
+                <button type="button" onclick="event.stopPropagation(); window.goCheckinForTask('${task.id}')" class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap" title="เช็กอินเข้าเริ่มงานนี้">
                   <span>📍</span>
                   <span>เช็กอิน</span>
                 </button>
               ` : (canUpdateOrClose ? `
-                <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer" title="ส่งความคืบหน้า / เช็กเอาต์รายวัน หรือปิดงาน">
+                <button type="button" onclick="event.stopPropagation(); window.openProgressModalForTask('${task.id}')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap" title="ส่งความคืบหน้า / เช็กเอาต์รายวัน หรือปิดงาน">
                   <span>🏁</span>
-                  <span>ส่งงาน/เช็กเอาต์</span>
+                  <span>ส่งงาน</span>
                 </button>
               ` : ''))}
               ${photoCount > 0 ? `
-                <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold border border-blue-200 transition-all inline-flex items-center space-x-1 active:scale-95 shadow-2xs" title="ดูภาพถ่ายผลงาน">
+                <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}', 'timeline')" class="px-1.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-bold border border-blue-200 transition-all inline-flex items-center space-x-0.5 active:scale-95 shadow-2xs whitespace-nowrap" title="ดูภาพถ่ายผลงาน (${photoCount} รูป)">
                   <span>📸</span>
                   <span>${photoCount}</span>
                 </button>
               ` : ''}
-              <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2.5 py-1 text-slate-700 hover:text-blue-700 bg-slate-50 hover:bg-blue-50 rounded-lg text-xs font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95">
-                <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <span>${isAdmin ? 'ดู/แก้ไข' : 'ดูรายละเอียด'}</span>
+              <button type="button" onclick="event.stopPropagation(); window.openTaskDetailModal('${task.id}')" class="px-2 py-1 text-slate-700 hover:text-blue-700 bg-slate-50 hover:bg-blue-50 rounded-lg text-[11px] font-semibold border border-slate-200 hover:border-blue-200 transition-all inline-flex items-center space-x-1 shadow-2xs active:scale-95 whitespace-nowrap" title="${isAdmin ? 'ดูรายละเอียด / แก้ไขข้อมูลงาน' : 'ดูรายละเอียดงาน'}">
+                <svg class="w-3.5 h-3.5 opacity-70 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span>${isAdmin ? 'แก้ไข' : 'ดู'}</span>
               </button>
             </div>
           </td>
